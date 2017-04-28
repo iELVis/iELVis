@@ -1,0 +1,6 @@
+function stop = plotCoordFun(coord,optimValues,state,history)
+
+history.coord=
+scatter3(coord(:,1),coord(:,2),coord(:,3),'b.');
+
+stop = false;

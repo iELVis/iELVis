@@ -1,0 +1,6 @@
+function dist=closestSurfDist(coord,surf)
+num_elec=size(coord,1);
+% num_surf=size(surf.vert,1);
+num_surf=size(surf,1);
+d=repmat(surf.vert,[1 1 num_elec])-permute(repmat(coord,[1 1 num_surf]),[3 2 1]);
+dist=squeeze(min(sqrt(sum(d.^2,2)),[],1));
