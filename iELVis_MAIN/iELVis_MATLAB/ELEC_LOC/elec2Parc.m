@@ -48,6 +48,10 @@ if nargin<2,
     atlas='DK';
 end
 
+if nargin<3,
+    out2text='n';
+end
+
 fsDir=getFsurfSubDir();
 
 
