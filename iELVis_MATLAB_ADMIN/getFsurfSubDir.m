@@ -9,7 +9,8 @@ if ~isempty(globalFsDir)
     fsurfSubDir=globalFsDir;
 else
     if ispc,
-        error('Hey mon, if you be using Windows you need to define the global variable "globalFsDir" and put the path to your FreeSurfer subject folder in it.');
+%         error('Hey mon, if you be using Windows you need to define the global variable "globalFsDir" and put the path to your FreeSurfer subject folder in it.');
+        fsurfSubDir=uigetdir(userpath,'select freesurfer directory');
     else
         fsurfSubDir=getenv('SUBJECTS_DIR');
         if isempty(fsurfSubDir)
