@@ -1,26 +1,26 @@
 function PTD_idx = getPtdIndex(fs_subj)
 % function PTD_idx = getPtdIndex(fs_subj)
 %
-% Compute Proximal Tissue Density (PTD) for each electrode as described in 
+% Compute Proximal Tissue Density (PTD) for each electrode as described in
 % Mercier et al., Neuroimage 2017
 %
 % PTD is an index reflecting the density of neocortical gray and white matter surrounding
-% a stereotactic electrode that has its centroid either in the neocortical Gray or in the 
+% a stereotactic electrode that has its centroid either in the neocortical Gray or in the
 % White matter. (otheriwse PTD = NaN)
 %
 % Be careful when a contact is in the vicinity of subcortical structures
 % PTD is computed exclusively by taking into account surrounding neocortical
-% Gray and White matter voxels; no other tissue will be taken into account (e.g. 
+% Gray and White matter voxels; no other tissue will be taken into account (e.g.
 % Hippocampus, Amygdala...). Voxel labels are taken from the FreeSurfer
 % wmparc.mgz file.
-% 
+%
 % Please note that this function belongs to the iELVis toolbox
 % and is therefore subjected to the same regulations
 % (Author: manuel.mercier@a3.epfl.ch)
 %
 % input: fs_subj - name of the patient's FreeSurfer subject folder
 %
-% output: PTD_idx structure containing 
+% output: PTD_idx structure containing
 %           >> elec: {nx1 cell}
 %           >> location: {nx1 cell}
 %           >> offset: 2
@@ -36,7 +36,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 %   (default size = 27 ;centroid plus offset)
 % - PTD proximal tissue density of white and neocortical gray matter around the electrode
 %
-% In addition the following files are created in the elec_recon subfolder 
+% In addition the following files are created in the elec_recon subfolder
 % of the patient's FreeSurfer directory:
 %   -GreyWhite_classifications.mat
 %   -GreyWhite_classifications.txt
@@ -44,18 +44,18 @@ function PTD_idx = getPtdIndex(fs_subj)
 %
 % Function dependency:
 % - MRIread from freesurfer (https://surfer.nmr.mgh.harvard.edu/)
-% 
+%
 % Files needed:
 % - MRI from elec_recon (wmparc.mgz)
 % - electrodes coordinates (*.LEPTOVOX)
 % - electrodes names (*.electrodeNames)
 % - parcellation code table (FreeSurferColorLUT.txt)
-% 
+%
 %
 % Reference:
-% Mercier, M. R., Bickel, S., Megevand, P., Groppe, D. M., Schroeder, C. E., 
-% Mehta, A. D., & Lado, F. A. (2017). Evaluation of cortical local field 
-% potential diffusion in stereotactic electro-encephalography recordings: 
+% Mercier, M. R., Bickel, S., Megevand, P., Groppe, D. M., Schroeder, C. E.,
+% Mehta, A. D., & Lado, F. A. (2017). Evaluation of cortical local field
+% potential diffusion in stereotactic electro-encephalography recordings:
 % A glimpse on white matter signal. NeuroImage, 147, 219-232.
 
 % Change Log:
@@ -102,7 +102,7 @@ if n==1
 elseif n==0
     disp('No *.LEPTOVOX file found. Please do it manualy');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.LEPTOVOX'),'select electrode coordinate file');
-    elec_file=fullfile(elec_dir,temp_file);    
+    elec_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
 elseif n>1
     disp('More than one *.LEPTOVOX file found. Please choose it manualy');
@@ -129,7 +129,7 @@ if isempty(FS_color_file)
     FS_color_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file
 else
-   fprintf('Loading file %s\n',FS_color_file); 
+    fprintf('Loading file %s\n',FS_color_file);
 end
 
 fid=fopen(FS_color_file);
@@ -171,13 +171,13 @@ for e=1:size(elec,1)
         set(gca,'xdir','reverse');
         plot(z,y,'g.');
         
-       subplot(1,3,3);
-       imagesc(squeeze(mri.vol(:,:,z)),[mri_mn, mri_mx]);
-       hold on;
-       axis square;
-       plot(y,x,'g.');
-       
-       disp('Done.');
+        subplot(1,3,3);
+        imagesc(squeeze(mri.vol(:,:,z)),[mri_mn, mri_mx]);
+        hold on;
+        axis square;
+        plot(y,x,'g.');
+        
+        disp('Done.');
     end
     
     % original labelling from parcellation
@@ -186,7 +186,7 @@ for e=1:size(elec,1)
     % check that the contact is in gray or white matter
     gray_white=[strfind(lower(ROI{e,1}),'ctx') strfind(lower(ROI{e,1}),'cortex') ...
         strfind(lower(ROI{e,1}),'wm') strfind(lower(ROI{e,1}),'white')];
-    if isempty(gray_white),
+    if ~isempty(gray_white),
         % get the euclidean distances between the electrode and every voxel in the MRI
         for i=1:mri.volsize(1)
             for j=1:mri.volsize(2)
@@ -195,14 +195,14 @@ for e=1:size(elec,1)
                 end
             end
         end
-
+        
         % do not include the offset
-        tmp=mri.vol(distances<offset); 
+        tmp=mri.vol(distances<offset);
         % find the regions
         tmp_region ={};
-            for i = 1:length(tmp)
-               tmp_region(i,1) =region_lookup(region_codes==tmp(i));  
-            end
+        for i = 1:length(tmp)
+            tmp_region(i,1) =region_lookup(region_codes==tmp(i));
+        end
         % find gray matter voxel in the vicinity
         gm_nb = length(cell2mat(strfind(lower(tmp_region),'ctx')));
         gm_nb = gm_nb + length(cell2mat(strfind(lower(tmp_region),'cortex')));
@@ -211,7 +211,7 @@ for e=1:size(elec,1)
         wm_nb = length(cell2mat(strfind(lower(tmp_region),'wm')));
         wm_nb = wm_nb + length(cell2mat(strfind(lower(tmp_region),'white')));
         wm_w = wm_nb;
-
+        
         ROI{e,2} = gm_w;
         ROI{e,3} = wm_w;
     else
@@ -222,18 +222,18 @@ for e=1:size(elec,1)
 end
 %% write output file
 
-for i=1:length(ROI)   
+for i=1:length(ROI)
     PTD_idx.elec(i,1)     = label(i);
     PTD_idx.location(i,1) = ROI(i,1);
     PTD_idx.nb_Gpix(i,1)  = cell2mat(ROI(i,2));
     PTD_idx.nb_Wpix(i,1)  = cell2mat(ROI(i,3));
     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3)));
     if (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3))) ~= power(offset+1,3)
-       warning(['channel ' label{e} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
-           'those voxels were not taking into account in PTD computation (see field nb_Gpix and nb_Wpix in the output)']);
+        warning(['channel ' label{e} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
+            'those voxels were not taking into account in PTD computation (see field nb_Gpix and nb_Wpix in the output)']);
     end
-% % otherwise a less strict version of the PTD taking into account the surrounding voxels that do not belong to Gray or White matter    
-%     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / power(offset+1,3);
+    % % otherwise a less strict version of the PTD taking into account the surrounding voxels that do not belong to Gray or White matter
+    %     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / power(offset+1,3);
 end
 PTD_idx.offset = offset;
 
