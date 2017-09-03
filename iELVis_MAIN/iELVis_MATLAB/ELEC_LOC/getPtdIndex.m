@@ -5,12 +5,19 @@ function PTD_idx = getPtdIndex(fs_subj)
 % Mercier et al., Neuroimage 2017
 %
 % PTD is an index reflecting the density of neocortical gray and white matter surrounding
-% a stereotactic electrode that has its centroid either in the neocortical Gray or in the
-% White matter. (otheriwse PTD = NaN)
+% a stereotactic electrode that has its centroid either in the neocortical gray or in the
+% white matter. It is: 
+%
+% PTD=(nGray?nWhite)/(nGray+nWhite)
+% Where nGray is the # of neocortical gray matter voxels and nWhite is the
+% number of white matter voxels in the 3x3 voxel cube centered on the contact. 
+%
+% If the contact centroid is not in white or neocortical gray matter, PTD =
+% NaN.
 %
 % Be careful when a contact is in the vicinity of subcortical structures
 % PTD is computed exclusively by taking into account surrounding neocortical
-% Gray and White matter voxels; no other tissue will be taken into account (e.g.
+% gray and white matter voxels; no other tissue will be taken into account (e.g.
 % Hippocampus, Amygdala...). Voxel labels are taken from the FreeSurfer
 % wmparc.mgz file.
 %
@@ -20,7 +27,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 %
 % input: fs_subj - name of the patient's FreeSurfer subject folder
 %
-% output: PTD_idx structure containing
+% output: PTD_idx structure containing 
 %           >> elec: {nx1 cell}
 %           >> location: {nx1 cell}
 %           >> offset: 2
@@ -29,18 +36,19 @@ function PTD_idx = getPtdIndex(fs_subj)
 %           >> PTD_idx.PTD [nx1 double]
 %
 % with:
-% - elec: electrodes name
+% - elec: electrodes names
 % - location: brain region where the centroid of each electrode is localized based on freesurfer parcellation
-% - Offset: correspond to the size of the cube around each electrode used to approximate the PTD (default = 2)
-% - nb_Gpix and nb_Wpix correspond to the number of Gray or White matter voxels within a cube centered around the electrode centroid
-%   (default size = 27 ;centroid plus offset)
+% - Offset: max # of voxels from contact centroid to include in PTD computation. 2 produces a 3x3 cube around
+%   each contact's center voxel. correspond to the size of the cube around each electrode used to approximate 
+%   the PTD (default = 2)
+% - nb_Gpix and nb_Wpix correspond to the number of neocortical gray or white matter voxels within a cube centered around the electrode centroid
+%   (default size = 3x3 ;centroid plus offset)
 % - PTD proximal tissue density of white and neocortical gray matter around the electrode
 %
 % In addition the following files are created in the elec_recon subfolder
 % of the patient's FreeSurfer directory:
 %   -GreyWhite_classifications.mat
 %   -GreyWhite_classifications.txt
-%
 %
 % Function dependency:
 % - MRIread from freesurfer (https://surfer.nmr.mgh.harvard.edu/)
@@ -200,6 +208,7 @@ for e=1:size(elec,1)
         tmp=mri.vol(distances<offset);
         % find the regions
         tmp_region ={};
+        fprintf('Dude: %d\n',length(tmp)); % ??
         for i = 1:length(tmp)
             tmp_region(i,1) =region_lookup(region_codes==tmp(i));
         end
