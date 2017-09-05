@@ -50,7 +50,6 @@ mkdir $newFolder/mri/transforms
 cp $fsDir/mri/brainmask.mgz $newFolder/mri/.
 cp $fsDir/mri/aparc+aseg.mgz $newFolder/mri/.
 cp $fsDir/mri/orig.mgz $newFolder/mri/.
-cp $fsDir/mri/wmparc.mgz $newFolder/mri/.
 cp $fsDir/mri/transforms/talairach.xfm $newFolder/mri/transforms/.
 
 # Copy label stuff
