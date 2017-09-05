@@ -11,3 +11,4 @@ for a=1:length(PTD_idx.elec),
     h=plot(a,PTD_idx.PTD(a),'o');
     clickText(h,PTD_idx.elec{a});
 end
+

@@ -19,7 +19,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 % PTD is computed exclusively by taking into account surrounding neocortical
 % gray and white matter voxels; no other tissue will be taken into account (e.g.
 % Hippocampus, Amygdala...). Voxel labels are taken from the FreeSurfer
-% wmparc.mgz file.
+% aparc+aseg.mgz file.
 %
 % Please note that this function belongs to the iELVis toolbox
 % and is therefore subjected to the same regulations
@@ -54,7 +54,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 % - MRIread from freesurfer (https://surfer.nmr.mgh.harvard.edu/)
 %
 % Files needed:
-% - MRI from elec_recon (wmparc.mgz)
+% - MRI from elec_recon (aparc+aseg.mgz)
 % - electrodes coordinates (*.LEPTOVOX)
 % - electrodes names (*.electrodeNames)
 % - parcellation code table (FreeSurferColorLUT.txt)
@@ -67,7 +67,8 @@ function PTD_idx = getPtdIndex(fs_subj)
 % A glimpse on white matter signal. NeuroImage, 147, 219-232.
 
 % Change Log:
-% 08-2017: a few other minor changes for iELVis by DG
+% 08-2017: a few other minor changes for iELVis by DG. In particular,
+% instead of using wmparc.mgz, we now use aparc+aseg.mgz.
 % 08-2017: adapted for iElvis by MrM;
 % 02-2016: created by MrM;
 %
@@ -75,7 +76,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 % load parcellation file
 fs_dir=getFsurfSubDir();
 recon_folder=fullfile(fs_dir,fs_subj,'elec_recon');
-parc_file=fullfile(fs_dir,fs_subj,'mri','wmparc.mgz');
+parc_file=fullfile(fs_dir,fs_subj,'mri','aparc+aseg.mgz');
 mri=MRIread(parc_file);
 
 % load electrodes name
@@ -195,7 +196,8 @@ for e=1:size(elec,1)
     gray_white=[strfind(lower(ROI{e,1}),'ctx') strfind(lower(ROI{e,1}),'cortex') ...
         strfind(lower(ROI{e,1}),'wm') strfind(lower(ROI{e,1}),'white')];
     if ~isempty(gray_white),
-        % get the euclidean distances between the electrode and every voxel in the MRI
+        % get the euclidean distances between the electrode and every voxel
+        % in the MRI (this could be sped up a lot)
         for i=1:mri.volsize(1)
             for j=1:mri.volsize(2)
                 for k=1:mri.volsize(3)
@@ -224,7 +226,7 @@ for e=1:size(elec,1)
         ROI{e,2} = gm_w;
         ROI{e,3} = wm_w;
     else
-        warning(['channel ' label{e} ' does not have its centroid in neither Gray or White matter >> PTD=NaN']);
+        warning(['channel ' label{e} ' does not have its centroid in Neocortical Gray or White matter >> PTD=NaN']);
         ROI{e,2} = NaN;
         ROI{e,3} = NaN;
     end
