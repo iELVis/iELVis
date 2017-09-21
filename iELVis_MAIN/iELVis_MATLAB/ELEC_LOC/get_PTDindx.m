@@ -37,7 +37,7 @@ function PTD_idx = get_PTDindx(fs_subj)
 % - MRIread from freesurfer (https://surfer.nmr.mgh.harvard.edu/)
 % 
 % files needed:
-% - MRI from elec_recon (wmparc.mgz)
+% - MRI from elec_recon (aparc+aseg.mgz) identical to 'wmparc.mgz'
 % - electrodes coordinates (*.3dUndump.VOX)
 % - electrodes names (*.electrodeNames)
 % - parcellation code table (FreeSurferColorLUT.txt)
@@ -50,18 +50,21 @@ function PTD_idx = get_PTDindx(fs_subj)
 
 
 % load parcellation file
-if isunix || ismac
-fs_dir=getenv('SUBJECTS_DIR');
-recon_folder=fullfile(fs_dir,fs_subj,'elec_recon/');
-elseif ispc
-fs_dir=uigetdir(userpath,'select freesurfer directory');
-recon_folder=fullfile(fs_dir,fs_subj,'elec_recon\');
-end
-parc_file=fullfile(fs_dir,fs_subj,'mri','wmparc.mgz');
+fs_dir=getFsurfSubDir();
+subPath = fullfile(fs_dir,fs_subj);
+recon_folder=fullfile(subPath,'elec_recon');
+% if isunix || ismac
+% fs_dir=getenv('SUBJECTS_DIR');
+% recon_folder=fullfile(fs_dir,fs_subj,'elec_recon/');
+% elseif ispc
+% fs_dir=uigetdir(userpath,'select freesurfer directory');
+% recon_folder=fullfile(fs_dir,fs_subj,'elec_recon\');
+% end
+parc_file=fullfile(fs_dir,fs_subj,'mri','aparc+aseg.mgz'); % wmparc.mgz
 mri=MRIread(parc_file);
 
 % load electrodes name
-files=dir([recon_folder '*.electrodeNames']);
+files=dir([recon_folder '\*.electrodeNames']);
 n=size(files,1);
 if n==1
     label_file=fullfile(recon_folder,files.name);
@@ -86,7 +89,7 @@ clear tmp;
 
 % load electrodes coordinate
 % files=dir([recon_folder '*.3dUndump.VOX']);
-files=dir([recon_folder '*.LEPTOVOX']);
+files=dir([recon_folder '\*.LEPTOVOX']);
 n=size(files,1);
 if n==1
     elec_file=fullfile(recon_folder,files.name);
@@ -140,9 +143,9 @@ for e=1:size(elec,1)
     % original labelling from parcellation
     ROI(e,1) =region_lookup(region_codes==mri.vol(x,y,z));
     
-    % check that the contact is in gray or white matter
-    if strfind(lower(ROI{e,1}),'ctx') || strfind(lower(ROI{e,1}),'cortex') || ...
-       strfind(lower(ROI{e,1}),'wm') || strfind(lower(ROI{e,1}),'white')
+    % check if the contact is in gray or white matter
+    if ~isempty(strfind(lower(ROI{e,1}),'ctx')) || ~isempty(strfind(lower(ROI{e,1}),'cortex')) || ...
+       ~isempty(strfind(lower(ROI{e,1}),'wm')) || ~isempty(strfind(lower(ROI{e,1}),'white'))
     
         % get the euclidean distances between the electrode and every voxel in the MRI
         for i=1:mri.volsize(1)
@@ -186,7 +189,7 @@ for i=1:length(ROI)
     PTD_idx.nb_Wpix(i,1)  = cell2mat(ROI(i,3));
     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3)));
     if (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3))) ~= power(offset+1,3)
-       warning(['channel ' label{e} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
+       warning(['channel ' label{i} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
            'those voxels were not taking into account in PTD computation (see field nb_Gpix and nb_Wpix in the output)']);
     end
 % % otherwise a less strict version of the PTD taking into account the surrounding voxels that do not belong to Gray or White matter    
@@ -194,9 +197,9 @@ for i=1:length(ROI)
 end
 PTD_idx.offset = offset;
 %save
-save([recon_folder 'GreyWhite_classifications.mat'],'PTD_idx');
+save([recon_folder '\GreyWhite_classifications.mat'],'PTD_idx');
 % raw output in txt
-outfile=([recon_folder 'GreyWhite_classifications.txt']);
+outfile=([recon_folder '\GreyWhite_classifications.txt']);
 fid=fopen(outfile,'w');
 fprintf(fid,'%s\t %s\t %s\t %s\r\n','Electrode','location','% Grey with offset=2','% White with offset=2');
 for i=1:size(ROI,1)
