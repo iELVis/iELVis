@@ -17,26 +17,10 @@ function depths_mergeshafts(fs_subj)
 
 
 fs_dir=getFsurfSubDir();
-% Folder with surface files
-recon_folder=fullfile(fs_dir,fs_subj,'elec_recon\');
 
-% load electrodes name and make a copy
-files=dir([recon_folder fs_subj 'PostimpLoc.txt']);
-n=size(files,1);
-if n==1
-    label_file=fullfile(recon_folder,files.name);
-elseif n==0
-    disp('No electrodeNames file found. Please do it manualy.');
-    [temp_file,elec_dir]=uigetfile([recon_folder '*.electrodeNames'],'select electrode names file');
-    label_file=fullfile(elec_dir,temp_file);
-    clear elec_dir temp_file files n
-elseif n>1
-    disp('More than one electrodeNames file found. Please do it manualy.');
-    [temp_file,elec_dir]=uigetfile([recon_folder '*.electrodeNames'],'select electrode names file');
-    label_file=fullfile(elec_dir,temp_file);
-    clear elec_dir temp_file files n
-end
-copyfile(label_file, [label_file(1:end-4) '_Copy.txt'])
+% load electrodes names & Voxel coordinates
+label_file=fullfile(fs_dir,fs_subj,'elec_recon',sprintf('%sPostimpLoc.txt',fs_subj));
+copyfile(label_file, [label_file(1:end-4) '_beforeDepthsMergingShaft.txt']);
 
 fid=fopen(label_file);
 import=textscan(fid,'%s %d %f %f %f %s %s\n');
@@ -46,7 +30,7 @@ idx = find(~cellfun(@isempty,suffix) & [0; ~cellfun(@strcmp,import{1}(1:end-1),i
 
 export = import;
 for i=1:2:length(idx)
-    export{1}(idx(i):idx(i+1)+import{2}(idx(i+1))-1) = regexp(import{1}{idx(1)},'\D+(\.)?(\D+)?','match');
+    export{1}(idx(i):idx(i+1)+import{2}(idx(i+1))-1) = regexp(import{1}{idx(i)},'\D+(\.)?(\D+)?','match');
     if str2num(cell2mat(suffix{idx(i)})) < str2num(cell2mat(suffix{idx(i+1)}))
         part1 = idx(i):(idx(i)+import{2}(idx(i))-1);
         part2 = idx(i+1):(idx(i+1)+import{2}(idx(i+1))-1);

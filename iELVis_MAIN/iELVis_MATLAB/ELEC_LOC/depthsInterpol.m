@@ -29,6 +29,8 @@ fsDir=getFsurfSubDir();
 
 % load electrodes names & Voxel coordinates
 coordFname=fullfile(fsDir,fs_subj,'elec_recon',sprintf('%sPostimpLoc.txt',fs_subj));
+copyfile(coordFname, [label_file(1:end-4) '_beforeDepthsInterpolation.txt']);
+
 fid=fopen(coordFname);
 IO_mgrid=textscan(fid,'%s %s %s %s %s %s %s');
 fclose(fid);
@@ -81,7 +83,7 @@ end
 
 save(fullfile(fsDir,fs_subj,'elec_recon\Interpolation_Info.mat'),'shaft_info');
 
-fid=fopen([coordFname(1:end-4) '_Interpolated.txt'],'w');
+fid=fopen(coordFname,'w');
 for i=1:size(IO_mgrid{1},1)
     fprintf(fid,'%s %s %s %s %s %s %s\n', ....
         IO_mgrid{1}{i},IO_mgrid{2}{i},IO_mgrid{3}{i},IO_mgrid{4}{i},IO_mgrid{5}{i},IO_mgrid{6}{i},IO_mgrid{7}{i});

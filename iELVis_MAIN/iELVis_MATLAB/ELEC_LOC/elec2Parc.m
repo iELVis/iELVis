@@ -203,6 +203,7 @@ for hemLoop=1:2,
     end
 end
 
+%% saving
 if universalYes(out2text) && ~universalYes(prob)
     txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '.txt']);
     fprintf('Outputing electrode anatomical locations to %s\n',txt_fname);
@@ -211,7 +212,7 @@ if universalYes(out2text) && ~universalYes(prob)
         fprintf(fid,'%s\t%s\r\n',elecParc{chan_loop,1},elecParc{chan_loop,2});
     end
     fclose(fid);
-    
+    save(fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.mat']),'elecParc');
 elseif universalYes(out2text) && universalYes(prob)
         txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.txt']);
         fprintf('Outputing electrode anatomical locations to %s\n',txt_fname);
@@ -221,7 +222,8 @@ elseif universalYes(out2text) && universalYes(prob)
             for n=1:length(probParc(chan_loop).neighbor)
                 fprintf(fid,'%s\t%.3f\t',probParc(chan_loop).neighbor{n}, probParc(chan_loop).ratio(n));
             end
-        fprintf(fid,'%s\t\r\n', ['over ' num2str(probParc(1).offset) ' surrounding voxels']);
+        fprintf(fid,'%s\t\r\n', ['over ' num2str(probParc(1).offset+1) '+' num2str(probParc(1).offset+1) ' surrounding voxels']);
         end
         fclose(fid);
+        save(fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.mat']),'probParc');        
 end
