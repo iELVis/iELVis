@@ -1,82 +1,33 @@
-function proxTissueInfo = getProxTissueHomIndex(fs_subj)
-% function PTD_idx = getProxTissueHomIndex(fs_subj)
+function proxTissueInfo = getProxTissueHomIndex(fsSub)
+% function proxTissueInfo = getProxTissueHomIndex(fsSub)
 %
-% Compute Proximal Tissue Density (PTD) for each electrode as described in
-% Mercier et al., Neuroimage 2017
+% Computes Proxim Tissue Homogeneity (PTD) for each electrode.
 %
-% PTD is an index reflecting the density of neocortical gray and white matter surrounding
-% a stereotactic electrode that has its centroid either in the neocortical gray or in the
-% white matter. It is: 
-%
-% PTD=(nGray?nWhite)/(nGray+nWhite)
-% Where nGray is the # of neocortical gray matter voxels and nWhite is the
-% number of white matter voxels in the 3x3 voxel cube centered on the contact. 
-%
-% If the contact centroid is not in white or neocortical gray matter, PTD =
-% NaN.
-%
-% Be careful when a contact is in the vicinity of subcortical structures
-% PTD is computed exclusively by taking into account surrounding neocortical
-% gray and white matter voxels; no other tissue will be taken into account (e.g.
-% Hippocampus, Amygdala...). Voxel labels are taken from the FreeSurfer
-% aparc+aseg.mgz file.
-%
-% Please note that this function belongs to the iELVis toolbox
-% and is therefore subjected to the same regulations
-% (Author: manuel.mercier@a3.epfl.ch)
-%
-% input: fs_subj - name of the patient's FreeSurfer subject folder
-%
-% output: PTD_idx structure containing 
-%           >> elec: {nx1 cell}
-%           >> location: {nx1 cell}
-%           >> offset: 2
-%           >> nb_Gpix [nx1 double]
-%           >> nb_Wpix [nx1 double]
-%           >> PTD_idx.PTD [nx1 double]
-%
-% with:
-% - elec: electrodes names
-% - location: brain region where the centroid of each electrode is localized based on freesurfer parcellation
-% - Offset: max # of voxels from contact centroid to include in PTD computation. 2 produces a 3x3 cube around
-%   each contact's center voxel. correspond to the size of the cube around each electrode used to approximate 
-%   the PTD (default = 2)
-% - nb_Gpix and nb_Wpix correspond to the number of neocortical gray or white matter voxels within a cube centered around the electrode centroid
-%   (default size = 3x3 ;centroid plus offset)
-% - PTD proximal tissue density of white and neocortical gray matter around the electrode
-%
-% In addition the following files are created in the elec_recon subfolder
-% of the patient's FreeSurfer directory:
-%   -GreyWhite_classifications.mat
-%   -GreyWhite_classifications.txt
-%
-% Function dependency:
-% - MRIread from freesurfer (https://surfer.nmr.mgh.harvard.edu/)
-%
-% Files needed:
-% - MRI from elec_recon (aparc+aseg.mgz)
-% - electrodes coordinates (*.LEPTOVOX)
-% - electrodes names (*.electrodeNames)
-% - parcellation code table (FreeSurferColorLUT.txt)
+% PTD is an index reflecting how anatomically homogenous the region around
+% each electrode is in its local neighborhood (i.e., the 3x3 voxel cube
+% centered on the contact). It varies from 1 (all voxels in the 3x3 cube
+% are the same type of brain region) to 0.037 (the center voxel in the 3x3
+% cube differs from all the others).
 %
 %
-% Reference:
-% Mercier, M. R., Bickel, S., Megevand, P., Groppe, D. M., Schroeder, C. E.,
-% Mehta, A. D., & Lado, F. A. (2017). Evaluation of cortical local field
-% potential diffusion in stereotactic electro-encephalography recordings:
-% A glimpse on white matter signal. NeuroImage, 147, 219-232.
-
-% Change Log:
-% 08-2017: a few other minor changes for iELVis by DG. In particular,
-% instead of using wmparc.mgz, we now use aparc+aseg.mgz.
-% 08-2017: adapted for iElvis by MrM;
-% 02-2016: created by MrM;
+% Input: 
+%   fsSub - name of the patient's FreeSurfer subject folder
 %
+% Output: 
+%   proxTissueInfo structure containing 
+%           elec_label: electrode name
+%           pptn_homog: electrode's PTD value
+%           anat_label: label of the anatomical region at the electrode's
+%                       center
+%
+%
+% Author: David Groppe
+% Krembil Neuroscience Center (Sept. 2017)
 
 % load parcellation file
 fs_dir=getFsurfSubDir();
-recon_folder=fullfile(fs_dir,fs_subj,'elec_recon');
-parc_file=fullfile(fs_dir,fs_subj,'mri','aparc+aseg.mgz');
+recon_folder=fullfile(fs_dir,fsSub,'elec_recon');
+parc_file=fullfile(fs_dir,fsSub,'mri','aparc+aseg.mgz');
 mri=MRIread(parc_file);
 
 % load electrodes name
@@ -131,34 +82,65 @@ clear tmp;
 elec=elec+1; % Voxel indexing starts at 0 but MATLAB indexing starts with 1
 
 %% load look-up table for the FreeSurfer MRI atlases
-FS_color_file = which('FreeSurferColorLUTnoFormat.txt');
-if isempty(FS_color_file)
-    disp('The freesurfer color code file, FreeSurferColorLUTnoFormat.txt, was not found. Please select it manually.');
-    [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.txt'),'Select freesurfer color code file');
-    FS_color_file=fullfile(elec_dir,temp_file);
-    clear elec_dir temp_file
-else
-    fprintf('Loading file %s\n',FS_color_file);
-end
+% FS_color_file = which('FreeSurferColorLUTnoFormat.txt');
+% if isempty(FS_color_file)
+%     disp('The freesurfer color code file, FreeSurferColorLUTnoFormat.txt, was not found. Please select it manually.');
+%     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.txt'),'Select freesurfer color code file');
+%     FS_color_file=fullfile(elec_dir,temp_file);
+%     clear elec_dir temp_file
+% else
+%     fprintf('Loading file %s\n',FS_color_file);
+% end
+% 
+% fid=fopen(FS_color_file);
+% C=textscan(fid,'%d %s %d %d %d %d');
+% fclose(fid);
+% 
+% region_lookup=C{:,2};
+% region_codes=C{:,1};
+% clear fid C p
 
-fid=fopen(FS_color_file);
-C=textscan(fid,'%d %s %d %d %d %d');
+% DG
+% asegFname=fullfile(fs_dir,fsSub,'mri','aparc+aseg.mgz');
+% %asegFname=[fs_dir '/' fsSub '/mri/aparc.a2009s+aseg.mgz'];
+% if ~exist(asegFname,'file')
+%    error('File %s not found.',asegFname); 
+% end
+% 
+% aseg=MRIread(asegFname);
+
+%% Load table
+pathstr = fileparts(which('mgrid2matlab'));
+inFile=fullfile(pathstr,'FreeSurferColorLUTnoFormat.txt');
+if ~exist(inFile,'file')
+    error('Could not find file %s',inFile);
+end
+fid=fopen(inFile,'r');
+%fid=fopen('/Applications/freesurfer/FreeSurferColorLUTnoFormat.txt','r');
+tbl=textscan(fid,'%d%s%d%d%d%d');
 fclose(fid);
 
-region_lookup=C{:,2};
-region_codes=C{:,1};
-clear fid C p
+%% Find anatomical region corresponding to voxel
+% id=find(aseg.vol(coordILA(1),coordILA(2),coordILA(3))==tbl{1});
+% id=min(id);
+% anatLabel=tbl{2}{id};
 
 %% find the proportion of neocortical grey and white matter surrounding the electrodes
 sVol=size(mri.vol);
 offset = 2;
 n_elec=size(elec,1);
 pptn_homogeneous=zeros(n_elec,1);
+anatLabel=cell(n_elec,1);
 for e=1:n_elec,
     disp(['Finding amount of surrounding grey and white matter for channel ' label{e}]);
     x=round(elec(e,2)); % switches x and y axes to match FreeSurfer
     y=round(elec(e,1)); % switches x and y axes to match FreeSurfer
     z=round(sVol(3)-elec(e,3)); %need to flip direction of last coordinate
+    
+    id=find(mri.vol(x,y,z)==tbl{1});
+    id=min(id);
+    anatLabel{e}=tbl{2}{id};
+
     
     % DG Code for double checking electrode coordinates
     if e==0, %68, 61
@@ -214,47 +196,48 @@ for e=1:n_elec,
 end
 
 %% Clean up labels
-elecLabels=cell(n_elec,1);
+elec_labels=cell(n_elec,1);
 for eloop=1:n_elec,
     split_id=find(label{eloop}=='_');
-    elecLabels{eloop}=label{eloop}(1:split_id-1);
+    elec_labels{eloop}=label{eloop}(1:split_id-1);
 end
 
 %% Add rest of info to struct
-proxTissueInfo=struct('elecLabel',elecLabels);
+proxTissueInfo=struct('elec_label',elec_labels);
 for eloop=1:n_elec,
     proxTissueInfo(eloop).pptn_homog=pptn_homogeneous(eloop);
+    proxTissueInfo(eloop).anat_label=anatLabel{eloop};
 end
 
 %% write output file
 
-for i=1:length(ROI)
-    PTD_idx.elec(i,1)     = label(i);
-    PTD_idx.location(i,1) = ROI(i,1);
-    PTD_idx.nb_Gpix(i,1)  = cell2mat(ROI(i,2));
-    PTD_idx.nb_Wpix(i,1)  = cell2mat(ROI(i,3));
-    PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3)));
-    if (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3))) ~= power(offset+1,3)
-        warning(['channel ' label{e} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
-            'those voxels were not taking into account in PTD computation (see field nb_Gpix and nb_Wpix in the output)']);
-    end
-    % % otherwise a less strict version of the PTD taking into account the surrounding voxels that do not belong to Gray or White matter
-    %     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / power(offset+1,3);
-end
-PTD_idx.offset = offset;
+% for i=1:length(ROI)
+%     PTD_idx.elec(i,1)     = label(i);
+%     PTD_idx.location(i,1) = ROI(i,1);
+%     PTD_idx.nb_Gpix(i,1)  = cell2mat(ROI(i,2));
+%     PTD_idx.nb_Wpix(i,1)  = cell2mat(ROI(i,3));
+%     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3)));
+%     if (cell2mat(ROI(i,2)) + cell2mat(ROI(i,3))) ~= power(offset+1,3)
+%         warning(['channel ' label{e} ' has in its surrounding voxels that are neither labelled Gray or White matter; ' char(10)...
+%             'those voxels were not taking into account in PTD computation (see field nb_Gpix and nb_Wpix in the output)']);
+%     end
+%     % % otherwise a less strict version of the PTD taking into account the surrounding voxels that do not belong to Gray or White matter
+%     %     PTD_idx.PTD (i,1)     = (cell2mat(ROI(i,2)) - cell2mat(ROI(i,3))) / power(offset+1,3);
+% end
+% PTD_idx.offset = offset;
 
 % Save PTD info as mat file
-outfile_mat=fullfile(recon_folder,'GreyWhite_classifications.mat');
-fprintf('Writing PTD values to %s\n',outfile_mat);
-save(outfile_mat,'PTD_idx');
-
-% Raw output in txt
-outfile=fullfile(recon_folder,'GreyWhite_classifications.txt');
-fprintf('Writing PTD values to %s\n',outfile);
-fid=fopen(outfile,'w');
-fprintf(fid,'%s\t %s\t %s\t %s\r\n','Electrode','location','% Grey with offset=2','% White with offset=2');
-for i=1:size(ROI,1)
-    fprintf(fid,'%s\t %s\t %d\t %d\t \r\n',label{i},ROI{i,:});
-end
-fclose(fid);
+% outfile_mat=fullfile(recon_folder,'GreyWhite_classifications.mat');
+% fprintf('Writing PTD values to %s\n',outfile_mat);
+% save(outfile_mat,'PTD_idx');
+% 
+% % Raw output in txt
+% outfile=fullfile(recon_folder,'GreyWhite_classifications.txt');
+% fprintf('Writing PTD values to %s\n',outfile);
+% fid=fopen(outfile,'w');
+% fprintf(fid,'%s\t %s\t %s\t %s\r\n','Electrode','location','% Grey with offset=2','% White with offset=2');
+% for i=1:size(ROI,1)
+%     fprintf(fid,'%s\t %s\t %d\t %d\t \r\n',label{i},ROI{i,:});
+% end
+% fclose(fid);
 end
