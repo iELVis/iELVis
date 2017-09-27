@@ -1,5 +1,5 @@
-function PTD_idx = getPtdIndex(fs_subj)
-% function PTD_idx = getPtdIndex(fs_subj)
+function PTD_idx = getProxTissueHomIndex(fs_subj)
+% function PTD_idx = getProxTissueHomIndex(fs_subj)
 %
 % Compute Proximal Tissue Density (PTD) for each electrode as described in
 % Mercier et al., Neuroimage 2017
@@ -8,7 +8,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 % a stereotactic electrode that has its centroid either in the neocortical gray or in the
 % white matter. It is: 
 %
-% PTD=(nGray-nWhite)/(nGray+nWhite)
+% PTD=(nGray?nWhite)/(nGray+nWhite)
 % Where nGray is the # of neocortical gray matter voxels and nWhite is the
 % number of white matter voxels in the 3x3 voxel cube centered on the contact. 
 %
@@ -85,12 +85,12 @@ n=size(files,1);
 if n==1
     label_file=fullfile(recon_folder,files.name);
 elseif n==0
-    disp('No electrodeNames file found. Please do it manualy.');
+    disp('No electrodeNames file found. Please do it manually.');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.electrodeNames'),'select electrode names file');
     label_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
 elseif n>1
-    disp('More than one electrodeNames file found. Please do it manualy.');
+    disp('More than one electrodeNames file found. Please do it manually.');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.electrodeNames'),'select electrode names file');
     label_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
@@ -109,12 +109,12 @@ n=size(files,1);
 if n==1
     elec_file=fullfile(recon_folder,files.name);
 elseif n==0
-    disp('No *.LEPTOVOX file found. Please do it manualy');
+    disp('No *.LEPTOVOX file found. Please do it manually');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.LEPTOVOX'),'select electrode coordinate file');
     elec_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
 elseif n>1
-    disp('More than one *.LEPTOVOX file found. Please choose it manualy');
+    disp('More than one *.LEPTOVOX file found. Please choose it manually');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.LEPTOVOX'),'select electrode coordinate file');
     elec_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
@@ -133,7 +133,7 @@ elec=elec+1; % Voxel indexing starts at 0 but MATLAB indexing starts with 1
 %% load look-up table for the FreeSurfer MRI atlases
 FS_color_file = which('FreeSurferColorLUTnoFormat.txt');
 if isempty(FS_color_file)
-    disp('The freesurfer color code file, FreeSurferColorLUTnoFormat.txt, was not found. Please select it manualy.');
+    disp('The freesurfer color code file, FreeSurferColorLUTnoFormat.txt, was not found. Please select it manually.');
     [temp_file,elec_dir]=uigetfile(fullfile(recon_folder,'*.txt'),'Select freesurfer color code file');
     FS_color_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file
@@ -152,7 +152,9 @@ clear fid C p
 %% find the proportion of neocortical grey and white matter surrounding the electrodes
 sVol=size(mri.vol);
 offset = 2;
-for e=1:size(elec,1)
+n_elec=size(elec,1);
+pptn_homogeneous=zeros(n_elec,1);
+for e=1:n_elec,
     disp(['Finding amount of surrounding grey and white matter for channel ' label{e}]);
     x=round(elec(e,2)); % switches x and y axes to match FreeSurfer
     y=round(elec(e,1)); % switches x and y axes to match FreeSurfer
@@ -190,45 +192,25 @@ for e=1:size(elec,1)
     end
     
     % original labelling from parcellation
-    ROI(e,1) =region_lookup(region_codes==mri.vol(x,y,z));
-    
-    % check that the contact is in gray or white matter
-    gray_white=[strfind(lower(ROI{e,1}),'ctx') strfind(lower(ROI{e,1}),'cortex') ...
-        strfind(lower(ROI{e,1}),'wm') strfind(lower(ROI{e,1}),'white')];
-    if ~isempty(gray_white),
-        % get the euclidean distances between the electrode and every voxel
-        % in the MRI (this could be sped up a lot)
-        for i=1:mri.volsize(1)
-            for j=1:mri.volsize(2)
-                for k=1:mri.volsize(3)
-                    distances(i,j,k)=sqrt((i-x)^2+(j-y)^2+(k-z)^2); % could be replaced by ~ norm([i j k] - [x y z])
+    %ROI(e,1) =region_lookup(region_codes==mri.vol(x,y,z));
+
+    % get the euclidean distances between the electrode and every voxel
+    % in the MRI (this could be sped up a lot)
+    nbor_ct=0;
+    for i=1:mri.volsize(1)
+        for j=1:mri.volsize(2)
+            for k=1:mri.volsize(3)
+                temp_dst=sqrt((i-x)^2+(j-y)^2+(k-z)^2); % could be replaced by ~ norm([i j k] - [x y z])
+                if temp_dst<offset,
+                   nbor_ct=nbor_ct+1;
+                   if mri.vol(x,y,z)==mri.vol(i,j,k),
+                       pptn_homogeneous(e)=pptn_homogeneous(e)+1;
+                   end
                 end
             end
         end
-        
-        % do not include the offset
-        tmp=mri.vol(distances<offset);
-        % find the regions
-        tmp_region ={};
-        for i = 1:length(tmp)
-            tmp_region(i,1) =region_lookup(region_codes==tmp(i));
-        end
-        % find gray matter voxel in the vicinity
-        gm_nb = length(cell2mat(strfind(lower(tmp_region),'ctx')));
-        gm_nb = gm_nb + length(cell2mat(strfind(lower(tmp_region),'cortex')));
-        gm_w = gm_nb;
-        % find white matter voxel in the vicinity
-        wm_nb = length(cell2mat(strfind(lower(tmp_region),'wm')));
-        wm_nb = wm_nb + length(cell2mat(strfind(lower(tmp_region),'white')));
-        wm_w = wm_nb;
-        
-        ROI{e,2} = gm_w;
-        ROI{e,3} = wm_w;
-    else
-        warning(['channel ' label{e} ' does not have its centroid in Neocortical Gray or White matter >> PTD=NaN']);
-        ROI{e,2} = NaN;
-        ROI{e,3} = NaN;
     end
+    pptn_homogeneous(e)=pptn_homogeneous(e)/nbor_ct;
 end
 %% write output file
 
