@@ -30,7 +30,7 @@ function anatLabel=vox2Seg(coordILA,fsSub)
 fsdir=getFsurfSubDir();
 
 %asegFname=[fsdir '/' fsSub '/mri/aseg.mgz'];
-asegFname=[fsdir '/' fsSub '/mri/aparc+aseg.mgz'];
+asegFname=fullfile(fsdir,fsSub,'mri','aparc+aseg.mgz');
 %asegFname=[fsdir '/' fsSub '/mri/aparc.a2009s+aseg.mgz'];
 if ~exist(asegFname,'file')
    error('File %s not found.',asegFname); 

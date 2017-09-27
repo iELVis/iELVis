@@ -1,4 +1,4 @@
-function PTD_idx = getProxTissueHomIndex(fs_subj)
+function proxTissueInfo = getProxTissueHomIndex(fs_subj)
 % function PTD_idx = getProxTissueHomIndex(fs_subj)
 %
 % Compute Proximal Tissue Density (PTD) for each electrode as described in
@@ -212,6 +212,20 @@ for e=1:n_elec,
     end
     pptn_homogeneous(e)=pptn_homogeneous(e)/nbor_ct;
 end
+
+%% Clean up labels
+elecLabels=cell(n_elec,1);
+for eloop=1:n_elec,
+    split_id=find(label{eloop}=='_');
+    elecLabels{eloop}=label{eloop}(1:split_id-1);
+end
+
+%% Add rest of info to struct
+proxTissueInfo=struct('elecLabel',elecLabels);
+for eloop=1:n_elec,
+    proxTissueInfo(eloop).pptn_homog=pptn_homogeneous(eloop);
+end
+
 %% write output file
 
 for i=1:length(ROI)
