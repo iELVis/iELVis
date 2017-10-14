@@ -853,8 +853,6 @@ else
     elseif isvector(elecColors) && size(elecColors,2)~=3
         % we need the second condition in case wants to plot a single
         % electrode and passes an rgb vector to specify the color
-        elecColorsAll=elecColors;
-        elecColors=elecColorsAll(showElecIds,:);
         if isnumeric(elecColorScale)
             type='minmax';
             elecCbarMin=elecColorScale(1);
@@ -877,8 +875,6 @@ else
         end
     else
         % elecColorScale consists of a matrix or vector of RGB values
-        elecColorsAll=elecColors;
-        elecColors=elecColorsAll(showElecIds,:);
         if ~universalNo(elecCbar),
             if isnumeric(elecColorScale) && isvector(elecColorScale) && length(elecColorScale)==2
                 elecCbarMin=min(elecColorScale);
@@ -1160,6 +1156,7 @@ function sub_cfg_out=plotPialOmni(fsSub,cfg)
 
 if ~isfield(cfg, 'figId'),         hFig=[];            else  hFig=cfg.figId; end
 if ~isfield(cfg, 'olayThresh'),       olayThresh=[];          else  olayThresh = cfg.olayThresh; end
+if ~isfield(cfg, 'figId'),         hFig=[];              else  hFig=cfg.figId; end
 if ~isfield(cfg, 'fsurfSubDir'),   fsDir=[];             else fsDir=cfg.fsurfSubDir; end
 if ~isfield(cfg, 'elecCoord'),      elecCoord='LEPTO';      else  elecCoord = cfg.elecCoord;       end
 if ~isfield(cfg, 'elecSize'),       elecSize=8;          else  elecSize = cfg.elecSize;      end
