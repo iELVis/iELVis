@@ -1319,7 +1319,7 @@ for h=1:2,
                 sub_cfg.elecCoord='n';
             else
                 sub_cfg.elecCoord=elecCoord;
-                if ~isfield('elecSize',sub_cfg)
+                if ~isfield(sub_cfg,'elecSize')
                     sub_cfg.elecSize=6;
                 end
                 sub_cfg.showLabels=showLabels;
@@ -1329,7 +1329,7 @@ for h=1:2,
                 sub_cfg.elecCoord='n';
             else
                 sub_cfg.elecCoord=elecCoord;
-                if ~isfield('elecSize',sub_cfg)
+                if ~isfield(sub_cfg,'elecSize')
                     sub_cfg.elecSize=6;
                 end
                 sub_cfg.showLabels=showLabels;
