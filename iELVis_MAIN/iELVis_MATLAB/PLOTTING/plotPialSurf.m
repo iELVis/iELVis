@@ -941,7 +941,7 @@ else
                     if elecSphere
                         sph_ct=sph_ct+1;
                         h_elec(sph_ct)=surf(sphX+RAS_coor(j,1),sphY+RAS_coor(j,2),sphZ+RAS_coor(j,3),zeros(Zdim));
-                        sph_colors(sph_ct,:)=elecColors(id,:);
+                        sph_colors(sph_ct,:)=elecColors(showElecIds(id),:);
                         used_color_electrodes(id)=1;
                         %colormap(gca,elecColors(id,:));
                         %shading interp; lighting gouraud; material dull;
@@ -950,15 +950,15 @@ else
                         if universalYes(edgeBlack)
                             markeredgecolor=[0 0 0];
                         else
-                            markeredgecolor=elecColors(id,:);
+                            markeredgecolor=elecColors(showElecIds(id),:);
                         end
                         h_elec=plot3(RAS_coor(j,1),RAS_coor(j,2),RAS_coor(j,3),'o', ...
-                            'Color',elecColors(id,:),'MarkerFaceColor', elecColors(id,:),'MarkerSize',elecSize, ...
+                            'Color',elecColors(showElecIds(id),:),'MarkerFaceColor', elecColors(showElecIds(id),:),'MarkerSize',elecSize, ...
                             'MarkerEdgeColor',markeredgecolor,'lineWidth',2);
                         used_color_electrodes(id)=1;
                     end
                     if showLabels,
-                        add_name(RAS_coor(j,:),elecNames{j},elecNames,elecSize,elecColors(id,:));
+                        add_name(RAS_coor(j,:),elecNames{j},elecNames,elecSize,elecColors(showElecIds(id),:));
                     end
                 end
             else
