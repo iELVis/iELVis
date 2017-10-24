@@ -23,7 +23,7 @@ function PTD_idx = getPtdIndex(fs_subj)
 %
 % Please note that this function belongs to the iELVis toolbox
 % and is therefore subjected to the same regulations
-% (Author: manuel.mercier@a3.epfl.ch)
+% (contacts: david.m.groppe@gmail.com ; manuel.mercier@a3.epfl.ch)
 %
 % input: fs_subj - name of the patient's FreeSurfer subject folder
 %
@@ -197,7 +197,7 @@ for e=1:size(elec,1)
         strfind(lower(ROI{e,1}),'wm') strfind(lower(ROI{e,1}),'white')];
     if ~isempty(gray_white),
         % get the euclidean distances between the electrode and every voxel
-        % in the MRI (this could be sped up a lot)
+        % in the MRI (this could be speed up a lot)
         for i=1:mri.volsize(1)
             for j=1:mri.volsize(2)
                 for k=1:mri.volsize(3)
