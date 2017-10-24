@@ -1,5 +1,5 @@
 function hCbar = cbarDGplus(pos,limits,cmapName,nTick,units,unitLocation,fontSize)
-%function hCbar = cbarDGplus(pos,limits,cmapName,nTick,units,fontSize)
+%function hCbar = cbarDGplus(pos,limits,cmapName,nTick,units,unitLocation,fontSize)
 %
 % Adds a colorbar to a figure
 %

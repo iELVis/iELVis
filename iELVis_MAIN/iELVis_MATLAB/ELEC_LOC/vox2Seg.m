@@ -61,7 +61,12 @@ switch upper(atlas)
         warning('only Desikan-Killiany and Destrieux atlases are available');
 end
 %asegFname=[fsdir '/' fsSub '/mri/aseg.mgz'];
+<<<<<<< HEAD
 
+=======
+asegFname=fullfile(fsdir,fsSub,'mri','aparc+aseg.mgz');
+%asegFname=[fsdir '/' fsSub '/mri/aparc.a2009s+aseg.mgz'];
+>>>>>>> refs/remotes/iELVis/master
 if ~exist(asegFname,'file')
    error('File %s not found.',asegFname); 
 end

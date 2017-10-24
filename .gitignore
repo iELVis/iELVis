@@ -1,8 +1,10 @@
-iELVis/PRIVATE_FILES
+PRIVATE_FILES
 *.m~
 *.dat
 *.dat.*
 *.mgh
 .DS_Store
+iELVis_MAIN/.DS_Store
+iELVis_MAIN/iELVis_MATLAB/.DS_Store
 diary
 *.asv
