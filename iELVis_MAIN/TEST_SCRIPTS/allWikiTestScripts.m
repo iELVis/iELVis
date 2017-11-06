@@ -1,4 +1,7 @@
 %%
+check_iELVisInstall;
+
+%%
 testBrainShift;
 
 %%

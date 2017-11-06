@@ -2,7 +2,7 @@
 %                to FreeSurfer pial surface-compatible parcellations.
 %
 % Usage:
-%  >>elecParc=elec2Parc(subj,atlas,out2text,prob);
+%  >>elecParc=elec2Parc(subj,atlas,out2text);
 %
 % Required Input:
 %  subj  -Name of the subject's freesurfer directory (full path not
@@ -18,46 +18,31 @@
 %  out2text - [1 or 0] If non-zero, a tab delimited text file called *_elec_atlas_loc.txt
 %            is created in the patient's elec_recon folder (where * is the
 %            patient's codename). {default: 0}
-%
-%  prob     - Binary (1/'yes' or 0/'no'
-%            If non-zero, voxels in the vicinity of the electrode centroid
-%            will be also taken into account to get the representativeness of
-%            the anatomical label (offset = 3x3 voxels)
 %  
 %
 % Output:
 %   elecParc - 2D cell array containing electrode names and their
 %                 assigned cortical area
-%   probParc - structure containing elecParc information plus:
-%              probParc that is the percentage of voxel labelled the same in the vicinity (offset 3x3)
-%              neighbor that are the name of the other brain areas in the surrounding 
-%              ratio that correspond to their respective representativeness
-%
 %
 % Example:
 % >> elecParc=elec2Parc('PT001','D');
 %
-% Note, depth electrode anatomical locations are taken only from the subject's FreeSurfer parcellation
-% in aparc+aseg.mgz for Desikan-Killiany
-% in aparc.a2009+aseg.mgz for Destrieux
+% Note, depth electrode anatomical locations are taken from the subject's
+% FreeSurfer parcellation in aparc+aseg.mgz (regardless of the surface
+% atlas specified).
 %
 % Author: David M. Groppe
 % Jan, 2016
 % Honeylab
 % University of Toronto
-%
-% Sept. 2017 - Manuel R. Mercier (manuel.mercier@a3.epfl.ch) from CerCo lab (CNRS)
-% modifs:
-% Add probabilistic approach on the labelling
-%
 
-
+%
 % Future Work:
 % -I should have a function called neat_labels.m that will format the DK
 % atlas names to be more kind to the eye. It might help to incoporate that.
 
 
-function elecParc=elec2Parc(subj,atlas,out2text,prob)
+function elecParc=elec2Parc(subj,atlas,out2text)
 
 if nargin<2,
     atlas='DK';
@@ -65,10 +50,6 @@ end
 
 if nargin<3,
     out2text='n';
-end
-
-if nargin<4,
-    prob='n';
 end
 
 fsDir=getFsurfSubDir();
@@ -169,17 +150,7 @@ for hemLoop=1:2,
             
             % Go through and set depth electrode assignments to depth:
             if elecLabels{elecIdsThisHem(elecLoop),2}=='D'
-                if universalYes(prob)
-                   [elecParc{elecIdsThisHem(elecLoop),2}, ROIs]=vox2Seg(pvoxCoord(elecIdsThisHem(elecLoop),:),subj,atlas,prob);
-                   probParc(elecIdsThisHem(elecLoop)).elecLabel = elecLabels{elecIdsThisHem(elecLoop),1};
-                   probParc(elecIdsThisHem(elecLoop)).elecParc  = elecParc{elecIdsThisHem(elecLoop),2};
-                   probParc(elecIdsThisHem(elecLoop)).probParc  = str2num(ROIs.center{2});
-                   probParc(elecIdsThisHem(elecLoop)).neighbor  = ROIs.name;
-                   probParc(elecIdsThisHem(elecLoop)).ratio     = ROIs.count;
-                   probParc(elecIdsThisHem(elecLoop)).offset    =ROIs.offset;
-                else
-                   elecParc{elecIdsThisHem(elecLoop),2}=vox2Seg(pvoxCoord(elecIdsThisHem(elecLoop),:),subj,atlas);
-                end
+                elecParc{elecIdsThisHem(elecLoop),2}=vox2Seg(pvoxCoord(elecIdsThisHem(elecLoop),:),subj);
                 %elecParc{elecIdsThisHem(elecLoop),2}='Depth'; % Could make
                 %this optional if one only wants to use surface atlases
             else
@@ -203,27 +174,12 @@ for hemLoop=1:2,
     end
 end
 
-%% saving
-if universalYes(out2text) && ~universalYes(prob)
-    txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '.txt']);
+if universalYes(out2text),
+    txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc.txt']);
     fprintf('Outputing electrode anatomical locations to %s\n',txt_fname);
     fid=fopen(txt_fname,'w');
-    for chan_loop=1:size(elecParc,1)
-        fprintf(fid,'%s\t%s\r\n',elecParc{chan_loop,1},elecParc{chan_loop,2});
+    for chan_loop=1:size(elecParc,1),
+        fprintf(fid,'%s\t%s\n',elecParc{chan_loop,1},elecParc{chan_loop,2});
     end
     fclose(fid);
-    save(fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.mat']),'elecParc');
-elseif universalYes(out2text) && universalYes(prob)
-        txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.txt']);
-        fprintf('Outputing electrode anatomical locations to %s\n',txt_fname);
-        fid=fopen(txt_fname,'w');
-        for chan_loop=1:size(elecParc,1)
-        fprintf(fid,'%s\t%s\t%.3f\t',probParc(chan_loop).elecLabel, probParc(chan_loop).elecParc,probParc(chan_loop).probParc);
-            for n=1:length(probParc(chan_loop).neighbor)
-                fprintf(fid,'%s\t%.3f\t',probParc(chan_loop).neighbor{n}, probParc(chan_loop).ratio(n));
-            end
-        fprintf(fid,'%s\t\r\n', ['over ' num2str(probParc(1).offset+1) '+' num2str(probParc(1).offset+1) ' surrounding voxels']);
-        end
-        fclose(fid);
-        save(fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc_' atlas '_prob.mat']),'probParc');        
 end
