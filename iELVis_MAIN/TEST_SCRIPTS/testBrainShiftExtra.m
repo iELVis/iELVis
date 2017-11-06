@@ -1,6 +1,7 @@
 %% Remove existing files
-% Test depths only subject
-sub='S13_50_LGM';
+% Test a depths only subject
+%sub='S13_50_LGM'; % Original sEEG subject, not sure were folder is now
+sub='TWH077noDelete'; % Groppe can send this to you if you need it
 eReconDir=fullfile(getFsurfSubDir(),sub,'elec_recon');
 eReconFiles{1}='.CT';
 eReconFiles{2}='.DURAL';
@@ -46,8 +47,8 @@ end
 
 
 %% Test Yang, Wang method with depths only
-makeIniLocTxtFile('S13_50_LGM');
-yangWangElecPjct('S13_50_LGM');
+makeIniLocTxtFile('TWH077noDelete');
+yangWangElecPjct('TWH077noDelete');
 
 %%
 disp('Script testBrainShiftExtra.m completed successfully.')
