@@ -27,8 +27,11 @@ function plotMgridOnSlices(fsSub,cfg)
 %                {default: FreeSurferColorLUTnoFormat.txt}
 %  pauseOn   - If 1, Matlab pa'uses after each figure is made and waits for
 %              a keypress. {default: 0}
-%  printFigs - If 1, each figure is output to an eps file. {default: 0}
-
+%  printFigs - If 1, each figure is output to a jpg file in the patient's
+%              elec_recon/PICS folder and the figure is closed after the 
+%              jpg is created. This is particularly useful for implants with 
+%              a large number of depth contacts. {default: 0}
+%
 %
 % Examples:
 %  %Specify mgrid file and do NOT print
@@ -129,7 +132,8 @@ if universalYes(anatOverlay)
     tbl=textscan(fid,'%d%s%d%d%d%d');
     fclose(fid);
 end
-    
+
+
 for elecId=1:nElec,
     if depthElecs(elecId)
         figId=figure();
@@ -226,8 +230,8 @@ for elecId=1:nElec,
         axis square;
         hold on;
         
-        % Plot segmentation
         if universalYes(anatOverlay)
+            % Plot segmentation
             for a=1:sVol(1),
                 for b=1:sVol(2),
                     if seg.vol(a,b,xyz(elecId,3))
@@ -291,6 +295,8 @@ for elecId=1:nElec,
             fprintf('Exporting figure to %s\n',figFname);
             %print(figId,figFname,'-depsc');
             print(figId,figFname,'-djpeg');
+            pause(1);
+            close(figId);
         end
         
         if universalYes(pauseOn)
