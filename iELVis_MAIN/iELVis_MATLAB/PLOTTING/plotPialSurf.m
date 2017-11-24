@@ -882,7 +882,7 @@ else
         if ~universalNo(elecCbar),
             if isnumeric(elecColorScale) && isvector(elecColorScale) && length(elecColorScale)==2
                 elecCbarMin=min(elecColorScale);
-                elecCbarMin=max(elecColorScale);
+                elecCbarMax=max(elecColorScale);
             else
                 error('When cfg.elecColors is a matrix of RGB values, elecColorScale needs to specify the min and max of the colorscale.');
             end
