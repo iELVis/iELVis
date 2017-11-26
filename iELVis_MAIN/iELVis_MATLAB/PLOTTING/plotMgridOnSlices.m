@@ -260,9 +260,14 @@ for elecId=1:nElec,
             axis([tempMin tempMax tempMin tempMax]);
         end
         set(gca,'xtick',[],'ytick',[]);
+                
+        % Get anatomical label if aparc-file exists
+        if exist(fullfile(fsdir,fsSub,'mri','aparc+aseg.mgz'),'file')
+            anatLabel=vox2Seg(xyz(elecId,:),fsSub);
+        else
+            anatLabel = 'NA';
+        end
         
-        anatLabel=vox2Seg(xyz(elecId,:),fsSub);
-  
         % Remove first 3 characters that indicate hemisphere and electrode
         % type
         formattedLabel=elecLabels{elecId}(4:end);
