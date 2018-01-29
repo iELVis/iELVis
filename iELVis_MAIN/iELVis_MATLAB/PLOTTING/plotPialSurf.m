@@ -288,7 +288,7 @@
 % cfg.showLabels='n';
 % cfg.elecUnits='r';
 % cfg.title='PT001: Stimulus Correlations';
-% cfg_out=plotPialSurf('PT001',cfg);
+% cfgOut=plotPialSurf('PT001',cfg);
 %
 % % Overlay fMRI statistical map from FreeSurfer mgh file
 % cfg=[];
@@ -1104,6 +1104,7 @@ end
 cfgOut.subject=fsSub;
 cfgOut.view=brainView;
 cfgOut.elecSize=elecSize;
+cfgOut.elecHandles=h_elec;
 cfgOut.surfType=surfType;
 cfgOut.hElecCbar=hElecCbar;
 cfgOut.hOlayCbar=hOlayCbar;
