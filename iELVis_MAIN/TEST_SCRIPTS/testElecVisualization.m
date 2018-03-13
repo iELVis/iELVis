@@ -27,7 +27,8 @@ cfg=[];
 cfg.view='li';
 cfg.ignoreDepthElec='n';
 cfg.opaqueness=0.5;
-cfg.onlyShow={'LDAm1','LDAm2','LDAm3','LDAm4','LDAm5','LDAm6','LDAm7','LDAm8','LDHp1','LDHp2','LDHp3','LDHp4','LDHp5','LDHp6','LDHp7','LDHp8'};
+%cfg.onlyShow={'LDAm1','LDAm2','LDAm3','LDAm4','LDAm5','LDAm6','LDAm7','LDAm8','LDHp1','LDHp2','LDHp3','LDHp4','LDHp5','LDHp6','LDHp7','LDHp8'};
+cfg.elecNames={'LDAm1','LDAm2','LDAm3','LDAm4','LDAm5','LDAm6','LDAm7','LDAm8','LDHp1','LDHp2','LDHp3','LDHp4','LDHp5','LDHp6','LDHp7','LDHp8'};
 cfg.title='PT001';
 cfgOut=plotPialSurf('PT001',cfg);
 if printEm,
@@ -42,7 +43,8 @@ end
 cfg=[];
 cfg.view='l';
 cfg.elecShape='sphere';
-cfg.elecColors=rand(8,1);
+% cfg.elecColors=rand(8,1);
+cfg.elecColors=linspace(0,1,8)';
 cfg.elecColorScale='minmax';
 cfg.showLabels='n';
 cfg.elecUnits='r';

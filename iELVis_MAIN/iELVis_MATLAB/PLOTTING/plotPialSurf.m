@@ -33,32 +33,30 @@
 %     elecColors           -2D matrix of colors to fill electrodes
 %                           (rows=electrodes, columns=RGB values), a column 
 %                           vector of values that will be automatically converted
-%                           into a color scale, or 'r' to make all red.
-%                           {default: all electrodes filled with black}
+%                           into a color scale, or 'r' to make all red. If
+%                           a matrix, the number of rows needs to equal the
+%                           number of elecNames (see below). {default: 
+%                           all electrodes filled with black}.
 %     edgeBlack            -If 'y', electrodes will all have a black
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
 %                           electrodes are represented as spheres. {default:
 %                           'y'}
 %     elecNames            -Cell array of the names of the electrodes to
-%                           which the rows of elecColors corresponds.
-%                           Electrodes not included in elecNames will be
-%                           colored black. Note, THESE SHOULD BE MGRID
-%                           NAMES. {default: not used}
+%                           show. If elecCoord is a matrix of coordinates,
+%                           the number of names needs to equal the number of
+%                           rows in the matrix. Otherwise, these names need
+%                           to match the names of the electrodes in the
+%                           *.electrodeNames file in the subjects Freesurfer
+%                           elec_recon folder. If elecCoord specifies a type of
+%                           electrode (e.g. LEPTO), then not specifying 
+%                           elecNames will cause all electrodes to be plot 
+%                           by default.
 %     clickElec            -If 'y', clicking on electrodes will reveal
 %                           their names in a textbox. Clicking on the box
 %                           should make it disapper. Disabled if 'n'. {default: 'y'}
-%     badChans             -Cell array of the names of bad electrodes that
-%                           should be plotted black (for when other
-%                           electrodes are in color). {default: not used}
-%     ignoreChans          -Cell array of the names of electrodes that
-%                           will not be shown. {default: not used}
-%     ignoreDepthElec    -'y' or 'n': If 'y', depth electrodes will not
+%     ignoreDepthElec      -'y' or 'n': If 'y', depth electrodes will not
 %                           be shown. {default: 'y'}
-%     onlyShow             -Cell array of the names of the only electrodes
-%                           you want to be shown. If an electrode is listed
-%                           both in onlyShow and ignoreChans, it will not
-%                           be shown. {default: not used}
 %     pullOut              -Factor via which to project electrodes out from
 %                           the center of view. Helpful for when electrodes
 %                           sink into the cortical surface. {default: 1}
@@ -361,19 +359,16 @@ if ~isfield(cfg, 'parcellationColors'),  parcellationColors= []; else  parcellat
 if ~isfield(cfg, 'figId'),         hFig=[];              else  hFig=cfg.figId; end
 if ~isfield(cfg, 'clearFig'),       clearFig=1;            else  clearFig=cfg.clearFig; end
 if ~isfield(cfg, 'title'),          surfTitle='default';  else surfTitle=cfg.title; end
-if ~isfield(cfg, 'elecNames'),      color_elecnames=[];    else color_elecnames=cfg.elecNames; end
-if ~isfield(cfg, 'badChans'),       badChans=[];           else badChans=cfg.badChans; end
-if ~isfield(cfg, 'ignoreChans'),    ignoreChans=[];        else ignoreChans=cfg.ignoreChans; end
+if ~isfield(cfg, 'elecNames'),      elecNames=[];    else elecNames=cfg.elecNames; end
 if ~isfield(cfg, 'clickElec'),      clickElec='y'; else clickElec=cfg.clickElec; end
 if ~isfield(cfg, 'fsurfSubDir'),  fsDir=[];             else fsDir=cfg.fsurfSubDir; end
 if ~isfield(cfg, 'verbLevel'),      verbLevel=2;           else verbLevel=cfg.verbLevel; end
 if ~isfield(cfg, 'backgroundColor'), backgroundColor=[]; else backgroundColor=cfg.backgroundColor; end
 if ~isfield(cfg, 'pairs'), electrode_pairs=[];  else electrode_pairs=cfg.pairs; end
 if ~isfield(cfg, 'lineWidth'), lineWidth=[];  else lineWidth=cfg.lineWidth; end
-if ~isfield(cfg, 'onlyShow'), onlyShow=[];  else onlyShow=cfg.onlyShow; end
 if ~isfield(cfg, 'ignoreDepthElec'), ignoreDepthElec='y'; else ignoreDepthElec=cfg.ignoreDepthElec; end
 if ~isfield(cfg, 'edgeBlack'),      edgeBlack='y';         else edgeBlack=cfg.edgeBlack; end
-if ~isfield(cfg, 'elecShape'), electrodeshape='marker';  else electrodeshape=cfg.elecShape; end
+if ~isfield(cfg, 'elecShape'), elecShape='marker';  else elecShape=cfg.elecShape; end
 if ~isfield(cfg, 'showLabels'), showLabels=0;  else showLabels=universalYes(cfg.showLabels); end
 if ~isfield(cfg, 'opaqueness'),      opaqueness=1;          else opaqueness=cfg.opaqueness; end
 if ~isfield(cfg, 'clearGlobal'),    clearGlobal=1;          else clearGlobal=cfg.clearGlobal; end
@@ -389,6 +384,22 @@ try
 checkCfg(cfg,'plotPialSurf.m');
 elecCmapName=[]; % needed for cfgOut
 olayCmapName=[]; % needed for cfgOut
+
+% If matrix of elecColors specified make sure an equal number of elecNames
+% specfied
+if ~isempty(elecColors) && isnumeric(elecColors),
+   if size(elecColors,1)~=length(elecNames),
+      error('# of elecColors rows, %d, needs to equal # of elecNames, %d.',size(elecColors,1),length(elecNames)); 
+   end
+end
+
+% If matrix of elecCoord specified make sure an equal number of elecNames
+% specfied
+if ~strcmpi(elecCoord,'n') && isnumeric(elecCoord),
+   if size(elecCoord,1)~=length(elecNames),
+      error('# of elecCoord rows, %d, needs to equal # of elecNames, %d.',size(elecCoord,1),length(elecNames)); 
+   end
+end
 
 if strcmpi(brainView,'omni')
     cfgOut=plotPialOmni(fsSub,cfg);
@@ -707,340 +718,12 @@ alpha(opaqueness);
 %% PLOT ELECTRODES (optional)
 if universalNo(elecCoord)
     verbReport('...not plotting electrodes',2,verbLevel);
+    h_elec=[];
 else
-    if isnumeric(elecCoord)
-        % Electrode coordinates passed as argument
-        if size(elecCoord,2)==4
-            display('...Electrode input is matrix with coordinates.');
-            RAS_coor=elecCoord(:,1:3);
-            if side=='l',
-                showElecIds=find(elecCoord(:,4));
-            else
-                showElecIds=find(~elecCoord(:,4));
-            end
-            % elecNames=cfg.elecNames(showElecIds);
-            color_elecnames=cfg.elecNames(showElecIds);
-            elecNames=color_elecnames; % ?? if these variables are redundant, we should just remove them
-            if strcmpi(surfType,'inflated')
-                cfg_pvox2inf=[];
-                cfg_pvox2inf.fsurfSubDir=fsDir;
-                cfg_pvox2inf.elecCoord=elecCoord(showElecIds,:);
-                cfg_pvox2inf.elecNames=color_elecnames;
-                RAS_coor=pial2InfBrain(fsSub,cfg_pvox2inf);
-            else
-                RAS_coor=RAS_coor(showElecIds,:);
-            end
-        else
-            error('...Electrode input is numeric but doesn''t have 3 coordinates + binary hemisphere column');
-        end
-    else
-        % electrode coordinates and names to be read from elec_recon folder
-        % files
-        coordType=elecCoord;
-        if strcmpi(surfType,'inflated')
-            if ~strcmp(coordType,'INF'),
-                coordType='INF';
-                warning('Using *.INF electrode coordinates as this is required for inflated brain.');
-            end
-        end
-        coordFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.' coordType]);
-        % ?? coordFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.LEPTO']);
-        verbReport(sprintf('...Overlaying electrodes. Taking coordinates from %s.%s and %s.electrodeNames in elec_recon folder. Use cfg.eleccord=''n''; if not wanted.', ...
-            fsSub,coordType,fsSub),2,verbLevel);
-        elecCoordCsv=csv2Cell(coordFname,' ',2);
-        nElecTotal=size(elecCoordCsv,1);
-        RAS_coor=zeros(nElecTotal,3);
-        for csvLoopA=1:nElecTotal,
-            for csvLoopB=1:3,
-                RAS_coor(csvLoopA,csvLoopB)=str2num(elecCoordCsv{csvLoopA,csvLoopB});
-            end
-        end
-
-        elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
-        elecInfo=csv2Cell(elecInfoFname,' ',2);
-
-        % Remove elecs in opposite hemisphere
-        if side=='l'
-            showElecIds=find(cellfun(@(x) strcmp(x,'L'),elecInfo(:,3)));
-        else
-            showElecIds=find(cellfun(@(x) strcmp(x,'R'),elecInfo(:,3)));
-        end
-        
-        % Remove depth elecs if requested
-        if universalYes(ignoreDepthElec),
-            verbReport('...not plotting depth electrodes (if any exist)', ...
-                2,verbLevel);
-            depthElecIds=find(cellfun(@(x) strcmp(x,'D'),elecInfo(:,2)));
-            showElecIds=setdiff(showElecIds,depthElecIds);
-        end
-        
-        RAS_coor=RAS_coor(showElecIds,:);
-        elecInfo=elecInfo(showElecIds,:);
-        elecNames=elecInfo(:,1);
-    end
-
-    % Pull electrodes out from the brain towards the viewer
-    nRAS=size(RAS_coor,1);
-    if pullOut,
-        verbReport(sprintf('...pulling out electrodes by factor %f. cfg.pullOut=0 if not wanted.\n',pullOut), ...
-            2,verbLevel);
-        v=axis;
-        campos=get(gca,'cameraposition');
-        %camtarg=get(gca,'cameratarget'); ?? Should we check that this is set to 0?
-        err=repmat(campos,nRAS,1)-RAS_coor;
-        nrmd=err./repmat(sqrt(sum(err.^2,2)),1,3);
-        RAS_coor=RAS_coor+nrmd*pullOut;
-    end
-    
-    % Plot lines joining electrodes ?? update this
-    if ~isempty(electrode_pairs),
-        % Remove all electrode pairs not on this hemisphere
-        nPairs=length(electrode_pairs);
-        usePairs=zeros(nPairs,1);
-        for pairLoop=1:nPairs,
-            if strcmpi(electrode_pairs{pairLoop,4},side)
-                usePairs(pairLoop)=1;
-            end
-        end
-        electrode_pairs=electrode_pairs(find(usePairs),:);
-        clear usePairs nPairs
-        
-        if isempty(lineWidth)
-            lineWidth=elecSize/3;
-        end
-        if size(electrode_pairs,2)<=5
-            electrode_pairs(:,6) ={lineWidth};
-        elseif size(electrode_pairs,2)>5
-            % normalize lineWidth
-            electrode_pairs(:,6) = cellfun(@rdivide,electrode_pairs(:,6), ...
-                num2cell(repmat(max([electrode_pairs{:,6}]), [size(electrode_pairs,1) 1])),'UniformOutput',false);
-            electrode_pairs(:,6) = cellfun(@times,electrode_pairs(:,6), ...
-                num2cell(repmat(lineWidth, [size(electrode_pairs,1) 1])),'UniformOutput',false);
-        end
-        
-        n_pairs=size(electrode_pairs,1);
-        pair_ids=[0 0];
-        for a=1:n_pairs,
-            for b=1:2,
-                [got_it, pair_ids(b)]=ismember(lower(electrode_pairs{a,b}),lower(elecNames));
-                if ~got_it
-                    error('Channel %s is in electrode pairs but not in pialVox electrode names.',electrode_pairs{a,b});
-                end
-            end
-            hl=plot3([RAS_coor(pair_ids(1),1) RAS_coor(pair_ids(2),1)], ...
-                [RAS_coor(pair_ids(1),2) RAS_coor(pair_ids(2),2)], ...
-                [RAS_coor(pair_ids(1),3) RAS_coor(pair_ids(2),3)],'-');
-            if isnumeric(electrode_pairs{a,3})
-                set(hl,'color',electrode_pairs{a,3},'lineWidth',lineWidth);
-            else
-                set(hl,'color',str2num(electrode_pairs{a,3}),'lineWidth',lineWidth);
-            end
-            
-            if size(electrode_pairs,2)>4 && ~isempty(electrode_pairs{a,5})
-                clickText3D(hl,[electrode_pairs{a,1} '-' electrode_pairs{a,2} ': ' electrode_pairs{a,5}],2);
-            else
-                clickText3D(hl,[electrode_pairs{a,1} '-' electrode_pairs{a,2}],2);
-            end
-        end
-    end
-    
-    % Make electrodes black if no input given
-    if isempty(elecColors)
-        elecColors = zeros(size(RAS_coor));
-    elseif ischar(elecColors) && strcmp(elecColors,'r')
-        elecColors = zeros(size(RAS_coor));
-        elecColors(:,1) = 1;
-    elseif isvector(elecColors) && size(elecColors,2)~=3
-        % we need the second condition in case wants to plot a single
-        % electrode and passes an rgb vector to specify the color
-%         elecColorsAll=elecColors;  %?? Pierre change
-%         elecColors=elecColorsAll(showElecIds,:); %?? Pierre change
-        if isnumeric(elecColorScale)
-            type='minmax';
-            elecCbarMin=elecColorScale(1);
-            elecCbarMax=elecColorScale(2);
-        else
-            type=elecColorScale;
-        end
-        if verLessThan('matlab','8.0.1')
-            elecCmapName='jet';
-        else
-            elecCmapName='parula';
-        end
-        if isempty(elecCbarMin),
-            % make electrode colormap
-            [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,type,elecCmapName);
-            elecCbarMin=elecLimits(1);
-            elecCbarMax=elecLimits(2);
-        else
-            [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,type,elecCmapName,[elecCbarMin elecCbarMax]);
-        end
-    else
-        % elecColorScale consists of a matrix or vector of RGB values
-%         elecColorsAll=elecColors; %?? Pierre change
-%         elecColors=elecColorsAll(showElecIds,:); %?? Pierre change
-        if ~universalNo(elecCbar),
-            if isnumeric(elecColorScale) && isvector(elecColorScale) && length(elecColorScale)==2
-                elecCbarMin=min(elecColorScale);
-                elecCbarMax=max(elecColorScale);
-            else
-                error('When cfg.elecColors is a matrix of RGB values, elecColorScale needs to specify the min and max of the colorscale.');
-            end
-        end
-    end
-    if ~isempty(color_elecnames),
-        n_color_electrodes=length(color_elecnames);
-        used_color_electrodes=zeros(1,n_color_electrodes);
-    end
-    if isempty(onlyShow),
-        %if user didn't specify a subset of electrodes to show, attempt to
-        %show all of them
-        onlyShow=elecNames;
-    end
-    if ~isempty(ignoreChans),
-        onlyShow=setdiff(onlyShow,ignoreChans);
-    end
-    
-    % Prepare variables if electrodes are to be drawn as spheres
-    if strcmpi(electrodeshape,'sphere')
-        elecSphere=1;
-        [sphX, sphY, sphZ]=sphere(20);
-        Zdim=size(sphZ);
-        scale_sph=elecSize;
-        sphX=sphX*scale_sph;
-        sphY=sphY*scale_sph;
-        sphZ=sphZ*scale_sph;
-        sph_colors=zeros(nRAS,3);
-        sph_ct=0;
-    else
-        elecSphere=0;
-    end
-    
-    % Check to make sure colored electrodes have unique names
-    if ~isempty(color_elecnames)
-       if length(color_elecnames)~=length(unique(color_elecnames)) 
-           error('cfg.elecNames has multiple entries with the exact same electrode name.');
-       end
-    end
-    
-    for j = 1:nRAS
-        if ismember(lower(elecNames{j}),lower(onlyShow)),
-            if ~isempty(color_elecnames)
-                [have_color, id]=ismember(lower(elecNames{j}),lower(color_elecnames));
-                if ~have_color || (~isempty(badChans) && ismember(lower(elecNames{j}),lower(badChans)))
-                    % We don't have data for this electrode or have
-                    % been instructed to ignore it; plot it black
-                    if elecSphere
-                        sph_ct=sph_ct+1;
-                        h_elec(sph_ct)=surf(sphX+RAS_coor(j,1),sphY+RAS_coor(j,2),sphZ+RAS_coor(j,3),zeros(Zdim));
-                        sph_colors(sph_ct,:)=[1 1 1]*.01;
-                    else
-                        h_elec=plot3(RAS_coor(j,1),RAS_coor(j,2),RAS_coor(j,3),'o','Color','k','MarkerFaceColor','k','MarkerSize',elecSize);
-                    end
-                    if showLabels,
-                        add_name(RAS_coor(j,:),elecNames{j},elecNames,elecSize,[1 1 1])
-                    end
-                else
-                    % Color the electrode to represent data
-                    if elecSphere
-                        sph_ct=sph_ct+1;
-                        h_elec(sph_ct)=surf(sphX+RAS_coor(j,1),sphY+RAS_coor(j,2),sphZ+RAS_coor(j,3),zeros(Zdim));
-                        sph_colors(sph_ct,:)=elecColors(id,:);
-                        used_color_electrodes(id)=1;
-                        %colormap(gca,elecColors(id,:));
-                        %shading interp; lighting gouraud; material dull;
-                        %set(h_sph(j),'facecolor',elecColors(id,:));
-                    else
-                        if universalYes(edgeBlack)
-                            markeredgecolor=[0 0 0];
-                        else
-                            markeredgecolor=elecColors(id,:);
-                        end
-                        h_elec=plot3(RAS_coor(j,1),RAS_coor(j,2),RAS_coor(j,3),'o', ...
-                            'Color',elecColors(id,:),'MarkerFaceColor', elecColors(id,:),'MarkerSize',elecSize, ...
-                            'MarkerEdgeColor',markeredgecolor,'lineWidth',2);
-                        used_color_electrodes(id)=1;
-                    end
-                    if showLabels,
-                        add_name(RAS_coor(j,:),elecNames{j},elecNames,elecSize,elecColors(id,:));
-                    end
-                end
-            else
-                if elecSphere
-                    sph_ct=sph_ct+1;
-                    h_elec(sph_ct)=surf(sphX+RAS_coor(j,1),sphY+RAS_coor(j,2),sphZ+RAS_coor(j,3),zeros(Zdim));
-                    %colormap(gca,elecColors(j,:))
-                    %set(h_sph(j),'facecolor',elecColors(j,:));
-                    %shading interp; lighting gouraud; material dull;
-                    sph_colors(sph_ct,:)=elecColors(j,:);
-                else
-                    h_elec=plot3(RAS_coor(j,1),RAS_coor(j,2),RAS_coor(j,3),'o','Color',elecColors(j,:),'MarkerFaceColor', elecColors(j,:),'MarkerSize',elecSize);
-                    if showLabels,
-                        add_name(RAS_coor(j,:),elecNames{j},elecNames,elecSize,elecColors(j,:))
-                    end
-                end
-            end
-            hold all
-            if universalYes(clickElec),
-                if isempty(elecAssign)
-                    if elecSphere,
-                        set(h_elec(sph_ct),'userdata',elecNames{j});
-                    else
-                        set(h_elec,'userdata',elecNames{j});
-                    end
-                else
-                    if elecSphere,
-                        set(h_elec(sph_ct),'userdata',elecNames{j});
-                    else
-                        set(h_elec,'userdata',[elecNames{j} ' ' elecAssign{j,2}]);
-                    end
-                end
-                % This click_text code should put the text out towards the
-                % viewer (so it doesn't get stuck in the brain)
-                % Note: pop_fact=5 in the below code might be too far for lateral surfaces
-                bdfcn=['Cp = get(gca,''CurrentPoint''); ' ...
-                    'Cp=Cp(1,1:3);', ...
-                    'v=axis;', ...
-                    'campos=get(gca,''cameraposition'');', ...
-                    'df=Cp-campos;', ...
-                    'nrmd=df/sqrt(sum(df.^2));', ...
-                    'pop_fact=5;', ...
-                    'eval(sprintf(''Cp=Cp-%d*nrmd;'',pop_fact));', ...
-                    'dat=get(gcbo,''userdata'');', ...
-                    'ht=text(Cp(1),Cp(2),Cp(3),sprintf(''%s'',dat));', ...
-                    'set(ht,''backgroundColor'',''w'',''horizontalalignment'',''center'',''verticalalignment'',''middle'',''buttondownfcn'',''delete(gcbo);'');'];
-                if elecSphere,
-                    set(h_elec(sph_ct),'buttondownfcn',bdfcn);
-                else
-                    set(h_elec,'buttondownfcn',bdfcn);
-                end
-            end
-        end
-        %NOTE:
-        % x dimension is lateral/medial  (+=lateral)
-        % y dimension is ant/posterior (+=anterior)
-        % z dimension is superior/inferior (+=superior)
-    end
-    if verbLevel>1,
-        if ~isempty(color_elecnames),
-            not_found=find(used_color_electrodes==0);
-            if not_found
-                warning('Number of colored electrodes NOT FOUND: %d\n',length(not_found));
-                for dg=not_found,
-                    fprintf('%s\n',color_elecnames{dg});
-                end
-            end
-        end
-    end
-    if elecSphere,
-        shading interp; lighting gouraud; material dull;
-        %for some reason the shading command resets of the colors of all the
-        %spheres, thus the need for this silly loop.  There is surely a more
-        %elegant way to deal with this.
-        for a=1:sph_ct,
-            set(h_elec(a),'facecolor',sph_colors(a,:));
-        end
-    end
+    [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotElecs(elecCoord, ...
+        surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
+        elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
+        elecCbar);
 end
 
 
@@ -1112,7 +795,10 @@ cfgOut.hBrain=hAx;
 cfgOut.elecCmapName=elecCmapName;
 cfgOut.olayCmapName=olayCmapName;
 if exist('cfg','var'), cfgOut.cfg=cfg; end
-if exist('RAS_coor','var'), cfgOut.electrodeCoords=RAS_coor; end
+if exist('showElecCoords','var'), 
+    cfgOut.electrodeCoords=showElecCoords; 
+    cfgOut.electrodeNames=showElecNames;
+end 
 if exist('elecCbarMin','var'), cfgOut.elecCbarLimits=[elecCbarMin elecCbarMax]; end
 if exist('olayCbarMin','var'), cfgOut.olayCbarLimits=[olayCbarMin olayCbarMax]; end
 
@@ -1138,23 +824,6 @@ end
 %% HELPER FUNCTIONS
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% subfunction add_name
-function add_name(xyz,label,all_labels,markersize,rgb)
-% Adds an electrode's name next to its location
-% right now rgb argument is ignored, fix in the future so that electrode
-% names stand out from background? ??
-
-if keyElec(label,all_labels),
-    h_t=text(xyz(1),xyz(2),xyz(3),label);
-    set(h_t,'color','k','fontweight','bold','fontsize',markersize+4);
-    %     if isequal(rgb,[0 0 0]),
-    %         set(h_t,'color','w','fontweight','bold','fontsize',markersize+2);
-    %     else
-    %         set(h_t,'color','k','fontweight','bold','fontsize',markersize+2);
-    %     end
-end
-
 
 %% subfunction plotPialOmni
 function sub_cfg_out=plotPialOmni(fsSub,cfg)
