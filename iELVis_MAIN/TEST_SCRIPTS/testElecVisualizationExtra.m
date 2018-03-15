@@ -38,24 +38,33 @@ cfgOut=plotPialSurf('PT001',cfg);
 
 %% Plot electrodes color coded to represent correlations ROMNI view, Unilateral coverage on the 
 % non-visualized hemisphere
-elecNames=cell(8,1);
-for a=1:8,
-    elecNames{a}=sprintf('LGd%d',a+16);
-end
-cfg=[];
-cfg.view='romni';
-% cfg.view='r';
-cfg.figId=1;
-% cfg.elecShape='sphere';
-%cfg.elecColors=rand(8,1);
-cfg.elecColors=linspace(0,1,8)';
-cfg.elecColorScale='minmax';
-cfg.showLabels='n';
-cfg.elecUnits='r';
-cfg.elecNames=elecNames;
-cfg.title='PT001: Stimulus Correlations';
-cfgOut=plotPialSurf('PT001',cfg);
+% elecNames=cell(8,1);
+% for a=1:8,
+%     elecNames{a}=sprintf('LGd%d',a+16);
+% end
+% cfg=[];
+% cfg.view='romni';
+% % cfg.view='r';
+% cfg.figId=1;
+% % cfg.elecShape='sphere';
+% %cfg.elecColors=rand(8,1);
+% cfg.elecColors=linspace(0,1,8)';
+% cfg.elecColorScale='minmax';
+% cfg.showLabels='n';
+% cfg.elecUnits='r';
+% cfg.elecNames=elecNames;
+% cfg.title='PT001: Stimulus Correlations';
+% cfgOut=plotPialSurf('PT001',cfg);
+%
+% This now throws an error as it should
 
+%% Inlfated Brain, Lomni view
+cfg=[];
+cfg.view='lomni';
+cfg.figId=1;
+cfg.surfType='inflated';
+cfg.title=[];
+cfgOut=plotPialSurf('PT001',cfg);
 
 
 %% Plot electrodes color coded to represent correlations OMNI view, Bilateral coverage
@@ -79,7 +88,7 @@ cfg.elecColorScale='minmax';
 cfg.showLabels='n';
 cfg.elecUnits='r';
 cfg.elecNames=elecNames;
-cfg.elecSize=2;
+cfg.elecSize=6;
 cfg.title=sprintf('%s: Stimulus Correlations',sub);
 cfgOut=plotPialSurf(sub,cfg);
 

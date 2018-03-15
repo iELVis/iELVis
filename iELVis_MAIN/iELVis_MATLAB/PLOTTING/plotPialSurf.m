@@ -31,12 +31,12 @@
 %     elecShape            -'marker' or 'sphere': The shape used to
 %                           represent electrodes. {default: 'marker'}
 %     elecColors           -2D matrix of colors to fill electrodes
-%                           (rows=electrodes, columns=RGB values), a column 
+%                           (rows=electrodes, columns=RGB values), a column
 %                           vector of values that will be automatically converted
 %                           into a color scale, or 'r' to make all red. If
-%                           a matrix, the number of rows needs to equal the
-%                           number of elecNames (see below). {default: 
-%                           all electrodes filled with black}.
+%                           a matrix or vector you must use elecNames arg
+%                           (see below). {default: all electrodes filled
+%                           with black}.
 %     edgeBlack            -If 'y', electrodes will all have a black
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
@@ -49,8 +49,8 @@
 %                           to match the names of the electrodes in the
 %                           *.electrodeNames file in the subjects Freesurfer
 %                           elec_recon folder. If elecCoord specifies a type of
-%                           electrode (e.g. LEPTO), then not specifying 
-%                           elecNames will cause all electrodes to be plot 
+%                           electrode (e.g. LEPTO), then not specifying
+%                           elecNames will cause all electrodes to be plot
 %                           by default.
 %     clickElec            -If 'y', clicking on electrodes will reveal
 %                           their names in a textbox. Clicking on the box
@@ -101,16 +101,16 @@
 %     overlayParcellation  -If 'DK', Freesurfer Desikan-Killiany (36 area)
 %                           cortical parcellation is plotted on the surface.
 %                           If 'D', Freesurfer Destrieux (76 area)
-%                           parcellation is used. If 'Y7' or 'Y17', Yeo 
+%                           parcellation is used. If 'Y7' or 'Y17', Yeo
 %                           7 or 17-network atlas is used, respectively.
 %                           You need to first run createIndivYeoMapping.m
-%                           on the individual's data to create Y7 and & Y17 
-%                           mappings as they are not produced by default by 
+%                           on the individual's data to create Y7 and & Y17
+%                           mappings as they are not produced by default by
 %                           recon-all. You can also input an annotation file
-%                           of your choice with fulpath. Be aware that if you 
-%                           plot with view = 'omni', you will have to input 
-%                           annotation files for the left and right hemisphere 
-%                           as a 1x2 cell array, and the filenames have to 
+%                           of your choice with fulpath. Be aware that if you
+%                           plot with view = 'omni', you will have to input
+%                           annotation files for the left and right hemisphere
+%                           as a 1x2 cell array, and the filenames have to
 %                           contain 'lh_' and 'rh_'.  {default: not used}
 %     parcellationColors   -Optional N-by-3 numeric array with RGB indexes
 %                           (0:255) for each of the ROIs in the
@@ -158,14 +158,14 @@
 %
 %    Neuroimaging Options:
 %     pialOverlay          -Filename or cell array of filenames of
-%                           functional data to plot.  If plotting both 
+%                           functional data to plot.  If plotting both
 %                           hemispheres, use a cell array with the left hem
 %                           filename as the 1st element and the right as
-%                           the 2nd element. Be sure to include file paths. 
+%                           the 2nd element. Be sure to include file paths.
 %                           {default: not used}
 %     olayColorScale       -'absmax', 'minmax', 'justpos', 'justneg',
-%                           or numeric vector (i.e., [minval maxval]).  The 
-%                           limits that define the overlay data color scale. 
+%                           or numeric vector (i.e., [minval maxval]).  The
+%                           limits that define the overlay data color scale.
 %                           {default: 'absmax'}
 %     olayThresh           -Overlay data with an absolute value less
 %                           than this threshold will not be shown (when
@@ -364,7 +364,7 @@ if ~isfield(cfg, 'clickElec'),      clickElec='y'; else clickElec=cfg.clickElec;
 if ~isfield(cfg, 'fsurfSubDir'),  fsDir=[];             else fsDir=cfg.fsurfSubDir; end
 if ~isfield(cfg, 'verbLevel'),      verbLevel=2;           else verbLevel=cfg.verbLevel; end
 if ~isfield(cfg, 'backgroundColor'), backgroundColor=[]; else backgroundColor=cfg.backgroundColor; end
-if ~isfield(cfg, 'pairs'), electrode_pairs=[];  else electrode_pairs=cfg.pairs; end
+if ~isfield(cfg, 'pairs'), elecPairs=[];  else elecPairs=cfg.pairs; end
 if ~isfield(cfg, 'lineWidth'), lineWidth=[];  else lineWidth=cfg.lineWidth; end
 if ~isfield(cfg, 'ignoreDepthElec'), ignoreDepthElec='y'; else ignoreDepthElec=cfg.ignoreDepthElec; end
 if ~isfield(cfg, 'edgeBlack'),      edgeBlack='y';         else edgeBlack=cfg.edgeBlack; end
@@ -372,446 +372,457 @@ if ~isfield(cfg, 'elecShape'), elecShape='marker';  else elecShape=cfg.elecShape
 if ~isfield(cfg, 'showLabels'), showLabels=0;  else showLabels=universalYes(cfg.showLabels); end
 if ~isfield(cfg, 'opaqueness'),      opaqueness=1;          else opaqueness=cfg.opaqueness; end
 if ~isfield(cfg, 'clearGlobal'),    clearGlobal=1;          else clearGlobal=cfg.clearGlobal; end
-if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];         else pialOverlay=cfg.pialOverlay; end 
+if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];         else pialOverlay=cfg.pialOverlay; end
 if ~isfield(cfg, 'olayColorScale'), olayColorScale='absmax';  else olayColorScale=cfg.olayColorScale; end
-if ~isfield(cfg, 'olayThresh'), olayThresh=0;  else olayThresh=cfg.olayThresh; end 
-if ~isfield(cfg, 'olayCbar'),       olayCbar=[];          else olayCbar=cfg.olayCbar; end 
+if ~isfield(cfg, 'olayThresh'), olayThresh=0;  else olayThresh=cfg.olayThresh; end
+if ~isfield(cfg, 'olayCbar'),       olayCbar=[];          else olayCbar=cfg.olayCbar; end
 if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
 
 global overlayData elecCbarMin elecCbarMax olayCbarMin olayCbarMax; % Needed for ?omni plots
 
-try 
-checkCfg(cfg,'plotPialSurf.m');
-elecCmapName=[]; % needed for cfgOut
-olayCmapName=[]; % needed for cfgOut
-
-% If matrix of elecColors specified make sure an equal number of elecNames
-% specfied
-if ~isempty(elecColors) && isnumeric(elecColors),
-   if size(elecColors,1)~=length(elecNames),
-      error('# of elecColors rows, %d, needs to equal # of elecNames, %d.',size(elecColors,1),length(elecNames)); 
-   end
-end
-
-% If matrix of elecCoord specified make sure an equal number of elecNames
-% specfied
-if ~strcmpi(elecCoord,'n') && isnumeric(elecCoord),
-   if size(elecCoord,1)~=length(elecNames),
-      error('# of elecCoord rows, %d, needs to equal # of elecNames, %d.',size(elecCoord,1),length(elecNames)); 
-   end
-end
-
-if strcmpi(brainView,'omni')
-    cfgOut=plotPialOmni(fsSub,cfg);
-    return;
-elseif strcmpi(brainView,'lomni') || strcmpi(brainView,'romni')
-    cfgOut=plotPialHemi(fsSub,cfg);
-    return;
-end
-
-% FreeSurfer Subject Directory
-if isempty(fsDir)
-    fsDir=getFsurfSubDir();
-end
-
-% Folder with surface files
-subFolder=fullfile(fsDir,fsSub);
-if ~exist(subFolder,'dir')
-   error('FreeSurfer folder for %s not found.',subFolder); 
-end
-surfacefolder=fullfile(fsDir,fsSub,'surf');
-
-% Get side of brain to show
-if ischar(brainView),
-    if findstr(brainView,'l')
-        side='l';
+try
+    checkCfg(cfg,'plotPialSurf.m');
+    elecCmapName=[]; % needed for cfgOut
+    olayCmapName=[]; % needed for cfgOut
+    
+    % If matrix of elecCoord specified make sure an equal number of elecNames
+    % specfied
+    if ~strcmpi(elecCoord,'n') && isnumeric(elecCoord),
+        if size(elecCoord,1)~=length(elecNames),
+            error('# of elecCoord rows, %d, needs to equal # of elecNames, %d.',size(elecCoord,1),length(elecNames));
+        end
+    end
+    
+    % If matrix or vector of elecColors specified make sure an equal number of elecNames
+    % specfied
+    if ~isempty(elecColors) && isnumeric(elecColors),
+        if isvector(elecColors),
+            nElecColors=length(elecColors);
+        else
+            nElecColors=size(elecColors,1);
+        end
+        if nElecColors~=length(elecNames),
+            if ~(length(elecNames)==1 && isequal(size(elecColors),[1 3]))
+                % Above condition catches odd corner case of single
+                % electrode with an RGB value
+                error('# of elecColors elements, %d, needs to equal # of elecNames, %d.',nElecColors,length(elecNames));
+            end
+        end
+    end
+    
+    % Call *omni subfunctions if requested
+    if strcmpi(brainView,'omni')
+        cfgOut=plotPialOmni(fsSub,cfg);
+        return;
+    elseif strcmpi(brainView,'lomni') || strcmpi(brainView,'romni')
+        cfgOut=plotPialHemi(fsSub,cfg);
+        return;
+    end
+    
+    % FreeSurfer Subject Directory
+    if isempty(fsDir)
+        fsDir=getFsurfSubDir();
+    end
+    
+    % Folder with surface files
+    subFolder=fullfile(fsDir,fsSub);
+    if ~exist(subFolder,'dir')
+        error('FreeSurfer folder for %s not found.',subFolder);
+    end
+    surfacefolder=fullfile(fsDir,fsSub,'surf');
+    
+    % Get side of brain to show
+    if ischar(brainView),
+        if findstr(brainView,'l')
+            side='l';
+        else
+            side='r';
+        end
     else
-        side='r';
+        side=lower(brainView.hem);
+        if ~strcmpi(side,'l') && ~strcmpi(side,'r')
+            error('cfg.brainView.hem needs to be ''l'' or ''r''.');
+        end
     end
-else
-    side=lower(brainView.hem);
-    if ~strcmpi(side,'l') && ~strcmpi(side,'r')
-        error('cfg.brainView.hem needs to be ''l'' or ''r''.');
+    
+    % Set/check electrode colorbar plotting options
+    if isempty(elecCbar)
+        if ~isempty(elecColors) && ~ischar(elecColors)
+            elecCbar='y';
+        else
+            elecCbar='n';
+        end
     end
-end
-
-% Set/check electrode colorbar plotting options
-if isempty(elecCbar)
-    if ~isempty(elecColors) && ~ischar(elecColors)
-        elecCbar='y';
+    if isempty(olayCbar)
+        if ~isempty(pialOverlay)
+            olayCbar='y';
+        else
+            olayCbar='n';
+        end
+    end
+    
+    %% %%%%%%%%%% Start Main Function %%%%%%%
+    verbReport('**** PLOTTING CORTICAL SURFACE WITH "plotPialSurf.m" ****', ...
+        2,verbLevel);
+    
+    
+    %% MAKE FIGURE/AXIS
+    if ~isempty(hFig),
+        figure(hFig);
     else
-        elecCbar='n';
+        hFig=figure;
     end
-end
-if isempty(olayCbar)
-    if ~isempty(pialOverlay)
-        olayCbar='y';
+    if universalYes(clearFig),
+        clf;
+    end
+    if ~isempty(backgroundColor)
+        set(hFig,'color',backgroundColor);
+    end
+    if ~isempty(hAx),
+        axes(hAx);
     else
-        olayCbar='n';
+        hAx=gca;
     end
-end
-
-%% %%%%%%%%%% Start Main Function %%%%%%%
-verbReport('**** PLOTTING CORTICAL SURFACE WITH "plotPialSurf.m" ****', ...
-    2,verbLevel);
-
-
-%% MAKE FIGURE/AXIS
-if ~isempty(hFig),
-    figure(hFig);
-else
-    hFig=figure;
-end
-if universalYes(clearFig),
-    clf;
-end
-if ~isempty(backgroundColor)
-    set(hFig,'color',backgroundColor);
-end
-if ~isempty(hAx),
-    axes(hAx);
-else
-    hAx=gca;
-end
-
-
-%% If plotting on inflated surface, load curvature values so that sulci and
-% gyri can be seen
-if strcmpi(surfType,'inflated')
+    
+    
+    %% If plotting on inflated surface, load curvature values so that sulci and
+    % gyri can be seen
+    if strcmpi(surfType,'inflated')
+        if side == 'r'
+            curv = read_curv(fullfile(surfacefolder,'rh.curv'));
+        else
+            curv = read_curv(fullfile(surfacefolder,'lh.curv'));
+        end
+        curvMap=zeros(length(curv),3);
+        pcurvIds=find(curv>=0);
+        curvMap(pcurvIds,:)=repmat([1 1 1]*.3,length(pcurvIds),1);
+        ncurvIds=find(curv<0);
+        curvMap(ncurvIds,:)=repmat([1 1 1]*.7,length(ncurvIds),1);
+    end
+    
+    %% Initialize pial surface coloration
+    % Color gyri and sulci different shades of grey
     if side == 'r'
         curv = read_curv(fullfile(surfacefolder,'rh.curv'));
     else
         curv = read_curv(fullfile(surfacefolder,'lh.curv'));
     end
-    curvMap=zeros(length(curv),3);
-    pcurvIds=find(curv>=0);
-    curvMap(pcurvIds,:)=repmat([1 1 1]*.3,length(pcurvIds),1);
-    ncurvIds=find(curv<0);
-    curvMap(ncurvIds,:)=repmat([1 1 1]*.7,length(ncurvIds),1);
-end
-
-%% Initialize pial surface coloration
-% Color gyri and sulci different shades of grey
-if side == 'r'
-    curv = read_curv(fullfile(surfacefolder,'rh.curv'));
-else
-    curv = read_curv(fullfile(surfacefolder,'lh.curv'));
-end
-if strcmpi(surfType,'inflated')
-    overlayDataTemp=zeros(length(curv),3);
-    pcurvIds=find(curv>=0);
-    overlayDataTemp(pcurvIds,:)=repmat([1 1 1]*.3,length(pcurvIds),1);
-    ncurvIds=find(curv<0);
-    overlayDataTemp(ncurvIds,:)=repmat([1 1 1]*.7,length(ncurvIds),1);
-else
-    overlayDataTemp=ones(length(curv),3)*.7;
-end
-
-
-if ~isempty(overlayData) || ~isempty(pialOverlay)
-    % Pial Surface Overlay (e.g., fMRI statistical maps)
-    if  ~isempty(pialOverlay)
-        [pathstr, name, ext]=fileparts(pialOverlay);
-        if strcmpi(ext,'.mgh')
-            % FreeSurfer formatted file
-            mgh = MRIread(pialOverlay);
-            overlayData=mgh.vol;
-        else
-            % mat file that needs to contain an mgh variable
-            if ~exist(pialOverlay,'file')
-                error('File %s not found.',pialOverlay);
-            end
-            load(pialOverlay,'overlayData');
-            if ~exist('overlayData','var')
-                error('File %s does NOT contain a variable called overlayData.',pialOverlay);
-            end
-        end
-    end
-    if isvector(overlayData)
-        %overlayData is a vector of values that needs to be converted to
-        %RGB
-        olayDataVec=overlayData;
-        [overlayData, oLayLimits, olayCmapName]=vals2Colormap(olayDataVec,olayColorScale);
-        olayCbarMin=oLayLimits(1);
-        olayCbarMax=oLayLimits(2);
-        if strcmpi(olayColorScale,'justpos')
-            maskIds=find(olayDataVec<=olayThresh);
-            overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make subthreshold values grey
-            %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make subthreshold values grey
-        elseif strcmpi(olayColorScale,'justneg')
-            maskIds=find(olayDataVec>=olayThresh);
-            overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make superthreshold values grey
-            %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make superthreshold values grey
-        elseif olayThresh~=0
-            maskIds=find(abs(olayDataVec)<=olayThresh);
-            overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make abs subthreshold values grey
-            %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make abs subthreshold values grey
-        end
-        clear olayDataVec
-    end
-else
-    overlayData=overlayDataTemp;
-end
-clear overlayDataTemp
-
-
-%% READ SURFACE
-global cort %speeds up omni a tiny bit
-if isempty(cort)
-    if side == 'r'
-        [cort.vert cort.tri]=read_surf(fullfile(surfacefolder,['rh.' surfType]));
+    if strcmpi(surfType,'inflated')
+        overlayDataTemp=zeros(length(curv),3);
+        pcurvIds=find(curv>=0);
+        overlayDataTemp(pcurvIds,:)=repmat([1 1 1]*.3,length(pcurvIds),1);
+        ncurvIds=find(curv<0);
+        overlayDataTemp(ncurvIds,:)=repmat([1 1 1]*.7,length(ncurvIds),1);
     else
-        [cort.vert cort.tri]=read_surf(fullfile(surfacefolder,['lh.' surfType]));
-    end
-    if min(min(cort.tri))<1
-        cort.tri=cort.tri+1; %sometimes this is needed sometimes not. no comprendo. DG
-    end
-end
-
-
-%% PLOT SURFACE
-tripatchDG(cort,hFig,overlayData); %this plots the brain
-rotate3d off;
-
-
-%% If specified, overlay cortical parcellation
-if overlayParcellation,
-    labelFolder=fullfile(fsDir,fsSub,'label');
-    if ~isempty(labelFolder) && (labelFolder(end)~='/')
-        labelFolder=[labelFolder '/'];
-    end
-    if strcmpi(overlayParcellation,'DK')
-        annotFname=fullfile(labelFolder,[side 'h.aparc.annot']); %Desikan-Killiany 36 area atlas
-        [averts,albl,actbl]=read_annotation(annotFname);
-        actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
-    elseif strcmpi(overlayParcellation,'D')
-        annotFname=fullfile(labelFolder,[side 'h.aparc.a2009s.annot']); %Destrieux 76 area atlas
-        [averts,albl,actbl]=read_annotation(annotFname);
-        actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
-    elseif strcmpi(overlayParcellation,'Y7')
-        if strcmpi(fsSub,'fsaverage')
-            annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
-            [averts,albl,actbl]=read_annotation(annotFname);
-        else
-            annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
-            load(annotFname);
-            albl=label;
-            actbl=colortable;
-            clear colortable label vertices
-            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
-        end
-    elseif strcmpi(overlayParcellation,'Y17')
-        if strcmpi(fsSub,'fsaverage')
-            annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.annot']); % Yeo et al. 2011
-            [averts,albl,actbl]=read_annotation(annotFname);
-        else
-            annotFname=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
-            load(annotFname);
-            albl=label;
-            actbl=colortable;
-            clear colortable label vertices
-            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
-        end
-    elseif exist(overlayParcellation,'file')
-        [averts,albl,actbl]=read_annotation(overlayParcellation);
-        %  actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
-    else
-        error('overlayParcellation argument needs to take a value of ''D'',''DK'',''Y7'', ''Y17'', or fullpath to annotation file.');
-    end
-    if ~isempty(parcellationColors)
-        if size(parcellationColors,1)~=size(actbl.table,1)
-            error('plotPialSurf:colors_parcellation_size1','parcellationColors argument needs to have \n the same number of rows as the number of ROIs \n in the parcellation. For %s, %d.',overlayParcellation,size(actbl.table,1));
-        end
-        if size(parcellationColors,2)~=3
-            error('plotPialSurf:colors_parcellation_size2','parcellationColors must be an N-by-3 array.');
-        end
-        actbl.table(:,1:3)=parcellationColors;
-    end
-    clear averts;
-    [~,locTable]=ismember(albl,actbl.table(:,5));
-    locTable(locTable==0)=1; % for the case where the label for the vertex says 0
-    fvcdat=actbl.table(locTable,1:3)./255; %scale RGB values to 0-1
-    clear locTable;
-    hTsurf=trisurf(cort.tri, cort.vert(:, 1), cort.vert(:, 2), cort.vert(:, 3),...
-        'FaceVertexCData', fvcdat,'FaceColor', 'interp','FaceAlpha',1);
-    if ~universalNo(elecCoord),
-        cfg_elec2parc=[];
-        cfg_elec2parc.fsurfSubDir=fsDir;
-        if isnumeric(elecCoord)
-            cfg_elec2parc.elecCoord=elecCoord;
-            cfg_elec2parc.elecNames=cfg.elecNames;
-        end
-        elecAssign=[];
-    end
-else
-    elecAssign=[];
-end
-
-
-%% Set Lighting & View
-shading interp; lighting gouraud; material dull; axis off, hold on
-if ischar(brainView)
-    switch brainView
-        case 'r'
-            l=light('Position',[1 0 0]);
-            view(90,0)
-        case 'rm'
-            l=light('Position',[-1 0 0]);
-            view(270,0)
-        case 'rim'
-            l=light('Position',[-1 0 0]);
-            view(270,-45)
-        case 'ri'
-            l=light('Position',[0 0 -1]);
-            view(90,-90)
-        case 'ro'
-            l=light('Position',[0 -1 0]);
-            view(0,0)
-        case 'lo'
-            l=light('Position',[0 -1 0]);
-            view(0,0)
-        case 'rf'
-            l=light('Position',[0 1 0]);
-            view(180,0)
-        case 'lf'
-            l=light('Position',[0 1 0]);
-            view(180,0)
-        case 'rs'
-            l=light('Position',[0 0 1]);
-            view(90,90);
-        case 'rsv' %superior & vertically aligned
-            l=light('Position',[0 0 1]);
-            view(0,90);
-        case 'l'
-            l=light('Position',[-1 0 0]);
-            view(270,0);
-        case 'lm'
-            l=light('Position',[1 0 0]);
-            view(90,0);
-        case 'li'
-            l=light('Position',[0 0 -1]);
-            view(90,-90);
-        case 'lim'
-            l=light('Position',[-1 0 0]);
-            view(270,-45);
-        case 'ls'
-            l=light('Position',[0 0 1]);
-            view(270,90);
-        case 'lsv' %superior & vertically aligned
-            l=light('Position',[0 0 1]);
-            view(0,90);
-        case 'liv' %inferior & vertically aligned
-            l=light('Position',[0 0 -1]);
-            view(0,-90);
-        case 'riv' %inferior & vertically aligned
-            l=light('Position',[0 0 -1]);
-            view(0,-90);
-    end
-    clear l
-else
-    light('Position',brainView.light);
-    view(brainView.eyes)
-end
-alpha(opaqueness);
-
-
-%% PLOT ELECTRODES (optional)
-if universalNo(elecCoord)
-    verbReport('...not plotting electrodes',2,verbLevel);
-    h_elec=[];
-else
-    [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotElecs(elecCoord, ...
-        surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
-        elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
-        elecCbar);
-end
-
-
-%% Add Title
-if strcmpi(surfTitle,'default'),
-    if ischar(brainView)
-        surfTitle=[fsSub '; ' brainView '; '];
-    else
-        surfTitle=[fsSub '; ' brainView.hem '; '];
-    end
-    title(surfTitle,'fontsize',20);
-elseif ~isempty(surfTitle)
-    title(surfTitle,'fontsize',20);
-end
-
-
-%% Colorbar
-hElecCbar=[]; % needs to be declared for cfgOut even if colorbar not drawn
-hOlayCbar=[]; % needs to be declared for cfgOut even if colorbar not drawn
-if universalYes(elecCbar) && universalYes(olayCbar)
-    % Plot both electrode AND olay colorbar
-    if isempty(elecCbarMin) || isempty(elecCbarMax)
-        fprintf('elecCbarMin or elecCbarMax are empty. Cannot draw colorbar.\n');
-    else
-        pos=[0.9158 0.1100 0.0310 0.8150];
-        cbarFontSize=12;
-        cbarDGplus(pos,[elecCbarMin elecCbarMax],elecCmapName,5,elecUnits,'top',cbarFontSize);
+        overlayDataTemp=ones(length(curv),3)*.7;
     end
     
-    pos=[0.1 0.05 0.8150 0.0310];
-    cbarDGplus(pos,[olayCbarMin olayCbarMax],olayCmapName,5,olayUnits,'top',cbarFontSize);
-elseif universalYes(elecCbar)
-    % Plot electrode colorbar only
-    if isempty(elecCbarMin) || isempty(elecCbarMax)
-        fprintf('elecCbarMin or elecCbarMax are empty. Cannot draw colorbar.\n');
+    
+    if ~isempty(overlayData) || ~isempty(pialOverlay)
+        % Pial Surface Overlay (e.g., fMRI statistical maps)
+        if  ~isempty(pialOverlay)
+            [pathstr, name, ext]=fileparts(pialOverlay);
+            if strcmpi(ext,'.mgh')
+                % FreeSurfer formatted file
+                mgh = MRIread(pialOverlay);
+                overlayData=mgh.vol;
+            else
+                % mat file that needs to contain an mgh variable
+                if ~exist(pialOverlay,'file')
+                    error('File %s not found.',pialOverlay);
+                end
+                load(pialOverlay,'overlayData');
+                if ~exist('overlayData','var')
+                    error('File %s does NOT contain a variable called overlayData.',pialOverlay);
+                end
+            end
+        end
+        if isvector(overlayData)
+            %overlayData is a vector of values that needs to be converted to
+            %RGB
+            olayDataVec=overlayData;
+            [overlayData, oLayLimits, olayCmapName]=vals2Colormap(olayDataVec,olayColorScale);
+            olayCbarMin=oLayLimits(1);
+            olayCbarMax=oLayLimits(2);
+            if strcmpi(olayColorScale,'justpos')
+                maskIds=find(olayDataVec<=olayThresh);
+                overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make subthreshold values grey
+                %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make subthreshold values grey
+            elseif strcmpi(olayColorScale,'justneg')
+                maskIds=find(olayDataVec>=olayThresh);
+                overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make superthreshold values grey
+                %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make superthreshold values grey
+            elseif olayThresh~=0
+                maskIds=find(abs(olayDataVec)<=olayThresh);
+                overlayData(maskIds,:)=overlayDataTemp(maskIds,:); % make abs subthreshold values grey
+                %overlayData(maskIds,:)=repmat([.7 .7 .7],length(maskIds),1); % make abs subthreshold values grey
+            end
+            clear olayDataVec
+        end
     else
+        overlayData=overlayDataTemp;
+    end
+    clear overlayDataTemp
+    
+    
+    %% READ SURFACE
+    global cort %speeds up omni a tiny bit
+    if isempty(cort)
+        if side == 'r'
+            [cort.vert cort.tri]=read_surf(fullfile(surfacefolder,['rh.' surfType]));
+        else
+            [cort.vert cort.tri]=read_surf(fullfile(surfacefolder,['lh.' surfType]));
+        end
+        if min(min(cort.tri))<1
+            cort.tri=cort.tri+1; %sometimes this is needed sometimes not. no comprendo. DG
+        end
+    end
+    
+    
+    %% PLOT SURFACE
+    tripatchDG(cort,hFig,overlayData); %this plots the brain
+    rotate3d off;
+    
+    
+    %% If specified, overlay cortical parcellation
+    if overlayParcellation,
+        labelFolder=fullfile(fsDir,fsSub,'label');
+        if ~isempty(labelFolder) && (labelFolder(end)~='/')
+            labelFolder=[labelFolder '/'];
+        end
+        if strcmpi(overlayParcellation,'DK')
+            annotFname=fullfile(labelFolder,[side 'h.aparc.annot']); %Desikan-Killiany 36 area atlas
+            [averts,albl,actbl]=read_annotation(annotFname);
+            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+        elseif strcmpi(overlayParcellation,'D')
+            annotFname=fullfile(labelFolder,[side 'h.aparc.a2009s.annot']); %Destrieux 76 area atlas
+            [averts,albl,actbl]=read_annotation(annotFname);
+            actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+        elseif strcmpi(overlayParcellation,'Y7')
+            if strcmpi(fsSub,'fsaverage')
+                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
+                [averts,albl,actbl]=read_annotation(annotFname);
+            else
+                annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+                load(annotFname);
+                albl=label;
+                actbl=colortable;
+                clear colortable label vertices
+                actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+            end
+        elseif strcmpi(overlayParcellation,'Y17')
+            if strcmpi(fsSub,'fsaverage')
+                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.annot']); % Yeo et al. 2011
+                [averts,albl,actbl]=read_annotation(annotFname);
+            else
+                annotFname=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
+                load(annotFname);
+                albl=label;
+                actbl=colortable;
+                clear colortable label vertices
+                actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+            end
+        elseif exist(overlayParcellation,'file')
+            [averts,albl,actbl]=read_annotation(overlayParcellation);
+            %  actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+        else
+            error('overlayParcellation argument needs to take a value of ''D'',''DK'',''Y7'', ''Y17'', or fullpath to annotation file.');
+        end
+        if ~isempty(parcellationColors)
+            if size(parcellationColors,1)~=size(actbl.table,1)
+                error('plotPialSurf:colors_parcellation_size1','parcellationColors argument needs to have \n the same number of rows as the number of ROIs \n in the parcellation. For %s, %d.',overlayParcellation,size(actbl.table,1));
+            end
+            if size(parcellationColors,2)~=3
+                error('plotPialSurf:colors_parcellation_size2','parcellationColors must be an N-by-3 array.');
+            end
+            actbl.table(:,1:3)=parcellationColors;
+        end
+        clear averts;
+        [~,locTable]=ismember(albl,actbl.table(:,5));
+        locTable(locTable==0)=1; % for the case where the label for the vertex says 0
+        fvcdat=actbl.table(locTable,1:3)./255; %scale RGB values to 0-1
+        clear locTable;
+        hTsurf=trisurf(cort.tri, cort.vert(:, 1), cort.vert(:, 2), cort.vert(:, 3),...
+            'FaceVertexCData', fvcdat,'FaceColor', 'interp','FaceAlpha',1);
+        if ~universalNo(elecCoord),
+            cfg_elec2parc=[];
+            cfg_elec2parc.fsurfSubDir=fsDir;
+            if isnumeric(elecCoord)
+                cfg_elec2parc.elecCoord=elecCoord;
+                cfg_elec2parc.elecNames=cfg.elecNames;
+            end
+            elecAssign=[];
+        end
+    else
+        elecAssign=[];
+    end
+    
+    
+    %% Set Lighting & View
+    shading interp; lighting gouraud; material dull; axis off, hold on
+    if ischar(brainView)
+        switch brainView
+            case 'r'
+                l=light('Position',[1 0 0]);
+                view(90,0)
+            case 'rm'
+                l=light('Position',[-1 0 0]);
+                view(270,0)
+            case 'rim'
+                l=light('Position',[-1 0 0]);
+                view(270,-45)
+            case 'ri'
+                l=light('Position',[0 0 -1]);
+                view(90,-90)
+            case 'ro'
+                l=light('Position',[0 -1 0]);
+                view(0,0)
+            case 'lo'
+                l=light('Position',[0 -1 0]);
+                view(0,0)
+            case 'rf'
+                l=light('Position',[0 1 0]);
+                view(180,0)
+            case 'lf'
+                l=light('Position',[0 1 0]);
+                view(180,0)
+            case 'rs'
+                l=light('Position',[0 0 1]);
+                view(90,90);
+            case 'rsv' %superior & vertically aligned
+                l=light('Position',[0 0 1]);
+                view(0,90);
+            case 'l'
+                l=light('Position',[-1 0 0]);
+                view(270,0);
+            case 'lm'
+                l=light('Position',[1 0 0]);
+                view(90,0);
+            case 'li'
+                l=light('Position',[0 0 -1]);
+                view(90,-90);
+            case 'lim'
+                l=light('Position',[-1 0 0]);
+                view(270,-45);
+            case 'ls'
+                l=light('Position',[0 0 1]);
+                view(270,90);
+            case 'lsv' %superior & vertically aligned
+                l=light('Position',[0 0 1]);
+                view(0,90);
+            case 'liv' %inferior & vertically aligned
+                l=light('Position',[0 0 -1]);
+                view(0,-90);
+            case 'riv' %inferior & vertically aligned
+                l=light('Position',[0 0 -1]);
+                view(0,-90);
+        end
+        clear l
+    else
+        light('Position',brainView.light);
+        view(brainView.eyes)
+    end
+    alpha(opaqueness);
+    
+    
+    %% PLOT ELECTRODES (optional)
+    if universalNo(elecCoord)
+        verbReport('...not plotting electrodes',2,verbLevel);
+        h_elec=[];
+    else
+        [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
+            surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
+            elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
+            elecCbar);
+        plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
+    end
+    
+    
+    %% Add Title
+    if strcmpi(surfTitle,'default'),
+        if ischar(brainView)
+            surfTitle=[fsSub '; ' brainView '; '];
+        else
+            surfTitle=[fsSub '; ' brainView.hem '; '];
+        end
+        title(surfTitle,'fontsize',20);
+    elseif ~isempty(surfTitle)
+        title(surfTitle,'fontsize',20);
+    end
+    
+    
+    %% Colorbar
+    hElecCbar=[]; % needs to be declared for cfgOut even if colorbar not drawn
+    hOlayCbar=[]; % needs to be declared for cfgOut even if colorbar not drawn
+    if universalYes(elecCbar) && universalYes(olayCbar)
+        % Plot both electrode AND olay colorbar
+        if isempty(elecCbarMin) || isempty(elecCbarMax)
+            fprintf('elecCbarMin or elecCbarMax are empty. Cannot draw colorbar.\n');
+        else
+            pos=[0.9158 0.1100 0.0310 0.8150];
+            cbarFontSize=12;
+            cbarDGplus(pos,[elecCbarMin elecCbarMax],elecCmapName,5,elecUnits,'top',cbarFontSize);
+        end
+        
+        pos=[0.1 0.05 0.8150 0.0310];
+        cbarDGplus(pos,[olayCbarMin olayCbarMax],olayCmapName,5,olayUnits,'top',cbarFontSize);
+    elseif universalYes(elecCbar)
         % Plot electrode colorbar only
+        if isempty(elecCbarMin) || isempty(elecCbarMax)
+            fprintf('elecCbarMin or elecCbarMax are empty. Cannot draw colorbar.\n');
+        else
+            % Plot electrode colorbar only
+            pos=[0.9158 0.1100 0.0310 0.8150];
+            cbarDGplus(pos,[elecCbarMin elecCbarMax],elecCmapName,5,elecUnits);
+            
+            if isequal(get(hFig,'color'),[0 0 0]);
+                %If background of figure is black, make colorbar text white
+                set(hElecCbar,'xcolor','w'); % fix so that box isn't white? ??
+                set(hElecCbar,'ycolor','w');
+            end
+        end
+    elseif universalYes(olayCbar)
+        % Plot pial surface overlay colorbar only
         pos=[0.9158 0.1100 0.0310 0.8150];
-        cbarDGplus(pos,[elecCbarMin elecCbarMax],elecCmapName,5,elecUnits);
+        cbarDGplus(pos,[olayCbarMin olayCbarMax],olayCmapName,5,olayUnits);
         
         if isequal(get(hFig,'color'),[0 0 0]);
             %If background of figure is black, make colorbar text white
-            set(hElecCbar,'xcolor','w'); % fix so that box isn't white? ??
-            set(hElecCbar,'ycolor','w');
+            set(hOlayCbar,'xcolor','w'); % fix so that box isn't white? ??
+            set(hOlayCbar,'ycolor','w');
         end
     end
-elseif universalYes(olayCbar)
-    % Plot pial surface overlay colorbar only
-    pos=[0.9158 0.1100 0.0310 0.8150];
-    cbarDGplus(pos,[olayCbarMin olayCbarMax],olayCmapName,5,olayUnits);
-
-    if isequal(get(hFig,'color'),[0 0 0]);
-        %If background of figure is black, make colorbar text white
-        set(hOlayCbar,'xcolor','w'); % fix so that box isn't white? ??
-        set(hOlayCbar,'ycolor','w');
+    
+    
+    %% COLLECT CONFIG OUTPUT
+    cfgOut.subject=fsSub;
+    cfgOut.view=brainView;
+    cfgOut.elecSize=elecSize;
+    cfgOut.elecHandles=h_elec;
+    cfgOut.surfType=surfType;
+    cfgOut.hElecCbar=hElecCbar;
+    cfgOut.hOlayCbar=hOlayCbar;
+    cfgOut.hBrain=hAx;
+    cfgOut.elecCmapName=elecCmapName;
+    cfgOut.olayCmapName=olayCmapName;
+    if exist('cfg','var'), cfgOut.cfg=cfg; end
+    if exist('showElecCoords','var'),
+        cfgOut.electrodeCoords=showElecCoords;
+        cfgOut.electrodeNames=showElecNames;
     end
-end
-
-
-%% COLLECT CONFIG OUTPUT
-cfgOut.subject=fsSub;
-cfgOut.view=brainView;
-cfgOut.elecSize=elecSize;
-cfgOut.elecHandles=h_elec;
-cfgOut.surfType=surfType;
-cfgOut.hElecCbar=hElecCbar;
-cfgOut.hOlayCbar=hOlayCbar;
-cfgOut.hBrain=hAx;
-cfgOut.elecCmapName=elecCmapName;
-cfgOut.olayCmapName=olayCmapName;
-if exist('cfg','var'), cfgOut.cfg=cfg; end
-if exist('showElecCoords','var'), 
-    cfgOut.electrodeCoords=showElecCoords; 
-    cfgOut.electrodeNames=showElecNames;
-end 
-if exist('elecCbarMin','var'), cfgOut.elecCbarLimits=[elecCbarMin elecCbarMax]; end
-if exist('olayCbarMin','var'), cfgOut.olayCbarLimits=[olayCbarMin olayCbarMax]; end
-
-if universalYes(clearGlobal)
-    clear global elecCbarMin elecCbarMax olayCbarMin olayCbarMax cort overlayData;
-end
-
+    if exist('elecCbarMin','var'), cfgOut.elecCbarLimits=[elecCbarMin elecCbarMax]; end
+    if exist('olayCbarMin','var'), cfgOut.olayCbarLimits=[olayCbarMin olayCbarMax]; end
+    
+    if universalYes(clearGlobal)
+        clear global elecCbarMin elecCbarMax olayCbarMin olayCbarMax cort overlayData;
+    end
+    
 catch err
     disp(err.identifier);
     disp(err.message);
     for errLoop=1:length(err.stack),
-        disp(err.stack(errLoop).file); 
-        fprintf('Line: %d\n',err.stack(errLoop).line); 
+        disp(err.stack(errLoop).file);
+        fprintf('Line: %d\n',err.stack(errLoop).line);
     end
     % Delete global variables if function crashes to prevent them from
     % being automatically used the next time plotPialSurf is called.
@@ -832,18 +843,21 @@ if ~isfield(cfg, 'figId'),         hFig=[];            else  hFig=cfg.figId; end
 if ~isfield(cfg, 'olayThresh'),       olayThresh=[];          else  olayThresh = cfg.olayThresh; end
 if ~isfield(cfg, 'figId'),         hFig=[];              else  hFig=cfg.figId; end
 if ~isfield(cfg, 'fsurfSubDir'),   fsDir=[];             else fsDir=cfg.fsurfSubDir; end
-if ~isfield(cfg, 'elecCoord'),      elecCoord='LEPTO';      else  elecCoord = cfg.elecCoord;       end
+if ~isfield(cfg, 'elecCoord'),      elecCoord=[];      else  elecCoord = cfg.elecCoord;       end
+if ~isfield(cfg, 'elecNames'),      elecNames=[];      else  elecNames = cfg.elecNames;       end
 if ~isfield(cfg, 'elecSize'),       elecSize=8;          else  elecSize = cfg.elecSize;      end
 if ~isfield(cfg, 'elecColors'),     elecColors=[];        else  elecColors = cfg.elecColors;        end
 if ~isfield(cfg, 'elecColorScale'),   elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'olayColorScale'),   olayColorScale='absmax';   else olayColorScale=cfg.olayColorScale; end
 if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits; end
-if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end 
+if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
 if ~isfield(cfg, 'showLabels'),         showLabels='y';            else  showLabels=cfg.showLabels; end
 if ~isfield(cfg, 'elecCbar'),     elecCbar=[];   else elecCbar=cfg.elecCbar; end
 if ~isfield(cfg, 'olayCbar'),     olayCbar=[];   else elecCbar=cfg.olayCbar; end
 if ~isfield(cfg, 'verbLevel'),     verbLevel=0;        else  verbLevel = cfg.verbLevel;        end
-if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end 
+if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end
+if ~isfield(cfg, 'ignoreDepthElec'), ignoreDepthElec='y'; else ignoreDepthElec=cfg.ignoreDepthElec; end
+if ~isfield(cfg, 'surfType'),       surfType = 'pial';     else  surfType = cfg.surfType;     end
 
 if isempty(fsDir)
     fsDir=getFsurfSubDir();
@@ -851,17 +865,137 @@ end
 
 clear global elecCbarMin elecCbarMax olayCbarMin olayCbarMax cort;
 
-% Optional electrode color bar variables
-if ~isempty(elecColors),
+%% Figure out electrode information
+if isempty(elecCoord),
+    if strcmpi(surfType,'inflated'),
+        elecCoord='INF';
+    else
+        elecCoord='LEPTO';
+    end
+end
+
+% Sort out electrode colors:
+elecCmapName=[];
+if isempty(elecColors)
+    elecCbar='n';
+elseif isnumeric(elecColors)
     if isempty(elecCbar)
         elecCbar='y';
     end
-end
-elecCmapName=[];
-if isnumeric(elecColorScale)
-    elecUsedLimits=elecColorScale;
+    if isvector(elecColors)
+        % convert vector of electrode values to RGB
+        %[map, limits, cmap]=vals2Colormap(vals,type,cmap,minmax);
+        [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,elecColorScale);
+        %[showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
+    else
+        % matrix of rgb values
+        if universalYes(elecCbar) && ~isnumeric(elecColorScale)
+            error('If cfg.elecColors is a matrix of RGB values, you need to specify numeric elecColorScale limits.');
+        end
+        elecLimits=elecColorScale;
+    end
+elseif ischar(elecColors)
+    % All electrodes will be black or red
+    if isempty(elecCbar)
+        elecCbar='n';
+    end
 else
-    elecUsedLimits=[];
+    error('Invalid value for cfg.elecColors.');
+end
+
+% Get coordinates & figure out which hemisphere has electrodes
+elecCoordByHem=cell(1,2);
+elecNamesByHem=cell(1,2);
+elecColorsByHem=cell(1,2);
+elecCoverage=zeros(1,2);
+if ~strcmpi(elecCoord,'n'),
+    if ~isempty(elecNames) && ischar(elecCoord),
+        % Electrode names have been specified but coordinates need to be loaded
+        % from disk
+        
+        % Grab electrode names and hemisphere from subject dir
+        elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
+        elecInfo=csv2Cell(elecInfoFname,' ',2);
+        % Load electrode coordinates
+        elecCoordFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.' elecCoord]);
+        elecCoordCsv=csv2Cell(elecCoordFname,' ',2);
+        fullElecCoord=zeros(size(elecCoordCsv));
+        % Convert coordinates from string to #
+        for a=1:size(elecCoordCsv,1),
+            for b=1:3,
+                fullElecCoord(a,b)=str2double(elecCoordCsv{a,b});
+            end
+        end
+        
+        % Loop over desired elecNames and save coordinates
+        nDesiredElec=length(elecNames);
+        elecCoord=zeros(nDesiredElec,4);
+        for a=1:nDesiredElec,
+            elecId=findStrInCell(elecNames{a},elecInfo(:,1));
+            if isempty(elecId),
+                error('Could not find coordinates for electrode %s\n',elecNames{a});
+            end
+            elecCoord(a,1:3)=fullElecCoord(elecId,:);
+            if strcmpi(elecInfo(elecId,3),'L'),
+                elecCoord(a,4)=1;
+            end
+        end
+    end
+    
+    if isnumeric(elecCoord),
+        % electrode coordinates passed as argument
+        for hem_loop=1:2, %(Left hem first)
+            if hem_loop==1,
+                ids=find(elecCoord(:,4));
+            else
+                ids=find(elecCoord(:,4)==0);
+            end
+            elecCoordByHem{hem_loop}=elecCoord(ids,:);
+            elecCoverage(hem_loop)=length(ids);
+            elecNamesByHem{hem_loop}=elecNames(ids);
+            if isempty(elecColors) || ischar(elecColors)
+                elecColorsByHem{hem_loop}=elecColors;
+            else
+                elecColorsByHem{hem_loop}=elecColors(ids,:);
+            end
+        end
+    else
+        % Grab electrode names and hemisphere from subject dir
+        elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
+        elecInfo=csv2Cell(elecInfoFname,' ',2);
+        
+        % Grab electrode coordinates from subject dir
+        if isempty(elecNames),
+            % Read elec coordinates from subject's elec_recon subfolder
+            for hem_loop=1:2,
+                if hem_loop==1,
+                    side='l';
+                    use_ids=findStrInCell('L',elecInfo(:,3));
+                else
+                    side='r';
+                    use_ids=findStrInCell('R',elecInfo(:,3));
+                end
+                elecNames=elecInfo(use_ids,1);
+                [showElecCoords, showElecNames, showElecIds]=getElecPlottingInfo(surfType, ...
+                    elecCoord,fsDir,fsSub,side,ignoreDepthElec,elecNames);
+                if hem_loop==1,
+                    showElecCoords(:,4)=1;
+                else
+                    showElecCoords(:,4)=0;
+                end
+                elecCoordByHem{hem_loop}=showElecCoords;
+                elecNamesByHem{hem_loop}=showElecNames;
+                elecCoverage(hem_loop)=length(showElecIds);
+                if ischar(elecColors),
+                    elecColorsByHem{hem_loop}=elecColors;
+                else
+                    % If you read electrode coordinates from elec_recon and don't specify elecNames, all
+                    % electrodes must be the same color
+                    elecColorsByHem{hem_loop}=[]; % electrodes will be default color (black)
+                end
+            end
+        end
+    end
 end
 
 % Optional pial overlay color bar variables
@@ -903,7 +1037,7 @@ if ~isempty(pialOverlay),
                 error('Invalid value of cfg.olayColorScale');
         end
     end
-        
+    
     switch lower(olayColorScale)
         case 'absmax'
             olayUsedLimits=[-1 1]*max(abs_mx);
@@ -924,19 +1058,7 @@ else
 end
 set(hFig,'MenuBar','none','position',[100 190 1000 600],'paperpositionmode','auto');
 
-% Figure out which hemisphere has electrodes
-if isnumeric(elecCoord),
-    leftCoverage=sum(elecCoord(:,4))>0;
-    rightCoverage=sum(~elecCoord(:,4))>0;
-else
-    % Grab electrode info from subject dir
-    elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
-    elecInfo=csv2Cell(elecInfoFname,' ',2);
-    leftCoverage=~isempty(findStrInCell('L',elecInfo(:,3)));
-    rightCoverage=~isempty(findStrInCell('R',elecInfo(:,3)));
-end
-
-% Loop over hemispheres
+% Loop over hemispheres (Left hem first)
 for h=1:2,
     for v=1:6,
         ax_loc=[0 0 0 0];
@@ -989,25 +1111,20 @@ for h=1:2,
         
         sub_cfg.title=[];
         if bview(1)=='l'
-            if ~leftCoverage || (ischar(elecCoord) && universalNo(elecCoord)), 
-                sub_cfg.elecCoord='n';
-            else
-                sub_cfg.elecCoord=elecCoord;
-                if ~isfield(sub_cfg,'elecSize')
-                    sub_cfg.elecSize=6;
-                end
-                sub_cfg.showLabels=showLabels;
-            end
+            temp_hem_id=1; %left hem
         else
-            if ~rightCoverage || (ischar(elecCoord) && universalNo(elecCoord)),
-                sub_cfg.elecCoord='n';
-            else
-                sub_cfg.elecCoord=elecCoord;
-                if ~isfield(sub_cfg,'elecSize')
-                    sub_cfg.elecSize=6;
-                end
-                sub_cfg.showLabels=showLabels;
+            temp_hem_id=2; %right hem
+        end
+        if ~elecCoverage(temp_hem_id)
+            sub_cfg.elecCoord='n';
+        else
+            sub_cfg.elecCoord=elecCoordByHem{temp_hem_id};
+            sub_cfg.elecNames=elecNamesByHem{temp_hem_id};
+            sub_cfg.elecColors=elecColorsByHem{temp_hem_id};
+            if ~isfield(sub_cfg,'elecSize')
+                sub_cfg.elecSize=6;
             end
+            sub_cfg.showLabels=showLabels;
         end
         
         % If plotting annotations from files input by user, choose hemisphere
@@ -1049,24 +1166,7 @@ for h=1:2,
         else
             sub_cfg.clearGlobal=0;
         end
-        sub_cfg_out=plotPialSurf(fsSub,sub_cfg);
-        
-        % Get electrode colormap limits
-        
-        if isempty(elecUsedLimits)
-            if isfield(sub_cfg_out,'elecCbarLimits')
-                elecUsedLimits=sub_cfg_out.elecCbarLimits;
-            end
-        else
-            if ~isempty(sub_cfg_out.elecCbarLimits)
-                if elecUsedLimits(2)<sub_cfg_out.elecCbarLimits(2)
-                    elecUsedLimits(2)=sub_cfg_out.elecCbarLimits(2);
-                end
-                if elecUsedLimits(1)>sub_cfg_out.elecCbarLimits(1)
-                    elecUsedLimits(1)=sub_cfg_out.elecCbarLimits(1);
-                end
-            end
-        end
+        sub_cfg_out=plotPialSurf(fsSub,sub_cfg); % PLOT BRAIN!!!!
         
         if isempty(elecCmapName) && isfield(sub_cfg_out,'elecCmapName')
             elecCmapName=sub_cfg_out.elecCmapName;
@@ -1074,20 +1174,19 @@ for h=1:2,
     end
 end
 
-
 %% DRAW COLORBAR(S)
 if universalYes(elecCbar) && universalYes(olayCbar),
     % Colorbar for electrodes
     pos=[.4 .09 .2 .01];
-    cbarDGplus(pos,elecUsedLimits,elecCmapName,5,elecUnits,'right');
-
+    cbarDGplus(pos,elecLimits,elecCmapName,5,elecUnits,'right');
+    
     % Colorbar for pial surface overlay (e.g., neuroimaging)
     pos=[.4 .04 .2 .01];
     cbarDGplus(pos,olayUsedLimits,olayCmapName,5,olayUnits,'right');
 elseif universalYes(elecCbar),
     % Colorbar for electrodes
     pos=[.4 .06 .2 .03];
-    cbarDGplus(pos,elecUsedLimits,elecCmapName,5,elecUnits);
+    cbarDGplus(pos,elecLimits,elecCmapName,5,elecUnits);
 elseif universalYes(olayCbar)
     % Colorbar for pial surface overlay (e.g., neuroimaging)
     pos=[.4 .06 .2 .03];
@@ -1117,11 +1216,11 @@ if ~isfield(cfg, 'elecColors'),     elecColors= [];        else  elecColors = cf
 if ~isfield(cfg, 'elecColorScale'),   elecColorScale=[];   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'olayColorScale'),   olayColorScale=[];   else olayColorScale=cfg.olayColorScale; end
 if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits; end
-if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end 
+if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
 if ~isfield(cfg, 'elecCbar'),     elecCbar=[];   else elecCbar=cfg.elecCbar; end
 if ~isfield(cfg, 'olayCbar'),     olayCbar=[];   else elecCbar=cfg.olayCbar; end
 if ~isfield(cfg, 'verbLevel'),     verbLevel=0;        else  verbLevel = cfg.verbLevel;        end
-if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end 
+if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end
 
 if ~isempty(elecColors),
     if isempty(elecCbar)
@@ -1223,7 +1322,7 @@ end
 
 
 %% DRAW COLORBAR(S)
-if universalYes(elecCbar) && universalYes(olayCbar),    
+if universalYes(elecCbar) && universalYes(olayCbar),
     % Colorbar for electrodes
     pos=[.88 .1 .01 .8];
     cbarDGplus(pos,elecUsedLimits,elecCmapName,5,elecUnits);

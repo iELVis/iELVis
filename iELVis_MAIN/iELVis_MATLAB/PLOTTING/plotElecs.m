@@ -1,4 +1,4 @@
-function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar)
+function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar)
 % function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar)
 %
 % This function plots electrodes. It should only be called by plotPialSurf.m
@@ -19,6 +19,7 @@ function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotE
 % Copy original value of elecColors to be able to tell if colored
 % electrodes were desired even if no electrodes get shown
 elecColorsOrig=elecColors;
+elecCmapName=[];
 
 % Get electrode coordinates
 if isnumeric(elecCoord)
@@ -84,7 +85,7 @@ end
 % Figure out electrode colors
 elecCbarMin=[];
 elecCbarMax=[];
-[showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
+[showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
 if ~isempty(elecColorsOrig) && isempty(showElecColors),
    error('ERROR: You tried to plot colored electrodes, but none of them are visible.'); 
 end

@@ -1,5 +1,5 @@
-function [showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
-%function [showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
+function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
+%function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
 %
 % This function derives the RGB color values of electrodes. It gets called
 % from plotElecs.m
@@ -19,10 +19,12 @@ function [showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElec
 %                visualized (might be a subset of elecColors)
 % elecCbarMin   -max value of visualized electrodes
 % elecCbarMax   -min value of visualized electrodes
+% elecCmapName  -the colormap used for the electrodes
 
 nShowElec=length(showElecIds);
 elecCbarMin=[];
 elecCbarMax=[];
+elecCmapName=[];
 if isempty(elecColors)
     % No color/value info given, make electrodes black
     showElecColors = zeros(nShowElec,3);
