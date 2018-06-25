@@ -34,7 +34,7 @@ function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(
 %   Load with a GUI:
 %   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab();
 %
-%   Load using EpiSurg storage conventions:
+%   Load using iELVis storage conventions:
 %   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab('TWH11');
 %
 %   Load using an full mgrid filename:

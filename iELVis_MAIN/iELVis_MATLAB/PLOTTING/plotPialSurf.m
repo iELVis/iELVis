@@ -574,7 +574,7 @@ try
             [cort.vert cort.tri]=read_surf(fullfile(surfacefolder,['lh.' surfType]));
         end
         if min(min(cort.tri))<1
-            cort.tri=cort.tri+1; %sometimes this is needed sometimes not. no comprendo. DG
+            cort.tri=cort.tri+1; %sometimes this is needed, sometimes not. no comprendo. DG
         end
     end
     
