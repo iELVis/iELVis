@@ -155,27 +155,15 @@ end
 ntools_elec_outer_brain(subPath); % If smoothed pial surface has NOT been created, I believe this function fails. DG
 
 % Initialize text file Ids
-% fidLepto=[];
-% fidPial=[];
-% fidCT=[];
-% fidLabels=[];
-% fidLeptoVox=[];
-% fidPialVox=[];
-
-% Initialize electrode info variables
-elecStems=[];
-elecNums=[];
-elecType=[];
-elecHem=[];
-% VOX2RAS
-ctRAS=[];
-leptoRAS=[];
-pialRAS=[];
-
+fidLepto=[];
+fidPial=[];
+fidCT=[];
+fidLabels=[];
+fidLeptoVox=[];
+fidPialVox=[];
 
 %% Calculate electrode locations with correction for brain shift
 %% Loop over hemispheres
-elec_ct=0; % index of the next electrode to add to info variables
 for hemLoop=1:2,
     if hemLoop==1
         hem='lh';
@@ -252,6 +240,16 @@ for hemLoop=1:2,
         %recount the number of grid elecs here. DG
         nElecThisHem=nDepthThisHem+nGridThisHem+nStripThisHem;
         
+        %% Process depth elecs
+        %         if 1
+        %             fprintf('Localizing depths using manually marked locations.\n');
+        %             fprintf('Locations are NOT corrected for brain shift.\n');
+        %         else
+        %             % Hugh's original code
+        %             fprintf('Localizing depths using the most extreme electrodes and interpolating the rest.\n');
+        %             elec_depth = ntools_elec_calc_depth(ini_depth);
+        %         end
+        
         %% Process strip elecs
         if nStripThisHem,
             elec_strip = ntools_elec_calc_strip(elec_strip,subPath,hem);
@@ -288,6 +286,12 @@ for hemLoop=1:2,
         
         %% Save the electrodes locations as text files(note that the text 
         % files are closed after looping over both hemispheres)
+        leptoRAS=zeros(nElecThisHem,3);
+        ctRAS=leptoRAS;
+        elecStems=cell(nElecThisHem,1);
+        elecNums=zeros(nElecThisHem,1);
+        elecType=cell(nElecThisHem,1);
+        ct=0;
         for a=1:nGridThisHem, % ?? make sure this works
             ct=ct+1;
             elecStems{ct}=elec_grid{a,1};
