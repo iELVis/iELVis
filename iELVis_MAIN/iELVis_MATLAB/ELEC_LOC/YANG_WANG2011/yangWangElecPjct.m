@@ -54,6 +54,8 @@ if ~isdir(subPath)
     error('Freesurfer folder %s not found',subPath);
 end
 
+%% Get version of code to store with electrode coordinates:
+brainShiftMethod=['yangWang-' iELVis_getGitInfo];
 
 %% read the inital text file with postimplant electrode coordinates
 % Note coordinates are in voxels (NOT RAS)
@@ -335,7 +337,7 @@ for hemLoop=1:2,
         fnameLeptoRAS = fullfile(elecReconPath,[sub '.LEPTO']);
         fprintf('Saving lepto RAS electrode locations to: %s\n',fnameLeptoRAS);
         if isempty(fidLepto)
-            fidLepto=writeElecCoordHeader(fnameLeptoRAS);
+            fidLepto=writeElecCoordHeader(fnameLeptoRAS,brainShiftMethod);
         end
         for a=1:nElecThisHem,
             fprintf(fidLepto,'%f %f %f\n',leptoRAS(a,1),leptoRAS(a,2),leptoRAS(a,3));
@@ -345,7 +347,7 @@ for hemLoop=1:2,
         fnamePialRAS = fullfile(elecReconPath,[sub '.PIAL']);
         fprintf('Saving pial RAS electrode locations to: %s\n',fnamePialRAS);
         if isempty(fidPial)
-            fidPial=writeElecCoordHeader(fnamePialRAS);
+            fidPial=writeElecCoordHeader(fnamePialRAS,brainShiftMethod);
         end
         for a=1:nElecThisHem,
             fprintf(fidPial,'%f %f %f\n',pialRAS(a,1),pialRAS(a,2),pialRAS(a,3));
@@ -355,7 +357,7 @@ for hemLoop=1:2,
         fnameCtRAS = fullfile(elecReconPath,[sub '.CT']);
         fprintf('Saving CT RAS electrode locations to: %s\n',fnameCtRAS);
         if isempty(fidCT)
-            fidCT=writeElecCoordHeader(fnameCtRAS);
+            fidCT=writeElecCoordHeader(fnameCtRAS,brainShiftMethod);
         end
         for a=1:nElecThisHem,
             fprintf(fidCT,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
@@ -379,7 +381,7 @@ for hemLoop=1:2,
         fnameLeptoVox = fullfile(elecReconPath,[sub '.LEPTOVOX']);
         fprintf('Saving lepto VOX electrode locations to: %s\n',fnameLeptoVox);
         if isempty(fidLeptoVox)
-            fidLeptoVox=writeElecCoordHeader(fnameLeptoVox);
+            fidLeptoVox=writeElecCoordHeader(fnameLeptoVox,brainShiftMethod);
         end
         for a=1:nElecThisHem,
             fprintf(fidLeptoVox,'%f %f %f\n',leptoVOX(a,1),leptoVOX(a,2),leptoVOX(a,3));
@@ -389,7 +391,7 @@ for hemLoop=1:2,
         fnamePialVox = fullfile(elecReconPath,[sub '.PIALVOX']);
         fprintf('Saving pial VOX electrode locations to: %s\n',fnamePialVox);
         if isempty(fidPialVox)
-            fidPialVox=writeElecCoordHeader(fnamePialVox);
+            fidPialVox=writeElecCoordHeader(fnamePialVox,brainShiftMethod);
         end
         for a=1:nElecThisHem,
             fprintf(fidPialVox,'%f %f %f\n',pialVOX(a,1),pialVOX(a,2),pialVOX(a,3));
@@ -411,7 +413,7 @@ fclose(fidPialVox);
 infRAS=pial2InfBrain(sub,[]);
 fnameInfRAS = fullfile(elecReconPath,[sub '.INF']);
 fprintf('Saving inflated pial RAS electrode locations to: %s\n',fnameInfRAS);
-fidInf=writeElecCoordHeader(fnameInfRAS);
+fidInf=writeElecCoordHeader(fnameInfRAS,brainShiftMethod);
 for a=1:nManElec,
     fprintf(fidInf,'%f %f %f\n',infRAS(a,1),infRAS(a,2),infRAS(a,3));
 end
