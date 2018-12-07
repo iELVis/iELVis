@@ -335,9 +335,10 @@ for hemLoop=1:2,
         fnameLeptoRAS = fullfile(elecReconPath,[sub '.LEPTO']);
         fprintf('Saving lepto RAS electrode locations to: %s\n',fnameLeptoRAS);
         if isempty(fidLepto)
-            fidLepto=fopen(fnameLeptoRAS,'w');
-            fprintf(fidLepto,'%s\n',datestr(now));
-            fprintf(fidLepto,'R A S\n');
+            %             fidLepto=fopen(fnameLeptoRAS,'w');
+            %             fprintf(fidLepto,'%s\n',datestr(now));
+            %             fprintf(fidLepto,'R A S\n');
+            fidLepto=writeElecCoordHeader(fnameLeptoRAS);
         end
         for a=1:nElecThisHem,
             fprintf(fidLepto,'%f %f %f\n',leptoRAS(a,1),leptoRAS(a,2),leptoRAS(a,3));
@@ -347,9 +348,10 @@ for hemLoop=1:2,
         fnamePialRAS = fullfile(elecReconPath,[sub '.PIAL']);
         fprintf('Saving pial RAS electrode locations to: %s\n',fnamePialRAS);
         if isempty(fidPial)
-            fidPial=fopen(fnamePialRAS,'w');
-            fprintf(fidPial,'%s\n',datestr(now));
-            fprintf(fidPial,'R A S\n');
+            %             fidPial=fopen(fnamePialRAS,'w');
+            %             fprintf(fidPial,'%s\n',datestr(now));
+            %             fprintf(fidPial,'R A S\n');
+            fidPial=writeElecCoordHeader(fnamePialRAS);
         end
         for a=1:nElecThisHem,
             fprintf(fidPial,'%f %f %f\n',pialRAS(a,1),pialRAS(a,2),pialRAS(a,3));
@@ -359,9 +361,10 @@ for hemLoop=1:2,
         fnameCtRAS = fullfile(elecReconPath,[sub '.CT']);
         fprintf('Saving CT RAS electrode locations to: %s\n',fnameCtRAS);
         if isempty(fidCT)
-            fidCT=fopen(fnameCtRAS,'w');
-            fprintf(fidCT,'%s\n',datestr(now));
-            fprintf(fidCT,'R A S\n');
+            %             fidCT=fopen(fnameCtRAS,'w');
+            %             fprintf(fidCT,'%s\n',datestr(now));
+            %             fprintf(fidCT,'R A S\n');
+            fidCT=writeElecCoordHeader(fnameCtRAS);
         end
         for a=1:nElecThisHem,
             fprintf(fidCT,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
@@ -382,24 +385,26 @@ for hemLoop=1:2,
         % VOX COORDINATES
         RAS2VOX=inv(VOX2RAS);
         leptoVOX=(RAS2VOX*[leptoRAS'; ones(1, nElecThisHem)])';
-        fnameLeptoVOX = fullfile(elecReconPath,[sub '.LEPTOVOX']);
-        fprintf('Saving lepto VOX electrode locations to: %s\n',fnameLeptoVOX);
+        fnameLeptoVox = fullfile(elecReconPath,[sub '.LEPTOVOX']);
+        fprintf('Saving lepto VOX electrode locations to: %s\n',fnameLeptoVox);
         if isempty(fidLeptoVox)
-            fidLeptoVox=fopen(fnameLeptoVOX,'w');
-            fprintf(fidLeptoVox,'%s\n',datestr(now));
-            fprintf(fidLeptoVox,'X Y Z\n');
+%             fidLeptoVox=fopen(fnameLeptoVOX,'w');
+%             fprintf(fidLeptoVox,'%s\n',datestr(now));
+%             fprintf(fidLeptoVox,'X Y Z\n');
+            fidLeptoVox=writeElecCoordHeader(fnameLeptoVox);
         end
         for a=1:nElecThisHem,
             fprintf(fidLeptoVox,'%f %f %f\n',leptoVOX(a,1),leptoVOX(a,2),leptoVOX(a,3));
         end
         
         pialVOX=(RAS2VOX*[pialRAS'; ones(1, nElecThisHem)])';
-        fnamePialVOX = fullfile(elecReconPath,[sub '.PIALVOX']);
-        fprintf('Saving pial VOX electrode locations to: %s\n',fnamePialVOX);
+        fnamePialVox = fullfile(elecReconPath,[sub '.PIALVOX']);
+        fprintf('Saving pial VOX electrode locations to: %s\n',fnamePialVox);
         if isempty(fidPialVox)
-            fidPialVox=fopen(fnamePialVOX,'w');
-            fprintf(fidPialVox,'%s\n',datestr(now));
-            fprintf(fidPialVox,'X Y Z\n');
+%             fidPialVox=fopen(fnamePialVOX,'w');
+%             fprintf(fidPialVox,'%s\n',datestr(now));
+%             fprintf(fidPialVox,'X Y Z\n');
+            fidPialVox=writeElecCoordHeader(fnamePialVox);
         end
         for a=1:nElecThisHem,
             fprintf(fidPialVox,'%f %f %f\n',pialVOX(a,1),pialVOX(a,2),pialVOX(a,3));
@@ -421,9 +426,10 @@ fclose(fidPialVox);
 infRAS=pial2InfBrain(sub,[]);
 fnameInfRAS = fullfile(elecReconPath,[sub '.INF']);
 fprintf('Saving inflated pial RAS electrode locations to: %s\n',fnameInfRAS);
-fidInf=fopen(fnameInfRAS,'w');
-fprintf(fidInf,'%s\n',datestr(now));
-fprintf(fidInf,'R A S\n');
+% fidInf=fopen(fnameInfRAS,'w');
+% fprintf(fidInf,'%s\n',datestr(now));
+% fprintf(fidInf,'R A S\n');
+fidInf=writeElecCoordHeader(fnameInfRAS);
 for a=1:nManElec,
     fprintf(fidInf,'%f %f %f\n',infRAS(a,1),infRAS(a,2),infRAS(a,3));
 end
