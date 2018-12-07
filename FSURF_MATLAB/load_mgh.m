@@ -77,9 +77,11 @@ if (strcmpi(fname((strlen(fname)-3):strlen(fname)), '.MGZ') | ...
           error('Win:no7zip','Could not find 7-Zip. Make sure that it is installed in\n''C:\\Program Files\\7-Zip\\'', or else edit this function\nto direct it to the correct location on your machine.');
       end
       % get folder and file name
-      foldername=fileparts(fname);
-      % execute 7-Zip command to extract and rename zipped file
-      eval(['dos ''"C:\Program Files\7-Zip\7z" x "' fname '" -so >"' fullfile(foldername,new_fname) '"''']);
+      [foldername,fnameshort]=fileparts(fname);
+      % execute 7-Zip extract command
+      eval(['dos ''"C:\Program Files\7-Zip\7z" e "' fname '" -o"' foldername '"''']);
+      % rename unzipped file
+      movefile(fullfile(foldername,fnameshort),fullfile(foldername,new_fname));
   elseif(strcmp(computer,'MAC') || strcmp(computer,'MACI') || strcmp(computer,'MACI64'))
       unix(sprintf('gunzip -c %s > %s', fname, new_fname)) ;
   else
