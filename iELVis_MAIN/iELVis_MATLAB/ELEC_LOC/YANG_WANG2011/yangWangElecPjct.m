@@ -14,11 +14,28 @@ function yangWangElecPjct(sub)
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
 %  Freesufer subject folder:
-%    *.PIAL - RAS coordinates snapped to pial surface
-%    *.PIALVOX - Voxel coordinates snapped to pial surface
-%    *.LEPTO - RAS coordinates snapped to leptomeningeal (i.e., smoothed pial)
-%                  surface)
-%    *.electrodeNames - electrode names
+%     *.POSTIMPLANT: The RAS coordinates of electrodes before any correction for 
+%           postimplant brain shift
+%     *.LEPTO: The leptomeningeal surface RAS coordinates of electrodes after 
+%           correction for postimplant brain shift. Depth electrode 
+%           coordinates are the same as in *.CT
+%     *.LEPTOVOX: The leptomeningeal surface voxel coordinates of electrodes after 
+%           correction for postimplant brain shift. Voxel coordinates 
+%           are for brainmask.nii.gz file also in the elec_recon folder. 
+%           Depth electrode coordinates are the same as in *.CT
+%     *.INF: The pial RAS coordinates of electrodes on the inflated pial 
+%           surface after correcting for brain shift. Depths have NaN coordinates.
+%     *.PIAL: The pial surface RAS coordinates of electrodes after 
+%           correction for postimplant brain shift. Depth electrode coordinates 
+%           are the same as in *.CT 
+%     *.PIALVOX: The pial surface voxel coordinates of electrodes after 
+%           correction for postimplant brain shift. Voxel coordinates are 
+%           for brainmask.nii.gz file also in the elec_recon folder. Depth 
+%           electrode coordinates are the same as in *.CT
+%     *.electrodeNames: A text file that indicates the name, type of 
+%           electrode (strip, grid, depth), and hemisphere in which each 
+%           electrode lies. The ith row of this file corresponds to the ith 
+%           row of coordinate files.
 %    localization_process_date.log - Record of command line output produced
 %                                    when this function is run
 %
@@ -159,7 +176,7 @@ ntools_elec_outer_brain(subPath); % If smoothed pial surface has NOT been create
 % Initialize text file Ids
 fidLepto=[];
 fidPial=[];
-fidCT=[];
+fidPostImp=[];
 fidLabels=[];
 fidLeptoVox=[];
 fidPialVox=[];
@@ -193,7 +210,7 @@ for hemLoop=1:2,
             for i=1:length(gridNames)
                 ini_gridNames(i) = gridNames{i};
             end
-            gridNames = unique(ini_gridNames); %# of unique grids
+            gridNames = unique(ini_gridNames); % number of unique grids
             nGridType=length(gridNames);
             elec_grid=[];
             grid_stats=[];
@@ -353,14 +370,14 @@ for hemLoop=1:2,
             fprintf(fidPial,'%f %f %f\n',pialRAS(a,1),pialRAS(a,2),pialRAS(a,3));
         end
         
-        % CT (i.e., uncorrected for brain shift)
-        fnameCtRAS = fullfile(elecReconPath,[sub '.CT']);
-        fprintf('Saving CT RAS electrode locations to: %s\n',fnameCtRAS);
-        if isempty(fidCT)
-            fidCT=writeElecCoordHeader(fnameCtRAS,brainShiftMethod);
+        % Postimplant (i.e., uncorrected for brain shift)
+        fnamePostImpRAS = fullfile(elecReconPath,[sub '.POSTIMPLANT']);
+        fprintf('Saving CT RAS electrode locations to: %s\n',fnamePostImpRAS);
+        if isempty(fidPostImp)
+            fidPostImp=writeElecCoordHeader(fnamePostImpRAS,brainShiftMethod);
         end
         for a=1:nElecThisHem,
-            fprintf(fidCT,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
+            fprintf(fidPostImp,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
         end
         
         % Electrode names 
@@ -403,7 +420,7 @@ end
 %% Close text files
 fclose(fidLepto);
 fclose(fidPial);
-fclose(fidCT);
+fclose(fidPostImp);
 fclose(fidLabels);
 fclose(fidLeptoVox);
 fclose(fidPialVox);
@@ -421,7 +438,7 @@ fclose(fidInf);
 
 
 %% Plot results to double check
-plotCtVsLepto(sub,1,1);
+plotPostImpVsLepto(sub,1,1);
 
 
 %% save all into binary nifti image

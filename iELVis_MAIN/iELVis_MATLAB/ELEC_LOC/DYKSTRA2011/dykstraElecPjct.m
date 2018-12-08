@@ -23,7 +23,7 @@ function dykstraElecPjct(sub,minimizeChange)
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
 %  Freesufer subject folder:
-%     *.CT: The RAS coordinates of electrodes before any correction for 
+%     *.POSTIMPLANT: The RAS coordinates of electrodes before any correction for 
 %           postimplant brain shift
 %     *.LEPTO: The leptomeningeal surface RAS coordinates of electrodes after 
 %           correction for postimplant brain shift. Depth electrode 
@@ -213,14 +213,14 @@ end
 fclose(fidLabels);
 
 %%%%%% Output RAS Coordinates to Text Files %%%%%%%%%
-% CT RAS COORDINATES
-fnameCtRAS = fullfile(elecReconPath,[ sub '.CT']);
-fprintf('Saving CT RAS electrode locations to: %s\n',fnameCtRAS);
-fidCt=writeElecCoordHeader(fnameCtRAS,brainShiftMethod);
+% POSTIMPLANT (CT or MRI) RAS COORDINATES
+fnamePostImpRAS = fullfile(elecReconPath,[ sub '.POSTIMPLANT']);
+fprintf('Saving CT RAS electrode locations to: %s\n',fnamePostImpRAS);
+fidPostImp=writeElecCoordHeader(fnamePostImpRAS,brainShiftMethod);
 for a=1:nElec,
-    fprintf(fidCt,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
+    fprintf(fidPostImp,'%f %f %f\n',ctRAS(a,1),ctRAS(a,2),ctRAS(a,3));
 end
-fclose(fidCt);
+fclose(fidPostImp);
 
 % Lepto RAS COORDINATES
 fnameLeptoRAS = fullfile(elecReconPath,[sub '.LEPTO']);
@@ -274,7 +274,7 @@ fclose(fidInf);
 
 
 %% Plot results to double check
-plotCtVsLepto(sub,1,1);
+plotPostImpVsLepto(sub,1,1);
 
 % close diary
 fprintf('\nElectrodes Localization finished for %s',sub);

@@ -14,9 +14,11 @@ subDir=fullfile(taskDir,sprintf('sub-%s',subj));
 ieegDir=fullfile(subDir,'ieeg');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir);
 
+%% TODO change CT to POSTIMP
 
 %% Export neuroimaging TODO
 
+%% TODO map to avg brain
 
 %% Import electrode names, type, and hemisphere
 % Electrode names
@@ -54,6 +56,37 @@ for sLoop=1:1, %% ?? debuging
         end
     end
     
+    % Import brain shift correction method
+    fid=fopen(xyzFname,'r');
+    firstLine=fgetl(fid);
+    fclose(fid);
+    splitHdr=strsplit(firstLine,9); % split on tabs
+    if length(splitHdr)>=2,
+        % method is specified in header
+        brainShiftCorrectMethod=splitHdr{2}; 
+    else
+        % figure out which brain shift correction method was used based on log
+        splitHdr2=strsplit(firstLine,32);
+        dateGenerated=datetime(splitHdr2{1});
+        logDate=datestr(dateGenerated,'yyyy-mm-dd');
+        logFname=sprintf('localization_process_%s.log',logDate);
+        logFname=fullfile(elecReconPath,logFname);
+        if exist(logFname,'file')
+            fid=fopen(logFname,'r');
+            tempLine=fgetl(fid);
+            tempLine=fgetl(fid);
+            tempLine=fgetl(fid);
+            if strfind('Dykstra',tempLine)
+                brainShiftCorrectMethod='dykstra-preIeegBids';
+            else
+                brainShiftCorrectMethod='yangWang-preIeegBids';
+            end
+            fclose(fid);
+        else
+            brainShiftCorrectMethod='BrainShiftCorrectionMethodUnknown';
+        end
+    end
+    
     %% Create channels.tsv file
     elecSpace=coordTypes{sLoop};
     % outFname=fullfile(ieegDir,sprintf('sub-%.2d_task-%s_run-%.2_channels.tsv', ...
@@ -85,7 +118,6 @@ for sLoop=1:1, %% ?? debuging
     
     
     %% Create coordsystem.json file
-    brainShiftCorrectMethod='??'; % TODO fix
     coordJsonFname=fullfile(ieegDir,sprintf('sub-%s_ses-%.2d_space-%s_coordsystem.json', ...
         subj,sessionId,elecSpace));
     anatFile='??'; % TODO fix
@@ -94,7 +126,12 @@ for sLoop=1:1, %% ?? debuging
     fprintf(fid,'"iEEGCoordinateSystem": "%s",\n',elecSpace);
     fprintf(fid,'"iEEGCoordinateUnits": "mm",\n');
     fprintf(fid,'"iEEGCoordinateProcessingDescripton": "%s",\n',brainShiftCorrectMethod);
-    % TODO use fprintf(fid,"iEEGCoordinateProcessingReference": "Hermes et al., 2010 JNeuroMeth",
+    if strfind('dykstra',brainShiftCorrectMethod),
+        brainShiftReference='Dykstra et al., 2011 NeuroImage; Groppe et al., 2017 JNeuroMeth';
+    else
+       brainShiftReference='Yang, Wang et al., 2012 NeuroImage; Groppe et al., 2017 JNeuroMeth';
+    end
+    fprintf(fid,'"iEEGCoordinateProcessingReference": "%s",\n',brainShiftReference);
     fprintf(fid,'"IntendedFor": "%s"\n',anatFile);
     fprintf(fid,'}\n');
     fclose(fid);

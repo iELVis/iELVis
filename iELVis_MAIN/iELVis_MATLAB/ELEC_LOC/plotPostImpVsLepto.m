@@ -1,5 +1,5 @@
-function [figH, axH]=plotCtVsLepto(sub,printEm,plotPial)
-%function [figH, axH]=plotCtVsLepto(sub,printEm,plotPial)
+function [figH, axH]=plotPostImpVsLepto(sub,printEm,plotPial)
+%function [figH, axH]=plotPostImpVsLepto(sub,printEm,plotPial)
 %
 % This function creates two plots to illustrate the effect of brain shift
 % correction:
@@ -9,7 +9,7 @@ function [figH, axH]=plotCtVsLepto(sub,printEm,plotPial)
 %  2: Post-correction positions overlayed on pial surface and color coded
 %  to represent distance between pre and post correction locations
 %
-% This function is called pial by interpStripElec.m and yangWangElecPjct.m
+% This function is called by interpStripElec.m, dykstraElecPjct.m, and yangWangElecPjct.m
 %
 % Inputs:
 %  sub - Subject's FreeSurfer name/folder
@@ -39,14 +39,14 @@ chanName=chanInfo(:,1);
 chanType=chanInfo(:,2);
 chanHem=chanInfo(:,3);
 
-ctFname=fullfile(erPath,[sub '.CT']);
-ctCsv=csv2Cell(ctFname,' ',2);
+postImpFname=fullfile(erPath,[sub '.POSTIMPLANT']);
+postImpCsv=csv2Cell(postImpFname,' ',2);
 
 leptoRAS=zeros(nChan,3);
 ctRAS=zeros(nChan,3);
 for a=1:nChan,
     for b=1:3,
-        ctRAS(a,b)=str2num(ctCsv{a,b});
+        ctRAS(a,b)=str2num(postImpCsv{a,b});
         leptoRAS(a,b)=str2num(leptoCsv{a,b});
     end
 end
