@@ -8,7 +8,7 @@
 #In the process the elec_recon subfolder in the patient's FreeSurfer folder is created along with the following files:
 #    T1.nii.gz: The full head MRI
 #    brainmask.nii.gz: The skull stripped MRI
-#    ctINt1.nii.gz: The post-implant CT coregistered to the pre-implant MRI
+#    postInPre.nii.gz: The post-implant CT coregistered to the pre-implant MRI
 #
 # Created by David Groppe on 2/11/15.
 # Questions? Email: david.m.groppe@gmail.com
@@ -53,17 +53,17 @@ echo 'Copying CT nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/.
 
 bbregister --s $sub --mov $2 --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-fsl --bold
-flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/ctINt1.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 
 # Make images of CT/MRI coregistration
-slices $elecReconPath/ctINt1.nii.gz $elecReconPath/T1.nii.gz
-slices $elecReconPath/T1.nii.gz  $elecReconPath/ctINt1.nii.gz
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz
 
 # Make gifs of those images
-slices $elecReconPath/ctINt1.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_1.gif
-slices $elecReconPath/T1.nii.gz  $elecReconPath/ctINt1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_2.gif
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_1.gif
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_2.gif
 
 echo 'Run this for interactive GUI'
-echo 'fslview ' $elecReconPath/T1.nii.gz ' ' $elecReconPath/ctINt1.nii.gz  
+echo 'fslview ' $elecReconPath/T1.nii.gz ' ' $elecReconPath/postInPre.nii.gz

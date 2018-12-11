@@ -53,18 +53,18 @@ echo 'Copying postimplant MRI nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/.
 
 echo 'Registering ' $2 ' to T1.nii.gz with a rigid (6 degrees of freedom) transformation that maximizes normalized correlation between the volumes. This takes awhile....'
-flirt -in $2  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postT1INpreT1.nii.gz -omat $elecReconPath/post2preT1.mat -interp trilinear -cost normcorr -dof 6 -searchcost normcorr -searchrx -180 180 -searchry -180 180 -searchrz -180 180
+flirt -in $2  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/post2preT1.mat -interp trilinear -cost normcorr -dof 6 -searchcost normcorr -searchrx -180 180 -searchry -180 180 -searchrz -180 180
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 
 # Make images of CT/MRI coregistration
-slices $elecReconPath/postT1INpreT1.nii.gz $elecReconPath/T1.nii.gz
-slices $elecReconPath/T1.nii.gz  $elecReconPath/postT1INpreT1.nii.gz
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz
 
 # Make gifs of those images
-slices $elecReconPath/postT1INpreT1.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_1.gif
-slices $elecReconPath/T1.nii.gz  $elecReconPath/postT1INpreT1.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_2.gif
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_1.gif
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_2.gif
 
-echo flirt -in $2  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postT1INpreT1.nii.gz -omat $elecReconPath/post2preT1.mat -interp trilinear -cost normcorr -dof 6 -searchcost normcorr -searchrx -180 180 -searchry -180 180 -searchrz -180 180
+echo flirt -in $2  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/post2preT1.mat -interp trilinear -cost normcorr -dof 6 -searchcost normcorr -searchrx -180 180 -searchry -180 180 -searchrz -180 180
 echo 'Run the command below to interactively inspect the coregistration:'
-echo "fslview ${elecReconPath}/T1.nii.gz ${elecReconPath}/postT1INpreT1.nii.gz" 
+echo "fslview ${elecReconPath}/T1.nii.gz ${elecReconPath}/postInPre.nii.gz"

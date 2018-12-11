@@ -3,26 +3,87 @@ rootDir='/Users/davidgroppe/Desktop/';
 task='tactile';
 %globalFsDir
 fsDir=getFsurfSubDir();
-elecReconPath=fullfile(fsDir,subj,'elec_recon');
+fsSubDir=fullfile(fsDir,subj);
+elecReconDir=fullfile(fsSubDir,'elec_recon');
 sessionId=1;
+% Get Freesurfer Version
+fsurfVersionFname=fullfile(fsSubDir,'scripts','build-stamp.txt');
+fid=fopen(fsurfVersionFname);
+fsurfVersion=fgetl(fid);
+fclose(fid);
 
 % BIDS directories
 taskDir=fullfile(rootDir,sprintf('%s_task',task));
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(taskDir);
-subDir=fullfile(taskDir,sprintf('sub-%s',subj));
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(subDir);
-ieegDir=fullfile(subDir,'ieeg');
+bidsSubDir=fullfile(taskDir,sprintf('sub-%s',subj));
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir);
+ieegDir=fullfile(bidsSubDir,'ieeg');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir);
+derivDir=fullfile(taskDir,'derivatives');
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir);
+derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir);
+
 
 %% TODO change CT to POSTIMP
 
-%% Export neuroimaging TODO
 
 %% TODO map to avg brain
 
+
+%% Export neuroimaging to anat folder
+anatDir=fullfile(bidsSubDir,'anat');
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
+copyfile(fullfile(elecReconDir,'T1.nii.gz'),fullfile(anatDir,'T1_fsurf.nii.gz'));
+postimpRawFname='postimpRaw.nii.gz';
+if ~exist(postimpRawFname,'file')
+    postimpRawFname='postopCT.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
+end
+copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimp_raw.nii.gz'));
+
+
+%% Export neuroimaging to derivatives folder
+% copy FreeSurfer version to derivatives folder
+copyfile(fsurfVersionFname,fullfile(derivSubDir,'freesurferVersion.txt'));
+
+% copy postimplant scan aligned to preimplant scan
+postimpAlignedFname='postInPre.nii.gz';
+if ~exist(postimpAlignedFname,'file')
+    postimpAlignedFname='ctINt1.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
+end
+copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postInPre.nii.gz'));
+
+% Copy anatomical labels
+labelFiles={'aparc.a2009s.annot','aparc.annot'};
+tempSubDir='label';
+fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+
+% Copy surface files to BIDS derivatives dir
+% DG: I don't know if all of these files are necessary
+surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
+tempSubDir='surf';
+fsurf2bids(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+
+% Copy mri volumes to BIDS derivatives dir
+mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
+tempSubDir='mri';
+derivMriDir=fullfile(derivSubDir,tempSubDir);
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivMriDir);
+for a=1:length(mriFiles),
+    copyfile(fullfile(fsSubDir,tempSubDir,mriFiles{a}),fullfile(derivMriDir,mriFiles{a}));
+end
+tempSubDir='transforms';
+derivTransDir=fullfile(derivMriDir,tempSubDir);
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivTransDir);
+fname='talairach.xfm';
+copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname));
+
+% TODO Yeo atlas if the files exist
+
+
 %% Import electrode names, type, and hemisphere
 % Electrode names
-elecNamesFname=fullfile(elecReconPath,sprintf('%s.electrodeNames',subj));
+elecNamesFname=fullfile(elecReconDir,sprintf('%s.electrodeNames',subj));
 elecNamesCsv=csv2Cell(elecNamesFname,' ',2);
 nElec=size(elecNamesCsv,1);
 elecNames=cell(nElec,1);
@@ -36,6 +97,7 @@ end
 
 
 %% Import electrode locations
+%TODO make this able to deal with "ct" or "postimplant" fnames
 coordTypes={'ct','inf','leptp','leptovox','pial','pialvox'};
 nCoordSpaces=length(coordTypes);
 for sLoop=1:1, %% ?? debuging
@@ -43,7 +105,7 @@ for sLoop=1:1, %% ?? debuging
     ielvisPostfix=upper(coordTypes{sLoop});
     
     % Import coordinates
-    xyzFname=fullfile(elecReconPath,sprintf('%s.%s',subj,ielvisPostfix));
+    xyzFname=fullfile(elecReconDir,sprintf('%s.%s',subj,ielvisPostfix));
     xyzCoordStr=csv2Cell(xyzFname,' ',2);
     if size(xyzCoordStr,1)~=nElec,
         error('# of electrodes in %s does not match that in %s\n',xyzFname,elecNamesFname);
@@ -70,7 +132,7 @@ for sLoop=1:1, %% ?? debuging
         dateGenerated=datetime(splitHdr2{1});
         logDate=datestr(dateGenerated,'yyyy-mm-dd');
         logFname=sprintf('localization_process_%s.log',logDate);
-        logFname=fullfile(elecReconPath,logFname);
+        logFname=fullfile(elecReconDir,logFname);
         if exist(logFname,'file')
             fid=fopen(logFname,'r');
             tempLine=fgetl(fid);
@@ -98,7 +160,7 @@ for sLoop=1:1, %% ?? debuging
     fprintf(fid,'name\tx\ty\tz\tsize\ttype\tmanufacturer\n');
     % Elec info
     for eLoop=1:nElec,
-        elecManufacturer='Unknown'; % TODO make it possible to import this from file
+        elecManufacturer='n/a'; % TODO make it possible to import this from file
         elecSize=nan; % TODO make it possible to import this from file
         % TODO add hemisphere to this?
         switch elecType{eLoop}
@@ -125,15 +187,19 @@ for sLoop=1:1, %% ?? debuging
     fprintf(fid,'{\n');
     fprintf(fid,'"iEEGCoordinateSystem": "%s",\n',elecSpace);
     fprintf(fid,'"iEEGCoordinateUnits": "mm",\n');
-    fprintf(fid,'"iEEGCoordinateProcessingDescripton": "%s",\n',brainShiftCorrectMethod);
+    fprintf(fid,'"iEEGCoordinateProcessingDescription": "%s",\n',brainShiftCorrectMethod);
     if strfind('dykstra',brainShiftCorrectMethod),
         brainShiftReference='Dykstra et al., 2011 NeuroImage; Groppe et al., 2017 JNeuroMeth';
     else
        brainShiftReference='Yang, Wang et al., 2012 NeuroImage; Groppe et al., 2017 JNeuroMeth';
     end
     fprintf(fid,'"iEEGCoordinateProcessingReference": "%s",\n',brainShiftReference);
+    fprintf(fid,'"t1ProcessingDescription": "%s",\n',fsurfVersion);
+    fprintf(fid,'"t1ProcessingReference": "http://freesurfer.net/fswiki/FreeSurferMethodsCitation",\n');
     fprintf(fid,'"IntendedFor": "%s"\n',anatFile);
     fprintf(fid,'}\n');
     fclose(fid);
     
 end
+
+

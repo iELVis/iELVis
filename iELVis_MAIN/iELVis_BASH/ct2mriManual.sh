@@ -49,15 +49,15 @@ echo 'Copying ct2mri.dat to ct2mriManual.dat.'
 cp $elecReconPath/ct2mri.dat $elecReconPath/ct2mriManual.dat
 
 bbregister --s $sub --mov $2 --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-reg $elecReconPath/ct2mriManual.dat  --bold
-flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/ctINt1.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 
 # Make images of CT/MRI coregistration
-slices $elecReconPath/ctINt1.nii.gz $elecReconPath/T1.nii.gz
-slices $elecReconPath/T1.nii.gz  $elecReconPath/ctINt1.nii.gz
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz
 
 # Make gifs of those images
-slices $elecReconPath/ctINt1.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_1.gif
-slices $elecReconPath/T1.nii.gz  $elecReconPath/ctINt1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_2.gif
+slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_1.gif
+slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz -o $elecReconPath/PICS/COREG/ctINt1_2.gif
 
 echo 'Run this for interactive GUI'
-echo 'fslview ' $elecReconPath '/T1.nii.gz' $elecReconPath '/ctINt1.nii.gz'  
+echo 'fslview ' $elecReconPath '/T1.nii.gz' $elecReconPath '/postInPre.nii.gz'
