@@ -29,7 +29,9 @@ derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
 
 
 %% TODO map to avg brain
-
+cfg=[];
+cfg.plotEm=0;
+[avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg);
 
 %% Export neuroimaging to anat folder
 anatDir=fullfile(bidsSubDir,'anat');

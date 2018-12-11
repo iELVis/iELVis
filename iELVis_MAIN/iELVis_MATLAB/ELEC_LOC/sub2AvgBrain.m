@@ -2,8 +2,8 @@ function [avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg)
 %function [avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg)
 %
 % This function maps electrodes from patient space to the FreeSurfer average
-% brain. For subdural electrodes, it takes RAS "pial" coordinates (snapped 
-% to the pial surface) and maps it to the corresponding location on the pial 
+% brain. For subdural electrodes, it takes RAS "pial" coordinates (snapped
+% to the pial surface) and maps it to the corresponding location on the pial
 % surface of FreeSurfer's average brain. Depth electrodes are mapped to
 % MNI305 space with an affine transformation; these coordinates too can be
 % visualized on the FreeSurfer average brain.
@@ -16,11 +16,11 @@ function [avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg)
 %            electrode locations on subject and average pial surface.
 %            Click on electrodes to see names. Depth electrodes are not
 %            shown. {default: 1}
-%   elecCoord = N-by-3 numeric array with RAS electrode coordinates. 
-%               {default: not used; the function looks into the subject's 
+%   elecCoord = N-by-3 numeric array with RAS electrode coordinates.
+%               {default: not used; the function looks into the subject's
 %               Freesurfer folder for electrode coordinate file instead}
 %   elecNames = cell array of strings with electrode names, corresponding
-%               to the rows of elecCoord. This argument is required 
+%               to the rows of elecCoord. This argument is required
 %               if elecCoord is used. {default: not used; the function
 %               looks into the subject's Freesurfer folder for electrode
 %               name file instead}
@@ -36,6 +36,11 @@ function [avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg)
 %               from the participant's electrodeNames file {default:
 %               all electrodes are assumed to be subdural}
 %   rmDepths = 1 or 0. If nonzero, depth electrodes are ignored. {default: 0}
+%   outputTextfile = 1 or 0. If nonzero, electrode locations are stored as a 
+%                  text file (*.FSAVERAGE) in the elec_recon subfolder of
+%                  subj's FreeSurfer folder. Note, you cannot use both this 
+%                  option and rmDepths as removing depths will cause the 
+%                  coordinates to not correspond to *.electrodeNames. {default: 1}
 %
 % Outputs:
 %   avgCoords = Electrode coordinates on FreeSurfer avg brain pial surface
@@ -65,8 +70,12 @@ if  ~isfield(cfg,'elecNames'),      elecNames = []; else    elecNames = cfg.elec
 if  ~isfield(cfg,'isLeft'),        isLeft = [];   else    isLeft = cfg.isLeft;      end
 if  ~isfield(cfg,'isSubdural'),     isSubdural = [];   else    isSubdural = cfg.isSubdural;      end
 if  ~isfield(cfg,'rmDepths'),       rmDepths = 0;   else    rmDepths = cfg.rmDepths;      end
+if  ~isfield(cfg,'outputTextfile'), outputTextfile = 1;   else    outputTextfile = cfg.outputTextfile;      end
 checkCfg(cfg,'sub2AvgBrain.m');
 
+if universalYes(outputTextfile) && universalYes(rmDepths)
+   error('You cannot set both rmDepths and outputTextfile to 1.'); 
+end
 
 % FreeSurfer Subject Directory
 fsDir=getFsurfSubDir();
@@ -206,7 +215,7 @@ for hemLoop=1:2,
             if isSubdural(hemElecIds(a)),
                 avgCoords(hemElecIds(a),:)=avgPial.vert(avgVids(hemElecIds(a)),:);
             else
-                % Get depth coordinate in MNI305 space
+                % Get depth coordinates in MNI305 space
                 %[avgCoordsDepths, elecNamesDepths, isLeftDepths]=depths2AvgBrain(subj);
                 depthId=findStrInCell(elecNames{hemElecIds(a)},elecNamesDepths,1);
                 avgCoords(hemElecIds(a),:)=avgCoordsDepths(depthId,:);
@@ -240,7 +249,7 @@ for hemLoop=1:2,
                 set(h,'markersize',20,'color',elecColors(a,:));
             end
             if universalNo(rmDepths)
-               alpha(0.5); % Make surface transparent so that depths are visible 
+                alpha(0.5); % Make surface transparent so that depths are visible
             end
             rotate3d off;
             
@@ -325,5 +334,48 @@ end
 
 %% Add subject name as prefix to electrode names:
 for a=1:nElec,
-   elecNames{a}=[subj '-' elecNames{a}];
+    elecNames{a}=[subj '-' elecNames{a}];
+end
+
+%% Write electrode locations to text file (if requested)
+if universalYes(outputTextfile),
+    pialFname=fullfile(subDir,'elec_recon',[subj '.PIAL']);
+    % Import brain shift correction method
+    fid=fopen(pialFname,'r');
+    firstLine=fgetl(fid);
+    fclose(fid);
+    splitHdr=strsplit(firstLine,9); % split on tabs
+    if length(splitHdr)>=2,
+        % method is specified in header
+        brainShiftCorrectMethod=splitHdr{2};
+    else
+        % figure out which brain shift correction method was used based on log
+        splitHdr2=strsplit(firstLine,32);
+        dateGenerated=datetime(splitHdr2{1});
+        logDate=datestr(dateGenerated,'yyyy-mm-dd');
+        logFname=sprintf('localization_process_%s.log',logDate);
+        logFname=fullfile(elecReconDir,logFname);
+        if exist(logFname,'file')
+            fid=fopen(logFname,'r');
+            tempLine=fgetl(fid);
+            tempLine=fgetl(fid);
+            tempLine=fgetl(fid);
+            if strfind('Dykstra',tempLine)
+                brainShiftCorrectMethod='dykstra-preIeegBids';
+            else
+                brainShiftCorrectMethod='yangWang-preIeegBids';
+            end
+            fclose(fid);
+        else
+            brainShiftCorrectMethod='BrainShiftCorrectionMethodUnknown';
+        end
+    end
+    
+    xyzFname=fullfile(subDir,'elec_recon',[subj '.FSAVERAGE']);
+    fprintf('Storing electrode coordinates in FreeSurfer Average Brain space to %s\n',xyzFname);
+    fidXyz=writeElecCoordHeader(xyzFname,brainShiftCorrectMethod,subj);
+    for a=1:nElec,
+        fprintf(fidXyz,'%f %f %f\n',avgCoords(a,1),avgCoords(a,2),avgCoords(a,3));
+    end
+    fclose(fidXyz);
 end
