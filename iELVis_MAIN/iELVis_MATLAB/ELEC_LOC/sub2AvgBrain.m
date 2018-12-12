@@ -354,6 +354,7 @@ if universalYes(outputTextfile),
         dateGenerated=datetime(splitHdr2{1});
         logDate=datestr(dateGenerated,'yyyy-mm-dd');
         logFname=sprintf('localization_process_%s.log',logDate);
+        elecReconDir=fullfile(subDir,'elec_recon');
         logFname=fullfile(elecReconDir,logFname);
         if exist(logFname,'file')
             fid=fopen(logFname,'r');

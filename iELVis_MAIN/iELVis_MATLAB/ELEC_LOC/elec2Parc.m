@@ -135,10 +135,18 @@ for hemLoop=1:2,
                     parcFname=fullfile(labelFolder,[lower(hem) 'h.aparc.a2009s.annot']);
                     [~, label, colortable]=read_annotation(parcFname);
                 case 'Y7'
-                    parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_7Networks_N1000.mat']);
+                    parcFname=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_7Networks_N1000.mat']);
+                    if ~exist(parcFname,'file')
+                        % Try original naming convention
+                        parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_7Networks_N1000.mat']);
+                    end
                     load(parcFname);
                 case 'Y17'
-                    parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_17Networks_N1000.mat']);
+                    parcFname=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_17Networks_N1000.mat']);
+                    if ~exist(parcFname,'file')
+                        % Try original naming convention
+                        parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_17Networks_N1000.mat']);
+                    end
                     load(parcFname);
                 otherwise
                     error('Unrecognized value of atlas argument.')

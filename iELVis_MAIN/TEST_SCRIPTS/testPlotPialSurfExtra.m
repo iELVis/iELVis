@@ -28,3 +28,6 @@ cfg.figId=3;
 cfg.showLabels='n';
 cfg.title=[];
 cfgOut=plotPialSurf('TWH013',cfg);
+
+%%
+disp('testPlotPialSurfExtra.m completed successfully.');

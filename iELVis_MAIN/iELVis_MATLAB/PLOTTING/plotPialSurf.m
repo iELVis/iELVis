@@ -603,7 +603,11 @@ try
                 annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
                 [averts,albl,actbl]=read_annotation(annotFname);
             else
-                annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+                if ~exist(annotFname,'file')
+                    % try original naming convention
+                    annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+                end
                 load(annotFname);
                 albl=label;
                 actbl=colortable;
@@ -615,7 +619,11 @@ try
                 annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.annot']); % Yeo et al. 2011
                 [averts,albl,actbl]=read_annotation(annotFname);
             else
-                annotFname=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
+                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
+                if ~exist(annotFname,'file')
+                    % try original naming convention
+                    annotFname=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
+                end
                 load(annotFname);
                 albl=label;
                 actbl=colortable;

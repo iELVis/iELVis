@@ -25,9 +25,13 @@ fsSubDir=fullfile(fsDir,subj);
 
 % Get version of FreeSurfer being used
 fsurfVersionFname=fullfile(fsSubDir,'scripts','build-stamp.txt');
-fid=fopen(fsurfVersionFname);
-fsurfVersion=fgetl(fid);
-fclose(fid);
+if exist(fsurfVersionFname,'file')
+    fid=fopen(fsurfVersionFname);
+    fsurfVersion=fgetl(fid);
+    fclose(fid);
+else
+    fsurfVersion='FreeSurferVersionUnknown';
+end
 
 fidXyz=fopen(fname,'w');
 fprintf(fidXyz,'%s',datestr(now));
