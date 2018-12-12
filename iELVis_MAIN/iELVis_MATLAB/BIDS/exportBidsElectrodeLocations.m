@@ -19,19 +19,11 @@ bidsSubDir=fullfile(taskDir,sprintf('sub-%s',subj));
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir);
 ieegDir=fullfile(bidsSubDir,'ieeg');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir);
-derivDir=fullfile(taskDir,'derivatives');
+derivDir=fullfile(taskDir,'derivatives','iELVis');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir);
 derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir);
 
-
-%% TODO change CT to POSTIMP
-
-
-%% TODO map to avg brain
-cfg=[];
-cfg.plotEm=0;
-[avgCoords, elecNames, isLeft, avgVids, subVids]=sub2AvgBrain(subj,cfg);
 
 %% Export neuroimaging to anat folder
 anatDir=fullfile(bidsSubDir,'anat');
@@ -60,6 +52,11 @@ labelFiles={'aparc.a2009s.annot','aparc.annot'};
 tempSubDir='label';
 fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
+% Copy Yeo anatomical labels if they exist
+labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
+tempSubDir='label';
+fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
+
 % Copy surface files to BIDS derivatives dir
 % DG: I don't know if all of these files are necessary
 surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
@@ -83,6 +80,26 @@ copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname)
 % TODO Yeo atlas if the files exist
 
 
+%% Export FreeSurfer avg brain to derivates
+derivFsavgDir=fullfile(derivDir,'fsaverage');
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
+derivFsavgSurfDir=fullfile(derivFsavgDir,'surf');
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgSurfDir);
+
+fsurfAvgSurfDir=fullfile(fsDir,'fsaverage','surf');
+fnameStems={'inflated','pial'};
+for a=1:2,
+    if a==1
+        hem='lh';
+    else
+        hem='rh';
+    end
+    for b=1:length(fnameStems),
+        copyfile(fullfile(fsurfAvgSurfDir,[hem '.' fnameStems{b}]), ...
+            fullfile(derivFsavgSurfDir,[hem '.' fnameStems{b}]));
+    end
+end
+  
 %% Import electrode names, type, and hemisphere
 % Electrode names
 elecNamesFname=fullfile(elecReconDir,sprintf('%s.electrodeNames',subj));
@@ -97,17 +114,35 @@ for a=1:nElec,
     elecHem{a}=elecNamesCsv{a,3};
 end
 
+%% Map to avg brain if it hasn't been done already
+avgCoordFname=fullfile(elecReconDir,[subj '.FSAVERAGE']);
+if ~exist(avgCoordFname,'file')
+    fprintf('Creating text file of electrodes coordinates in FreeSurfer avg. brain space.\n');
+    cfg=[];
+    cfg.plotEm=0;
+    sub2AvgBrain(subj,cfg);
+end
+
 
 %% Import electrode locations
-%TODO make this able to deal with "ct" or "postimplant" fnames
-coordTypes={'ct','inf','leptp','leptovox','pial','pialvox'};
+% Note this can deal with "ct" or "postimplant" fnames
+coordTypes={'postimplant','inf','lepto','leptovox','pial','pialvox','fsaverage'};
 nCoordSpaces=length(coordTypes);
-for sLoop=1:1, %% ?? debuging
+for sLoop=1:1, %% ?? debuging TODO
     %for sLoop=1:nCoordSpaces,
     ielvisPostfix=upper(coordTypes{sLoop});
     
     % Import coordinates
     xyzFname=fullfile(elecReconDir,sprintf('%s.%s',subj,ielvisPostfix));
+    if strcmpi(ielvisPostfix,'POSTIMPLANT')
+        if ~exist(xyzFname,'file')
+            % Try older filename convention
+            xyzFname=fullfile(elecReconDir,sprintf('%s.CT',subj));
+            if ~exist(xyzFname,'file')
+                error('Missing *.POSTIMPLANT/*.CT file for subject %s\n',subj);
+            end
+        end
+    end
     xyzCoordStr=csv2Cell(xyzFname,' ',2);
     if size(xyzCoordStr,1)~=nElec,
         error('# of electrodes in %s does not match that in %s\n',xyzFname,elecNamesFname);
@@ -159,7 +194,7 @@ for sLoop=1:1, %% ?? debuging
         subj,sessionId,elecSpace));
     fid=fopen(elecTsvFname,'w');
     % Header
-    fprintf(fid,'name\tx\ty\tz\tsize\ttype\tmanufacturer\n');
+    fprintf(fid,'name\tx\ty\tz\themisphere\tsize\ttype\tmanufacturer\n');
     % Elec info
     for eLoop=1:nElec,
         elecManufacturer='n/a'; % TODO make it possible to import this from file
@@ -175,8 +210,10 @@ for sLoop=1:1, %% ?? debuging
             otherwise
                 error('Unrecognized value of elecType: %s',elecType{eLoop});
         end
-        fprintf(fid,'%d\t%f\t%f\t%f\t%f\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
-            xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecSize,thisElecType,elecManufacturer);
+        fprintf(fid,'%s\t%f\t%f\t%f\t%s\t%f\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
+            xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecHem{eLoop},elecSize,thisElecType,elecManufacturer);
+        %         fprintf(fid,'%s\t%f\t%f\t%f\t%f\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
+        %             xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecSize,thisElecType,elecManufacturer);
     end
     fclose(fid);
     
@@ -184,7 +221,16 @@ for sLoop=1:1, %% ?? debuging
     %% Create coordsystem.json file
     coordJsonFname=fullfile(ieegDir,sprintf('sub-%s_ses-%.2d_space-%s_coordsystem.json', ...
         subj,sessionId,elecSpace));
-    anatFile='??'; % TODO fix
+    switch ielvisPostfix
+        case 'FSAVERAGE'
+            anatFile=sprintf('/derivatives/fsaverage/surf/*.pial'); % TODO add this to derivatives?
+        case {'LEPTOVOX','PIALVOX'}
+            anatFile=sprintf('/sub-%s/anat/T1_fsurf.nii.gz',subj);
+        case 'INF'
+            anatFile=sprintf('/derivatives/sub-%s/surf/*.inflated',subj);
+        otherwise
+            anatFile=sprintf('/derivatives/sub-%s/surf/*.pial',subj);
+    end
     fid=fopen(coordJsonFname,'w');
     fprintf(fid,'{\n');
     fprintf(fid,'"iEEGCoordinateSystem": "%s",\n',elecSpace);

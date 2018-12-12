@@ -20,7 +20,6 @@ function [fidXyz]=writeElecCoordHeader(fname,brainShiftMethod,subj)
 % fprintf(fidXyz,'\n');
 % fprintf(fidXyz,'R A S\n');
 
-
 fsDir=getFsurfSubDir();
 fsSubDir=fullfile(fsDir,subj);
 

@@ -28,8 +28,8 @@ function createIndivYeoMapping(fsSub)
 fsDir=getFsurfSubDir();
 labelFolder=fullfile(fsDir,fsSub,'label');
 
-avg_dir=[fsDir '/' 'fsaverage'];
-sub_dir=[fsDir '/' fsSub];
+avg_dir=fullfile(fsDir,'fsaverage');
+sub_dir=fullfile(fsDir,fsSub);
 
 %% 7 area labels taken from the original paper:
 % Yeo BT, Krienen FM, Sepulcre J, Sabuncu MR, Lashkari D, Hollinshead M, 
@@ -103,13 +103,13 @@ for hemLoop=1:2,
     end
     
     %% Export individual annotation as a mat file
-    annotFname7=fullfile(labelFolder,[hem '_Yeo2011_7Networks_N1000.mat']);
+    annotFname7=fullfile(labelFolder,[hem '.Yeo2011_7Networks_N1000.mat']);
     fprintf('Saving Yeo7 %s\n',annotFname7);
     label=indivBrainYeo7;
     colortable=colortable7;
     save(annotFname7,'label','colortable');
     
-    annotFname17=fullfile(labelFolder,[hem '_Yeo2011_17Networks_N1000.mat']);
+    annotFname17=fullfile(labelFolder,[hem '.Yeo2011_17Networks_N1000.mat']);
     fprintf('Saving Yeo17 %s\n',annotFname17);
     label=indivBrainYeo17;
     colortable=colortable17;
