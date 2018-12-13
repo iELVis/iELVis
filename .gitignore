@@ -6,7 +6,6 @@ PRIVATE_FILES
 .DS_Store
 BIDS_STUFF
 iELVis_MAIN/.DS_Store
-iELVis_MAIN/iELVis_MATLAB/BIDS
 iELVis_MAIN/iELVis_MATLAB/.DS_Store
 diary
 *.asv
