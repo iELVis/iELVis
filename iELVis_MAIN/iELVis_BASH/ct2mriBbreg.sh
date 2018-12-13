@@ -50,10 +50,10 @@ echo 'Creating brainmask.nii.gz in elec_recon folder for use with BioImageSuite 
 mri_convert $mriPath/brainmask.mgz $elecReconPath/brainmask.nii.gz
 
 echo 'Copying CT nii.gz file to elec_recon folder.'
-cp $2 $elecReconPath/.
+cp $2 $elecReconPath/postimpRaw.nii.gz
 
-bbregister --s $sub --mov $2 --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-fsl --bold
-flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-fsl --bold
+flirt -in postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 

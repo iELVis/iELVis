@@ -56,6 +56,7 @@ cp $fsDir/mri/transforms/talairach.xfm $newFolder/mri/transforms/.
 mkdir $newFolder/label
 cp $fsDir/label/*.aparc.a2009s.annot $newFolder/label/.
 cp $fsDir/label/*.aparc.annot $newFolder/label/.
+cp $fsDir/label/*Yeo2011*.mat $newFolder/label/.
 
 # Copy surf stuff
 mkdir $newFolder/surf

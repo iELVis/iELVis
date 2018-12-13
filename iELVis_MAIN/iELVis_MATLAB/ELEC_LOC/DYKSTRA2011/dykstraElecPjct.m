@@ -1,5 +1,5 @@
-function dykstraElecPjct(sub,minimizeChange)
-%function dykstraElecPjct(sub,minimizeChange)
+function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId)
+%function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId)
 %
 % Corrects intracranial electrode locations for brain shift using the
 % following method:
@@ -11,7 +11,7 @@ function dykstraElecPjct(sub,minimizeChange)
 % Required Input:
 %  sub - Freesurfer subject name (e.g., 'TWH001')
 %
-% Optional Input:
+% Optional Inputs:
 %  minimizeChange - [0 | 1] If 0, subdural electrodes are simply projected
 %        to the closest leptomeningeal surface vertex to correct for brain shift. If
 %        non-zero, an interative optimization algorithm is used to project
@@ -19,6 +19,14 @@ function dykstraElecPjct(sub,minimizeChange)
 %        change in spatial location and change in the Euclidean distance 
 %        between electrode neighbors. Turning off the optimization may help 
 %        if the optimization peforms poorly. {default: 1}
+%  bidsRootDir - [string] The root BIDS directory into which electrode and
+%               neuroimaging info will be stored {default: not used}
+%  sessionId - [integer] A number indicating the "session" in which the
+%                corresponding iEEG data have been recorded. This will be
+%                used to create filenames of electrode locations as it is
+%                possible that data may be recorded in multiple sessions and
+%                the electrodes recorded from may differ across sessions.
+%                {default: 1}
 %
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
@@ -64,6 +72,12 @@ function dykstraElecPjct(sub,minimizeChange)
 
 if nargin<2,
    minimizeChange=1; 
+end
+if nargin<3,
+    bidsRootDir=[];
+end
+if nargin<4,
+    sessionId=1;
 end
 
 fsDir=getFsurfSubDir();
@@ -280,5 +294,10 @@ plotPostImpVsLepto(sub,1,1);
 fprintf('\nElectrodes Localization finished for %s',sub);
 fprintf('\n================================================================\n');
 diary off
+
+% Copy electrode and anatomical info to an iEEG-BIDS folder
+if ~isempty(bidsRootDir)
+    iELVisFsurf2BIDS(sub,bidsRootDir,sessionId);
+end
 
 

@@ -1,5 +1,5 @@
-function yangWangElecPjct(sub)
-%function yangWangElecPjct(sub)
+function yangWangElecPjct(sub,bidsRootDir,sessionId)
+%function yangWangElecPjct(sub,bidsRootDir,sessionId)
 %
 % Corrects intracranial electrode locations for brain shift using the
 % following method:
@@ -8,8 +8,18 @@ function yangWangElecPjct(sub)
 %  using magnetic resonance imaging. NeuroImage 63(1), 157?165. 
 %  doi:10.1016/j.neuroimage.2012.06.039
 %
-% Input:
+% Required Input:
 %  sub - Freesurfer subject name (e.g., 'TWH001')
+%
+% Optional Inputs:
+%  bidsRootDir - [string] The root BIDS directory into which electrode and
+%               neuroimaging info will be stored {default: not used}
+%  sessionId - [integer] A number indicating the "session" in which the
+%                corresponding iEEG data have been recorded. This will be
+%                used to create filenames of electrode locations as it is
+%                possible that data may be recorded in multiple sessions and
+%                the electrodes recorded from may differ across sessions.
+%                {default: 1}
 %
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
@@ -60,6 +70,13 @@ function yangWangElecPjct(sub)
 % file, but I have not looked to see if it works.
 % -Hugh's original code could interpolate depth electrode locations. I've
 % disabled it but you could make it an option -DG
+
+if nargin<2,
+    bidsRootDir=[];
+end
+if nargin<3,
+    sessionId=1;
+end
 
 % get the subject info
 fsDir=getFsurfSubDir();
@@ -464,6 +481,10 @@ fprintf('\nElectrodes Localization finished for %s',sub);
 fprintf('\n================================================================\n');
 diary off
 
+% Copy electrode and anatomical info to an iEEG-BIDS folder
+if ~isempty(bidsRootDir)
+    iELVisFsurf2BIDS(sub,bidsRootDir,sessionId);
+end
 
 end
 

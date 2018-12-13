@@ -43,13 +43,13 @@ fi
 elecReconPath=$SUBJECTS_DIR/$sub/elec_recon
 
 echo 'Copying CT nii.gz file to elec_recon folder.'
-cp $2 $elecReconPath/.
+cp $2 $elecReconPath/postimpRaw.nii.gz
 
 echo 'Copying ct2mri.dat to ct2mriManual.dat.'
 cp $elecReconPath/ct2mri.dat $elecReconPath/ct2mriManual.dat
 
-bbregister --s $sub --mov $2 --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-reg $elecReconPath/ct2mriManual.dat  --bold
-flirt -in $2 -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-reg $elecReconPath/ct2mriManual.dat  --bold
+flirt -in postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 
 # Make images of CT/MRI coregistration
 slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz

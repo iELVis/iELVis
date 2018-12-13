@@ -52,12 +52,12 @@ derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
 %% Export neuroimaging to anat folder
 anatDir=fullfile(bidsSubDir,'anat');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
-copyfile(fullfile(elecReconDir,'T1.nii.gz'),fullfile(anatDir,'T1_fsurf.nii.gz'));
+copyfile(fullfile(fsSubDir,'mri','orig','001.mgz'),fullfile(anatDir,'preimpRaw.mgz'));
 postimpRawFname='postimpRaw.nii.gz';
-if ~exist(postimpRawFname,'file')
+if ~exist(postimpRawFname,'file') % ?? pickup here
     postimpRawFname='postopCT.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
 end
-copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimp_raw.nii.gz'));
+copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
 
 
 %% Import information about electrode size and manufacturer TODO make this work once iEEG-BIDS format is set
@@ -73,7 +73,11 @@ copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimp_raw.ni
 % copy FreeSurfer version to derivatives folder
 copyfile(fsurfVersionFname,fullfile(derivSubDir,'freesurferVersion.txt'));
 
-% copy postimplant scan aligned to preimplant scan
+% Copy FreeSurfer pre-processed preimplant scan
+preimpPreprocFname='T1.nii.gz';
+copyfile(fullfile(elecReconDir,preimpPreprocFname),fullfile(derivSubDir,'preimplantFsurf.nii.gz'));
+
+% Copy postimplant scan aligned to preimplant scan
 postimpAlignedFname='postInPre.nii.gz';
 if ~exist(postimpAlignedFname,'file')
     postimpAlignedFname='ctINt1.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
