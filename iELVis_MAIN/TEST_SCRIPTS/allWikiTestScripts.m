@@ -15,3 +15,6 @@ testAtlases;
 
 %%
 testImagingOverlays;
+
+%%
+testBids;

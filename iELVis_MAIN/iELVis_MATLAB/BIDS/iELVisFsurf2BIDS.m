@@ -21,6 +21,9 @@ function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId)
 % TODO add link to BIDS specification
 %extraElecInfoFname=[]; % TODO make this an argument to the function
 
+fprintf('Exporting data from %s into iEEG-BIDS format.\n',subj);
+fprintf('iEEG-BIDS root directory is %s\n',bidsRootDir);
+
 % Get FreeSurfer directories
 fsDir=getFsurfSubDir();
 fsSubDir=fullfile(fsDir,subj);
@@ -54,10 +57,21 @@ anatDir=fullfile(bidsSubDir,'anat');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
 copyfile(fullfile(fsSubDir,'mri','orig','001.mgz'),fullfile(anatDir,'preimpRaw.mgz'));
 postimpRawFname='postimpRaw.nii.gz';
-if ~exist(postimpRawFname,'file') % ?? pickup here
-    postimpRawFname='postopCT.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
+if ~exist(fullfile(elecReconDir,postimpRawFname),'file')
+    % Data must have been processed with original version of iELVis that
+    % did not standardize the raw postimplant nii filename.
+    % Ask user to select the postimplant nii file
+    homeDir=pwd;
+    cd(elecReconDir);
+    [postimpRawFname, tempPathName] = uigetfile('*.nii.gz;*.nii', 'Select postimplant raw nii file');
+    if postimpRawFname==0
+       error('You need to select a file that contains the raw postimplant volume.'); 
+    end
+    cd(homeDir);
+    copyfile(fullfile(tempPathName,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
+else
+    copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
 end
-copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
 
 
 %% Import information about electrode size and manufacturer TODO make this work once iEEG-BIDS format is set
