@@ -182,12 +182,12 @@
 %
 %
 %    Other Options:
-%     bidsDir              -Full path to an iEEG-BIDS root directory. If specified,
+%     bidsDir              -Full path to an BIDS-iEEG root directory. If specified,
 %                           electrode location and pial surface files will be 
 %                           imported from this directory. If not specified, 
 %                           these data will be imported from the subject's 
 %                           FreeSurfer directory.
-%     bidsSes              -integer. The iEEG-BIDS session number. This has
+%     bidsSes              -integer. The BIDS-iEEG session number. This has
 %                           no effect if bidsDir not specified {default: 1}
 %     axis                 -Handle of axis in which to make plot.
 %                           {default: new axis created}
@@ -225,14 +225,14 @@
 % cfg.title=[];
 % cfgOut=plotPialSurf('PT001',cfg);
 %
-% % Plot electrodes on brain using data stored according to iEEG-BIDS
+% % Plot electrodes on brain using data stored according to BIDS-iEEG
 % conventions
 % cfg=[];
 % cfg.view='l';
 % cfg.figId=1;
 % cfg.elecCoord='LEPTO';
-% cfg.title='PT001: iEEG-BIDS';
-% cfg.bidsDir='~/Desktop/HandMotor'; % iEEG-BIDS study root directory
+% cfg.title='PT001: BIDS-iEEG';
+% cfg.bidsDir='~/Desktop/HandMotor'; % BIDS-iEEG study root directory
 % cfgOut=plotPialSurf('PT001',cfg);
 %
 % % Plot depths with a semi-transparent pial surface

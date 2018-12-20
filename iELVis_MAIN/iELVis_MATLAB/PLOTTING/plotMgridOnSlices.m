@@ -32,14 +32,14 @@ function plotMgridOnSlices(fsSub,cfg)
 %              jpg is created. This is particularly useful for implants with
 %              a large number of depth contacts. If a directory, the jpg files
 %              get saved there instead. {default: 0}
-%  bidsDir   - Full path to an iEEG-BIDS root directory. If specified,
+%  bidsDir   - Full path to an BIDS-iEEG root directory. If specified,
 %              electrode location and pial surface files will be
 %              imported from this directory. If not specified,
 %              these data will be imported from the subject's FreeSurfer directory.
 %              Note that all electrodes are colored red when you use this
-%              option as iEEG-BIDS does not associate a default color with
+%              option as BIDS-iEEG does not associate a default color with
 %              each electrode.
-%  bidsSes   - integer. The iEEG-BIDS session number. This has no effect if
+%  bidsSes   - integer. The BIDS-iEEG session number. This has no effect if
 %              bidsDir not specified {default: 1}
 %
 %
@@ -80,7 +80,7 @@ if isempty(bidsDir)
     % Look in FreeSurfer directories
     mriDir=fullfile(fsdir,fsSub,'mri');
 else
-    % Look in iEEG-BIDS directory
+    % Look in BIDS-iEEG directory
     mriDir=fullfile(bidsDir,'derivatives','iELVis',['sub-' fsSub],'mri');
 end
 
