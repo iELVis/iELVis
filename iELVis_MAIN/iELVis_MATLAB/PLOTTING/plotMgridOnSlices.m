@@ -9,28 +9,38 @@ function plotMgridOnSlices(fsSub,cfg)
 %  fsSub - Patient's freesurfer directory name
 %
 % Optional cfg parameters:
-%  mgridFname - mgrid filename and path. If empty, name is assumed to be fsSub.mgrid. 
+%  mgridFname - mgrid filename and path. If empty, name is assumed to be fsSub.mgrid.
 %  fullTitle  - If 1, the mgrid and mri voxel coordinates are displayed in
-%               the figure title along with the electrode name and anatomical 
+%               the figure title along with the electrode name and anatomical
 %               location. {default: 0}
 %  markerSize - The size of the dot in each slice used to represent an
 %               electrode's location. {default: 30}
 %  cntrst     - 0< number <=1 The lower this number, the lower the brightness
-%               of the image (i.e., the lower the voxel value corresponding to 
+%               of the image (i.e., the lower the voxel value corresponding to
 %               white). {default: 0.5}
 %  anatOverlay -If 1, color is overlayed on the brain to show FreeSurfer's
-%              automatic segmentation of brain areas (neocortex uses 
+%              automatic segmentation of brain areas (neocortex uses
 %              Desikan-Killiany parcellation). Alternatively define the fullpath
 %              to another parcellation file. {default: 0}
-%  colorLUT    - fullpath to color lookup table if you would like to use 
+%  colorLUT    - fullpath to color lookup table if you would like to use
 %                non default colors for your parcellation overlay.
 %                {default: FreeSurferColorLUTnoFormat.txt}
 %  pauseOn   - If 1, Matlab pa'uses after each figure is made and waits for
 %              a keypress. {default: 0}
-%  printFigs - If 1, each figure is output to a jpg file in the patient's
-%              elec_recon/PICS folder and the figure is closed after the 
-%              jpg is created. This is particularly useful for implants with 
-%              a large number of depth contacts. {default: 0}
+%  printFigs - 1 or directory. If 1, each figure is output to a jpg file in the patient's
+%              elec_recon/PICS folder and the figure is closed after the
+%              jpg is created. This is particularly useful for implants with
+%              a large number of depth contacts. If a directory, the jpg files
+%              get saved there instead. {default: 0}
+%  bidsDir   - Full path to an iEEG-BIDS root directory. If specified,
+%              electrode location and pial surface files will be
+%              imported from this directory. If not specified,
+%              these data will be imported from the subject's FreeSurfer directory.
+%              Note that all electrodes are colored red when you use this
+%              option as iEEG-BIDS does not associate a default color with
+%              each electrode.
+%  bidsSes   - integer. The iEEG-BIDS session number. This has no effect if
+%              bidsDir not specified {default: 1}
 %
 %
 % Examples:
@@ -49,8 +59,6 @@ function plotMgridOnSlices(fsSub,cfg)
 % Feb. 2015
 % Feinstein Institute for Medical Research/Univ. of Toronto
 
-% Future work:
-% Add option for fsurf anatomy colors?
 
 if ~isfield(cfg,'mgridFname'),    mgridFname=[];    else mgridFname=cfg.mgridFname; end
 if ~isfield(cfg,'fullTitle'),     fullTitle=0;      else fullTitle=cfg.fullTitle; end
@@ -60,16 +68,26 @@ if ~isfield(cfg,'anatOverlay'),    anatOverlay=.5;          else anatOverlay=1; 
 if ~isfield(cfg,'colorLUT'),    colorLUT=0;          else colorLUT=cfg.colorLUT; end
 if ~isfield(cfg,'pauseOn'),    pauseOn=0;          else pauseOn=cfg.pauseOn; end
 if ~isfield(cfg,'printFigs'),    printFigs=0;          else printFigs=cfg.printFigs; end
+if ~isfield(cfg, 'bidsDir'),      bidsDir=[];         else bidsDir=cfg.bidsDir; end
+if ~isfield(cfg, 'bidsSes'),      bidsSes=1;         else bidsSes=cfg.bidsSes; end
 checkCfg(cfg,'plotMgridOnSlices.m');
 
 
 % FreeSurfer Subject Directory
 fsdir=getFsurfSubDir();
 
+if isempty(bidsDir)
+    % Look in FreeSurfer directories
+    mriDir=fullfile(fsdir,fsSub,'mri');
+else
+    % Look in iEEG-BIDS directory
+    mriDir=fullfile(bidsDir,'derivatives','iELVis',['sub-' fsSub],'mri');
+end
+
 % Load MRI
-mriFname=fullfile(fsdir,fsSub,'mri','brainmask.mgz');
+mriFname=fullfile(mriDir,'brainmask.mgz');
 if ~exist(mriFname,'file')
-   error('File %s not found.',mriFname); 
+    error('File %s not found.',mriFname);
 end
 mri=MRIread(mriFname);
 %mri.vol is ILA (i.e., S->I, R->L, P->A)
@@ -78,14 +96,61 @@ mn=min(min(min(mri.vol)));
 sVol=size(mri.vol);
 
 
-% Load mgrid
-% if strcmpi(mgridFname,'l') || strcmpi(mgridFname,'r')
-%     [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub,mgridFname);
-% else
-%     [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(mgridFname); % mgrid coords are LIP
-% end
+% Get mgrid info
 if isempty(mgridFname)
-    [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+    if isempty(bidsDir)
+        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+        % elecMatrix coords are LIP
+        % elecLabels is a cell array of things like LD_LDAm_10
+        % elecRgb is nElec x 3 matrix of 0-1 RGB values
+    else
+        % Get electrode information from iEEG-BIDs directory and transform
+        % coordinates to be compatible with those in mgrid files
+        %/Users/davidgroppe/Desktop/HandMotor/sub-PT001/ieeg/sub-PT001_ses-01_space-inf_electrodes.tsv
+        coordFname=fullfile(bidsDir,['sub-' fsSub],'ieeg',sprintf('sub-%s_ses-%.2d_space-postimplant_electrodes.tsv',fsSub,bidsSes));
+        fprintf('Taking electrode info from %s.\n',coordFname);
+        
+        %% Collect electrode coordinates
+        elecCoordCsv=csv2Cell(coordFname,9,0); %9=tab
+        nElecTotal=size(elecCoordCsv,1)-1;
+        RAS_coor=zeros(nElecTotal,3);
+        coordHdrs={'x','y','z'};
+        for csvLoopB=1:3,
+            colId=findStrInCell(coordHdrs{csvLoopB},elecCoordCsv(1,:),1);
+            for csvLoopA=1:nElecTotal,
+                RAS_coor(csvLoopA,csvLoopB)=str2double(elecCoordCsv{csvLoopA+1,colId});
+            end
+        end
+        % convert RAS coordinates to LIP
+        elecMatrix=zeros(nElecTotal,3);
+        elecMatrix(:,1)=-RAS_coor(:,1)+129;
+        elecMatrix(:,2)=-RAS_coor(:,3)+129;
+        elecMatrix(:,3)=-RAS_coor(:,2)+129;
+        
+        %% Collect electrode name, type, & hemisphere into elecLabels
+        % also define electrode colors (all red for the time being)
+        elecLabels=cell(nElecTotal,3); % a cell array of things like LD_LDAm10
+        nameId=findStrInCell('name',elecCoordCsv(1,:),1);
+        typeId=findStrInCell('type',elecCoordCsv(1,:),1);  % grid, depth, strip
+        hemId=findStrInCell('hemisphere',elecCoordCsv(1,:),1); % L,R
+        elecRgb=zeros(nElecTotal,3);
+        elecRgb(:,1)=1; % make all electrodes red
+        for csvLoopA=1:nElecTotal,
+            tempName=elecCoordCsv{csvLoopA+1,nameId}; % Name
+            switch elecCoordCsv{csvLoopA+1,typeId}
+                case 'grid'
+                    tempType='G';
+                case 'strip'
+                    tempType='S';
+                case 'depth'
+                    tempType='D';
+                otherwise
+                    error('Unrecognized value of electrode "type": %s',elecCoordCsv{csvLoopA+1,typeId});
+            end
+            tempHem=elecCoordCsv{csvLoopA+1,hemId}; % Hemisphere
+            elecLabels{csvLoopA}=sprintf('%s%s_%s',tempHem,tempType,tempName);
+        end
+    end
 end
 nElec=length(elecLabels);
 elecMatrix=round(elecMatrix);
@@ -103,12 +168,11 @@ end
 
 
 if universalYes(anatOverlay)
-    
     % Load segmentation
     if ischar(cfg.anatOverlay)
         segFname = cfg.anatOverlay;
     else
-        segFname=fullfile(fsdir,fsSub,'mri','aparc+aseg.mgz');
+        segFname=fullfile(mriDir,'aparc+aseg.mgz');
         if ~exist(mriFname,'file')
             error('File %s not found.',mriFname);
         end
@@ -181,8 +245,8 @@ for elecId=1:nElec,
         %keep image square
         tempMin=min([limXa limYa]);
         tempMax=max([limXb limYb]);
-        if tempMin<tempMax, 
-            axis([tempMin tempMax tempMin tempMax]); 
+        if tempMin<tempMax,
+            axis([tempMin tempMax tempMin tempMax]);
         end
         set(gca,'xtick',[],'ytick',[]);
         
@@ -260,9 +324,9 @@ for elecId=1:nElec,
             axis([tempMin tempMax tempMin tempMax]);
         end
         set(gca,'xtick',[],'ytick',[]);
-                
+        
         % Get anatomical label if aparc-file exists
-        if exist(fullfile(fsdir,fsSub,'mri','aparc+aseg.mgz'),'file')
+        if exist(fullfile(mriDir,'aparc+aseg.mgz'),'file')
             anatLabel=vox2Seg(xyz(elecId,:),fsSub);
         else
             anatLabel = 'NA';
@@ -284,10 +348,14 @@ for elecId=1:nElec,
         end
         set(ht,'position',[.5 .97 0]);
         
-        if universalYes(printFigs)
+        if ~universalNo(printFigs)
             % Make sure PICS directory exists
-            erPath=fullfile(fsdir,fsSub,'elec_recon');
-            outPath=fullfile(erPath,'PICS');
+            if ischar(printFigs)
+                outPath=printFigs; % user specified directory
+            else
+                erPath=fullfile(fsdir,fsSub,'elec_recon');
+                outPath=fullfile(erPath,'PICS');
+            end
             if ~exist(outPath,'dir')
                 dirSuccess=mkdir(outPath);
                 if ~dirSuccess,
