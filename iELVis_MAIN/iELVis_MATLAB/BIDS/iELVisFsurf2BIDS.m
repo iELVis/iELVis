@@ -101,18 +101,18 @@ copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postIn
 % Copy anatomical labels
 labelFiles={'aparc.a2009s.annot','aparc.annot'};
 tempSubDir='label';
-fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy Yeo anatomical labels if they exist
 labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
 tempSubDir='label';
-fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
+fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
 
 % Copy surface files to BIDS derivatives dir
 % DG: I don't know if all of these files are necessary
 surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
 tempSubDir='surf';
-fsurf2bids(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2BIDS(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy mri volumes to BIDS derivatives dir
 mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
@@ -130,7 +130,7 @@ copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname)
 
 
 %% Export FreeSurfer avg brain to derivates
-derivFsavgDir=fullfile(derivDir,'fsaverage');
+derivFsavgDir=fullfile(derivDir,'sub-fsaverage');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
 derivFsavgSurfDir=fullfile(derivFsavgDir,'surf');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgSurfDir);
@@ -146,6 +146,23 @@ for a=1:2,
     for b=1:length(fnameStems),
         copyfile(fullfile(fsurfAvgSurfDir,[hem '.' fnameStems{b}]), ...
             fullfile(derivFsavgSurfDir,[hem '.' fnameStems{b}]));
+    end
+end
+
+derivFsavgLabelDir=fullfile(derivFsavgDir,'label');
+[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgLabelDir);
+fsurfAvgLabelDir=fullfile(fsDir,'fsaverage','label');
+fnameStems={'aparc.annot','aparc.a2009s.annot','Yeo2011_17Networks_N1000.annot', ...
+    'Yeo2011_7Networks_N1000.annot'};
+for a=1:2,
+    if a==1
+        hem='lh';
+    else
+        hem='rh';
+    end
+    for b=1:length(fnameStems),
+        copyfile(fullfile(fsurfAvgLabelDir,[hem '.' fnameStems{b}]), ...
+            fullfile(derivFsavgLabelDir,[hem '.' fnameStems{b}]));
     end
 end
   

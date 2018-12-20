@@ -14,7 +14,7 @@
 %    Electrode Options:
 %     elecCoord            -If 'n', no electrodes will be rendered in the
 %                           figure.  Alternative, you can specify 'LEPTO',
-%                           'CT','PIAL', or 'INF' to use the coordinates
+%                           'POSTIMPLANT','PIAL', or 'INF' to use the coordinates
 %                           with those extensions in the patients elec_recon
 %                           folder. *.LEPTO file in patient's
 %                           FreeSurfer folder.  Alternatively, you
@@ -182,6 +182,13 @@
 %
 %
 %    Other Options:
+%     bidsDir              -Full path to an iEEG-BIDS root directory. If specified,
+%                           electrode location and pial surface files will be 
+%                           imported from this directory. If not specified, 
+%                           these data will be imported from the subject's 
+%                           FreeSurfer directory.
+%     bidsSes              -integer. The iEEG-BIDS session number. This has
+%                           no effect if bidsDir not specified {default: 1}
 %     axis                 -Handle of axis in which to make plot.
 %                           {default: new axis created}
 %     figId                -Handle of figure in which to make plot.
@@ -208,7 +215,7 @@
 %                             3 - stuff that might help you debug (show all
 %                                 reports)
 %
-% Example:
+% Examples:
 % % Plot electrodes on brain with Desikan-Killiany cortical parcellation
 % cfg=[];
 % cfg.view='l';
@@ -216,6 +223,16 @@
 % cfg.overlayParcellation='DK';
 % cfg.showLabels='y';
 % cfg.title=[];
+% cfgOut=plotPialSurf('PT001',cfg);
+%
+% % Plot electrodes on brain using data stored according to iEEG-BIDS
+% conventions
+% cfg=[];
+% cfg.view='l';
+% cfg.figId=1;
+% cfg.elecCoord='LEPTO';
+% cfg.title='PT001: iEEG-BIDS';
+% cfg.bidsDir='~/Desktop/HandMotor'; % iEEG-BIDS study root directory
 % cfgOut=plotPialSurf('PT001',cfg);
 %
 % % Plot depths with a semi-transparent pial surface
@@ -377,6 +394,8 @@ if ~isfield(cfg, 'olayColorScale'), olayColorScale='absmax';  else olayColorScal
 if ~isfield(cfg, 'olayThresh'), olayThresh=0;  else olayThresh=cfg.olayThresh; end
 if ~isfield(cfg, 'olayCbar'),       olayCbar=[];          else olayCbar=cfg.olayCbar; end
 if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
+if ~isfield(cfg, 'bidsDir'),      bidsDir=[];         else bidsDir=cfg.bidsDir; end
+if ~isfield(cfg, 'bidsSes'),      bidsSes=1;         else bidsSes=cfg.bidsSes; end
 
 global overlayData elecCbarMin elecCbarMax olayCbarMin olayCbarMax; % Needed for ?omni plots
 
@@ -423,11 +442,16 @@ try
     if isempty(fsDir)
         fsDir=getFsurfSubDir();
     end
+
     
     % Folder with surface files
-    subFolder=fullfile(fsDir,fsSub);
+    if isempty(bidsDir)
+        subFolder=fullfile(fsDir,fsSub); % use FreeSurfer
+    else
+        subFolder=fullfile(bidsDir,'derivatives','iELVis',['sub-' fsSub]);
+    end
     if ~exist(subFolder,'dir')
-        error('FreeSurfer folder for %s not found.',subFolder);
+        error('Subject folder %s not found.',subFolder);
     end
     surfacefolder=fullfile(fsDir,fsSub,'surf');
     
@@ -461,10 +485,10 @@ try
         end
     end
     
+    
     %% %%%%%%%%%% Start Main Function %%%%%%%
     verbReport('**** PLOTTING CORTICAL SURFACE WITH "plotPialSurf.m" ****', ...
         2,verbLevel);
-    
     
     %% MAKE FIGURE/AXIS
     if ~isempty(hFig),
@@ -741,7 +765,7 @@ try
         [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
             surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
             elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
-            elecCbar);
+            elecCbar,bidsDir,bidsSes);
         plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
     end
     

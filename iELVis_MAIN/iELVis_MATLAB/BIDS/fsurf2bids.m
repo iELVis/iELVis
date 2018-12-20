@@ -1,5 +1,5 @@
-function fsurf2bids(fnameStems,sourceDir,destDir,optional)
-% function fsurf2bids(fnameStems,sourceDir,destDir,optional)
+function fsurf2BIDS(fnameStems,sourceDir,destDir,optional)
+% function fsurf2BIDS(fnameStems,sourceDir,destDir,optional)
 %
 % Copies both hemisphere versions of a FreeSurfer file (e.g., lh.pial and 
 % rh.pial) from sourceDir into destDir

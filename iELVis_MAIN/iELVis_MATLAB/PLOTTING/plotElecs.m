@@ -1,6 +1,5 @@
-function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar)
-% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar)
-%
+function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
+% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
 % This function plots electrodes. It should only be called by plotPialSurf.m
 %
 % Inputs:
@@ -51,8 +50,13 @@ if isnumeric(elecCoord)
         error('elecCoord is numeric but doesn''t have 3 coordinates + binary hemisphere column. It needs to be an nx4 matrix where n=# of electrodes.');
     end
 else
-    % Load electrode coordinates from subject's Freesurfer folder
-    [showElecCoords, showElecNames, showElecIds]=getElecPlottingInfo(surfType,elecCoord,fsDir,fsSub,side,ignoreDepthElec,elecNames);
+    if isempty(bidsDir)
+        % Load electrode coordinates from subject's Freesurfer folder
+        [showElecCoords, showElecNames, showElecIds]=getElecPlottingInfo(surfType,elecCoord,fsDir,fsSub,side,ignoreDepthElec,elecNames);
+    else
+        % Load electrode coordinates from subject's iEEG-BIDS directory
+        [showElecCoords, showElecNames, showElecIds]=getElecPlottingInfoBids(surfType,elecCoord,bidsDir,fsSub,side,ignoreDepthElec,elecNames,bidsSes);
+    end
     if ~isempty(elecColors) && isnumeric(elecColors),
         % If elec colors/values have been specified, expand them so that
         % they correspond to showElecIds, since colors/values might only be
