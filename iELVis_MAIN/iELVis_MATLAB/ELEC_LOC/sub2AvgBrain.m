@@ -344,13 +344,13 @@ if universalYes(outputTextfile),
     fid=fopen(pialFname,'r');
     firstLine=fgetl(fid);
     fclose(fid);
-    splitHdr=strsplit(firstLine,9); % split on tabs
+    splitHdr=strsplit(firstLine,'\t'); % split on tabs
     if length(splitHdr)>=2,
         % method is specified in header
         brainShiftCorrectMethod=splitHdr{2};
     else
         % figure out which brain shift correction method was used based on log
-        splitHdr2=strsplit(firstLine,32);
+        splitHdr2=strsplit(firstLine,'\t');
         dateGenerated=datetime(splitHdr2{1});
         logDate=datestr(dateGenerated,'yyyy-mm-dd');
         logFname=sprintf('localization_process_%s.log',logDate);
