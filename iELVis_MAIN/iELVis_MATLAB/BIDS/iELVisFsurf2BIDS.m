@@ -63,7 +63,6 @@ if ~exist(fullfile(elecReconDir,postimpRawFname),'file')
     % Ask user to select the postimplant nii file
     homeDir=pwd;
     cd(elecReconDir);
-    disp('Select postimplant raw nii file');
     [postimpRawFname, tempPathName] = uigetfile('*.nii.gz;*.nii', 'Select postimplant raw nii file');
     if postimpRawFname==0
        error('You need to select a file that contains the raw postimplant volume.'); 
