@@ -878,7 +878,7 @@ else
     else
         % elecColorScale consists of a matrix or vector of RGB values
 %         elecColorsAll=elecColors; %?? Pierre change
-%         elecColors=elecColorsAll(showElecIds,:); %?? Pierre change
+        elecColors=elecColors(showElecIds,:); 
         if ~universalNo(elecCbar),
             if isnumeric(elecColorScale) && isvector(elecColorScale) && length(elecColorScale)==2
                 elecCbarMin=min(elecColorScale);
