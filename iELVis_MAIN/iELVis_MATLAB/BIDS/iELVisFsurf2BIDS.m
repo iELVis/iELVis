@@ -63,6 +63,7 @@ if ~exist(fullfile(elecReconDir,postimpRawFname),'file')
     % Ask user to select the postimplant nii file
     homeDir=pwd;
     cd(elecReconDir);
+    disp('Select postimplant raw nii file');
     [postimpRawFname, tempPathName] = uigetfile('*.nii.gz;*.nii', 'Select postimplant raw nii file');
     if postimpRawFname==0
        error('You need to select a file that contains the raw postimplant volume.'); 
@@ -101,18 +102,18 @@ copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postIn
 % Copy anatomical labels
 labelFiles={'aparc.a2009s.annot','aparc.annot'};
 tempSubDir='label';
-fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy Yeo anatomical labels if they exist
 labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
 tempSubDir='label';
-fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
+fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
 
 % Copy surface files to BIDS derivatives dir
 % DG: I don't know if all of these files are necessary
 surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
 tempSubDir='surf';
-fsurf2BIDS(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2bids(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy mri volumes to BIDS derivatives dir
 mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
@@ -226,13 +227,13 @@ for sLoop=1:nCoordSpaces,
     fid=fopen(xyzFname,'r');
     firstLine=fgetl(fid);
     fclose(fid);
-    splitHdr=strsplit(firstLine,9); % split on tabs
+    splitHdr=strsplit(firstLine,'\t'); % split on tabs
     if length(splitHdr)>=2,
         % method is specified in header
         brainShiftCorrectMethod=splitHdr{2}; 
     else
         % figure out which brain shift correction method was used based on log
-        splitHdr2=strsplit(firstLine,32);
+        splitHdr2=strsplit(firstLine,'\t');
         dateGenerated=datetime(splitHdr2{1});
         logDate=datestr(dateGenerated,'yyyy-mm-dd');
         logFname=sprintf('localization_process_%s.log',logDate);
