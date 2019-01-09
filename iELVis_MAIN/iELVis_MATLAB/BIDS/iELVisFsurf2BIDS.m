@@ -102,18 +102,18 @@ copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postIn
 % Copy anatomical labels
 labelFiles={'aparc.a2009s.annot','aparc.annot'};
 tempSubDir='label';
-fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy Yeo anatomical labels if they exist
 labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
 tempSubDir='label';
-fsurf2bids(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
+fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
 
 % Copy surface files to BIDS derivatives dir
 % DG: I don't know if all of these files are necessary
 surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
 tempSubDir='surf';
-fsurf2bids(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+fsurf2BIDS(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
 
 % Copy mri volumes to BIDS derivatives dir
 mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
