@@ -21,3 +21,6 @@ cfg=[];
 cfg.printFigs='~/Desktop/SLICE_FIGS';
 cfg.bidsDir='/Users/davidgroppe/GIT/iELVis/PRIVATE_FILES/HandMotor'; % Note this differs from path on wiki
 plotMgridOnSlices('PT001',cfg);
+
+%%
+disp('Script testBids.m completed successfully.')
