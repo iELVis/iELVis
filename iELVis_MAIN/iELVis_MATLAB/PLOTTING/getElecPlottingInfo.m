@@ -21,7 +21,7 @@ if strcmpi(surfType,'inflated')
     end
 end
 coordFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.' coordType]);
-fprintf('Taking electrode coordinates from %s.%s and %s.electrodeNames in elec_recon folder. Use cfg.eleccord=''n''; if not wanted.\n', ...
+fprintf('Taking electrode coordinates from %s.%s and %s.electrodeNames in elec_recon folder. Use cfg.elecCoord=''n''; if not wanted.\n', ...
     fsSub,coordType,fsSub);
 elecCoordCsv=csv2Cell(coordFname,' ',2);
 nElecTotal=size(elecCoordCsv,1);
