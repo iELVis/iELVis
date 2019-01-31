@@ -1,24 +1,35 @@
-function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId)
-% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId)
+function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, elecReconDir)
+% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, elecReconDir)
 % 
 % Takes iELVis electrode location and neuroimaging information and copies
-% it into a new directory according to iEEG-BIDS conventions.
+% it into a new directory according to BIDS-iEEG conventions.
+%
+% Here is a preprint of the paper introducing BIDS-iEEG and describing its 
+% format:
+%     https://psyarxiv.com/r7vc2/
 %
 % Required Inputs:
 %  subj - [string] Patient FreeSurfer ID
 %  bidsRootDir - [string] The root BIDS directory into which all data from a study
 %                will be stored
+%
+% Optional Inputs:
 %  sessionId - [integer] A number indicating the "session" in which the
 %              corresponding iEEG data have been recorded. This will be
 %              used to create filenames of electrode locations as it is
 %              possible that data may be recorded in multiple sessions and
 %              the electrodes recorded from may differ across sessions.
+%              {default: 1}
+%  elecReconDir - [string] The directory from which iELVis information
+%                (e.g., electrode names and coordinates) will be taken 
+%                from. {default: the "elec_recon" subfolder of the
+%                patient's FreeSurfer subject dir}
 %
 % Example:
 %  iELVisFsurf2BIDS('PT001','~/Desktop/HandMotor',1);
 %
 
-% TODO add link to BIDS specification
+% 
 %extraElecInfoFname=[]; % TODO make this an argument to the function
 
 fprintf('Exporting data from %s into iEEG-BIDS format.\n',subj);
@@ -27,7 +38,18 @@ fprintf('iEEG-BIDS root directory is %s\n',bidsRootDir);
 % Get FreeSurfer directories
 fsDir=getFsurfSubDir();
 fsSubDir=fullfile(fsDir,subj);
-elecReconDir=fullfile(fsSubDir,'elec_recon');
+
+if nargin<3,
+    sessionId=1;
+else
+   if ~isnumeric(sessionId)
+      error('sessionId needs to be an integer.'); 
+   end
+end
+if nargin<4,
+    elecReconDir=fullfile(fsSubDir,'elec_recon');
+end
+
 
 %% Get Freesurfer Version
 fsurfVersionFname=fullfile(fsSubDir,'scripts','build-stamp.txt');
