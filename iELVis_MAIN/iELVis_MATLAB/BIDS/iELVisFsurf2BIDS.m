@@ -152,7 +152,7 @@ fname='talairach.xfm';
 copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname));
 
 
-%% Export FreeSurfer avg brain to derivates
+%% Export FreeSurfer avg brain and associate info to derivates
 derivFsavgDir=fullfile(derivDir,'sub-fsaverage');
 [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
 derivFsavgSurfDir=fullfile(derivFsavgDir,'surf');
@@ -213,6 +213,9 @@ if ~exist(avgCoordFname,'file')
     cfg.plotEm=0;
     sub2AvgBrain(subj,cfg);
 end
+
+
+%% Get anatomical labels for electrodes if they don't already exist
 
 
 %% Import electrode locations and create channels.tsv and coordsystem.json file
