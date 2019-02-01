@@ -1,5 +1,5 @@
-function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, elecReconDir)
-% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, elecReconDir)
+function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
+% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
 % 
 % Takes iELVis electrode location and neuroimaging information and copies
 % it into a new directory according to BIDS-iEEG conventions.
@@ -20,6 +20,14 @@ function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, elecReconDir)
 %              possible that data may be recorded in multiple sessions and
 %              the electrodes recorded from may differ across sessions.
 %              {default: 1}
+%
+%  atlas - Anatomical atlas to use for identifying the anatomical region
+%          nearest each electrode. Options:
+%             'DK'=Desikan-Killiany {default}
+%             'D' =Destrieux
+%             'Y7'=Yeo 7-network resting state fMRI atlas
+%             'Y17'=Yeo 17-network resting state fMRI atlas
+%          Default: not used
 %  elecReconDir - [string] The directory from which iELVis information
 %                (e.g., electrode names and coordinates) will be taken 
 %                from. {default: the "elec_recon" subfolder of the
@@ -47,9 +55,11 @@ else
    end
 end
 if nargin<4,
+    atlas=[];
+end
+if nargin<5,
     elecReconDir=fullfile(fsSubDir,'elec_recon');
 end
-
 
 %% Get Freesurfer Version
 fsurfVersionFname=fullfile(fsSubDir,'scripts','build-stamp.txt');
@@ -212,11 +222,29 @@ if ~exist(avgCoordFname,'file')
     cfg=[];
     cfg.plotEm=0;
     sub2AvgBrain(subj,cfg);
-end
+end;
 
 
 %% Get anatomical labels for electrodes if they don't already exist
-
+elecAnatLabel=cell(nElec,1);
+if isempty(atlas)
+    for a=1:nElec,
+        elecAnatLabel{a}='n/a';
+    end
+else
+    atlas=upper(atlas);
+    anatLabelsFname=fullfile(fsDir,subj,'elec_recon',[subj '_' atlas '_AtlasLabels.tsv']);
+    if ~exist(anatLabelsFname,'file')
+        fprintf('Creating text file that indicates which anatomical region each electrode is closest to.\n');
+        fprintf('%s\n',anatLabelsFname);
+        elec2Parc(subj,atlas,1);
+    end
+    anatLabelsTable=csv2Cell(anatLabelsFname,9);
+    for a=1:nElec,
+        tempId=findStrInCell(elecNames{a},anatLabelsTable(:,1));
+        elecAnatLabel{a}=anatLabelsTable{tempId,2};
+    end
+end
 
 %% Import electrode locations and create channels.tsv and coordsystem.json file
 % Note this can deal with "ct" or "postimplant" fnames
@@ -287,7 +315,7 @@ for sLoop=1:nCoordSpaces,
         subj,sessionId,elecSpace));
     fid=fopen(elecTsvFname,'w');
     % Header
-    fprintf(fid,'name\tx\ty\tz\themisphere\tsize\ttype\tmanufacturer\n');
+    fprintf(fid,'name\tx\ty\tz\themisphere\tsize\ttype\tmanufacturer\tanatomicalLocation\n');
     % Elec info
     for eLoop=1:nElec,
         elecManufacturer='n/a'; % TODO make it possible to import this from file
@@ -302,8 +330,8 @@ for sLoop=1:nCoordSpaces,
             otherwise
                 error('Unrecognized value of elecType: %s',elecType{eLoop});
         end
-        fprintf(fid,'%s\t%f\t%f\t%f\t%s\t%f\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
-            xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecHem{eLoop},elecSize,thisElecType,elecManufacturer);
+        fprintf(fid,'%s\t%f\t%f\t%f\t%s\t%f\t%s\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
+            xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecHem{eLoop},elecSize,thisElecType,elecManufacturer,elecAnatLabel{eLoop});
         %         fprintf(fid,'%s\t%f\t%f\t%f\t%f\t%s\t%s\n',elecNames{eLoop},xyzCoord(eLoop,1), ...
         %             xyzCoord(eLoop,2),xyzCoord(eLoop,3),elecSize,thisElecType,elecManufacturer);
     end
@@ -336,7 +364,20 @@ for sLoop=1:nCoordSpaces,
     fprintf(fid,'"iEEGCoordinateProcessingReference": "%s",\n',brainShiftReference);
     fprintf(fid,'"t1ProcessingDescription": "%s",\n',fsurfVersion);
     fprintf(fid,'"t1ProcessingReference": "http://freesurfer.net/fswiki/FreeSurferMethodsCitation",\n');
-    fprintf(fid,'"IntendedFor": "%s"\n',anatFile);
+    fprintf(fid,'"IntendedFor": "%s",\n',anatFile);
+    if ~isempty(atlas)
+        switch atlas
+            case 'DK'
+                atlasLong='Desikan-Killiany';
+            case 'D'
+                atlasLong='Destrieux';
+            case 'Y7'
+                atlasLong='Yeo 7-network';
+            case 'Y17'
+                atlasLong='Yeo 17-network';
+        end
+        fprintf(fid,'"Atlas used for electrode anatomical labels": "%s"\n',atlasLong);
+    end
     fprintf(fid,'}\n');
     fclose(fid);
 end

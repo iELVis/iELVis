@@ -15,10 +15,10 @@
 %           'Y7'=Yeo 7-network resting state fMRI atlas
 %           'Y17'=Yeo 17-network resting state fMRI atlas
 %           'fullpath2parcfile'=Some annotation file defined by you.
-%  out2text - [1 or 0] If non-zero, a tab delimited text file called  *_@_AtlasLabels.txt
+%  out2text - [1 or 0] If non-zero, a tab delimited text file called *_@_AtlasLabels.tsv
 %            is created in the patient's elec_recon folder (where * is the
 %            patient's codename and @ is the atlas; for example: 
-%            PT001_DK_AtlasLabels.txt). {default: 0}
+%            PT001_DK_AtlasLabels.tsv). {default: 0}
 %  
 %
 % Output:
@@ -184,8 +184,7 @@ for hemLoop=1:2,
 end
 
 if universalYes(out2text),
-    %txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_elec_atlas_loc.txt']);
-    txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_' upper(atlas) '_AtlasLabels.txt']);
+    txt_fname=fullfile(fsDir,subj,'elec_recon',[subj '_' upper(atlas) '_AtlasLabels.tsv']);
     fprintf('Outputing electrode anatomical locations to %s\n',txt_fname);
     fid=fopen(txt_fname,'w');
     for chan_loop=1:size(elecParc,1),
