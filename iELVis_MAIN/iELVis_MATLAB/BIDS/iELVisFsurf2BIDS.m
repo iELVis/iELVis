@@ -233,7 +233,7 @@ if isempty(atlas)
     end
 else
     atlas=upper(atlas);
-    anatLabelsFname=fullfile(fsDir,subj,'elec_recon',[subj '_' atlas '_AtlasLabels.tsv']);
+    anatLabelsFname=fullfile(elecReconDir,[subj '_' atlas '_AtlasLabels.tsv']);
     if ~exist(anatLabelsFname,'file')
         fprintf('Creating text file that indicates which anatomical region each electrode is closest to.\n');
         fprintf('%s\n',anatLabelsFname);
@@ -241,7 +241,7 @@ else
     end
     anatLabelsTable=csv2Cell(anatLabelsFname,9);
     for a=1:nElec,
-        tempId=findStrInCell(elecNames{a},anatLabelsTable(:,1));
+        tempId=findStrInCell(elecNames{a},anatLabelsTable(:,1),1);
         elecAnatLabel{a}=anatLabelsTable{tempId,2};
     end
 end
