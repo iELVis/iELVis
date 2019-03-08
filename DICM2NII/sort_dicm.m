@@ -1,5 +1,5 @@
 function varargout = sort_dicm(srcDir)
-% SORT_DICM sorts dicom files for different subjects into subject folders. 
+% Sort dicom files for different subjects into subject folders. 
 % 
 % subjects = SORT_DICM(dicmFolder);
 % The optional input is the top folder containing dicom file and/or subfodlers
@@ -13,9 +13,10 @@ function varargout = sort_dicm(srcDir)
 % each subject, and move corresponding files into each subject folder. If a
 % subject has more than one studies, each study will have a subfolder.
 % 
-% This will simplify the dicom to nifti conversion by dicm2nii.
+% This function is kind of obsolete since later version of dicm2nii will convert
+% files with more than one subjects.
 % 
-% See also DICM2NII, DICM_HDR, RENAME_DICM 
+% See also DICM2NII, DICM_HDR, RENAME_DICM, ANONYMIZE_DICM
 
 % History (yymmdd):
 % 141016 Wrote it (Xiangrui Li).
@@ -31,7 +32,7 @@ dirs = genpath(srcDir);
 dirs = textscan(dirs, '%s', 'Delimiter', pathsep);
 dirs = dirs{1}; % cell str
 fnames = {};
-for i = 1:length(dirs)
+for i = 1:numel(dirs)
     curFolder = [dirs{i} filesep];
     foo = dir(curFolder); % all files and folders
     foo([foo.isdir]) = []; % remove folders
@@ -41,7 +42,7 @@ end
 
 dict = dicm_dict('', {'PatientName' 'PatientID' 'StudyID'});
 h = struct;
-n = length(fnames);
+n = numel(fnames);
 nDicm = 0;
 for i = 1:n
     s = dicm_hdr(fnames{i}, dict);
@@ -49,11 +50,11 @@ for i = 1:n
 
     if isfield(s, 'PatientName'), subj = s.PatientName;
     elseif isfield(s, 'PatientID'), subj = s.PatientID;
-    else continue;
+    else, continue;
     end
     if ~isfield(s, 'StudyID'), s.StudyID = '1'; end
     
-    P = genvarname(['P' subj]);
+    P = genvarname(['P' subj]); %#ok<*DEPGENAM>
     if ~isfield(h, P), h.(P) = []; end
     S = genvarname(['S' s.StudyID]);
     if ~isfield(h.(P), S), h.(P).(S) = {}; end
@@ -65,17 +66,17 @@ end
 sep = filesep;
 folders = {};
 subjs = fieldnames(h);
-for i = 1:length(subjs)
+for i = 1:numel(subjs)
     sub = h.(subjs{i});
     S = fieldnames(sub);
-    nS = length(S);
+    nS = numel(S);
     for j = 1:nS
         dstDir = [srcDir sep subjs{i}(2:end)];
         if nS>1, dstDir = [dstDir '_study' S{j}(2:end)]; end
         if ~exist(dstDir, 'dir'), mkdir(dstDir); end
         folders{end+1} = dstDir;
         
-        for k = 1:length(sub.(S{j}))
+        for k = 1:numel(sub.(S{j}))
             fname = sub.(S{j}){k};
             [~, nam, ext] = fileparts(fname);
             dstName = [dstDir sep nam ext];
@@ -88,6 +89,6 @@ if nargout
     varargout = {folders'};
 else
     fprintf(' %g of %g files sorted into %g subfolders:\n', ...
-        nDicm, n, length(folders));
+        nDicm, n, numel(folders));
     fprintf('  %s\n', folders{:});
 end
