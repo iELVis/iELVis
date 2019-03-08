@@ -11,12 +11,13 @@ function [elec_proj,info_cell] = ntools_elec_projection(ini_loc,ini_pos,row,col,
 % elec_proj = ntools_elec_projection(elec,col,sph,subjectpath,scale,radius,range,std_thres,avg_thres)
 %
 % Inputs:
-% elec: cell array with electrodes' names in first column, x y z
-%           coordinates in the rest 3
-% scale: physical size of dim (in mm)
-% col: column number of the grid
+% ini_loc: 4 x 3 matrix of corner electrode coordinates
+% ini_pos: indices of grid corners
+% row: # of grid rows
+% col: # of grid columns
 % sph: the hemisphere on which the grid locates
 % subjectpath: patient's Freesurfer reconstruction folder
+% scale: physical size of dim (in mm)
 % radius: supposed distance between each 2 nearest electrodes (mm)
 % range: iteration range
 % std_thres: standard deviation (of distance to nearest neighbor) threshold, lower numbers pass (mm)
