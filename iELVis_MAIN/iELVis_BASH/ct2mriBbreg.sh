@@ -53,7 +53,7 @@ echo 'Copying CT nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/postimpRaw.nii.gz
 
 bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-fsl --bold
-flirt -in postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+flirt -in $elecReconPath/postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 

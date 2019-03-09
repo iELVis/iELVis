@@ -64,11 +64,11 @@ cp $3 $elecReconPath/postimpMriRaw.nii.gz
 
 # Postimplant MRI to preimplant MRI
 echo 'Registering ' $3 ' to T1.nii.gz with a rigid (6 degrees of freedom) transformation that maximizes normalized correlation between the volumes.'
-flirt -in postimpMriRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postT1inPreT1.nii.gz -omat $elecReconPath/postT12PreT1.mat -interp trilinear -cost normcorr -dof 6
+flirt -in $elecReconPath/postimpMriRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postT1inPreT1.nii.gz -omat $elecReconPath/postT12PreT1.mat -interp trilinear -cost normcorr -dof 6
 
 # Postimplant CT to transformed postimplant MRI
 echo 'Registering ' $2 ' to postT1inPreT1.nii.gz with a rigid (6 degrees of freedom) transformation that maximizes mutual information between the volumes. This takes awhile....'
-flirt -in postimpRaw.nii.gz  -ref $elecReconPath/postT1inPreT1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/ct2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -searchrx -180 180 -searchry -180 180 -searchrz -180 180
+flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/postT1inPreT1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/ct2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -searchrx -180 180 -searchry -180 180 -searchrz -180 180
 
 
 # Make directory store coregistration images

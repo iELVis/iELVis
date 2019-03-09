@@ -53,7 +53,7 @@ echo 'Copying CT nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/postimpRaw.nii.gz
 
 echo 'Registering ' $2 ' to T1.nii.gz with a maximally flexible linear (12 degrees of freedom) transformation that maximizes mutual information between the volumes. This takes awhile....'
-flirt -in postimpRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/ct2t1.mat -interp trilinear -cost mutualinfo -dof 12
+flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/ct2t1.mat -interp trilinear -cost mutualinfo -dof 12
 # Make directory store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 
