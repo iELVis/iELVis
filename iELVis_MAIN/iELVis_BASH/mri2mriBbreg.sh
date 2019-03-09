@@ -50,7 +50,7 @@ mri_convert $mriPath/brainmask.mgz $elecReconPath/brainmask.nii.gz
 echo 'Copying CT nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/postimpRaw.nii.gz
 
-bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/mri2mri.dat --fslmat $elecReconPath/mri2mri.mat --init-fsl --t1
+bbregister --s $sub --mov $elecReconPath/postimpRaw.nii.gz --reg $elecReconPath/mri2mri.dat --fslmat $elecReconPath/mri2mri.mat --init-fsl --t1
 flirt -in $elecReconPath/postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/mri2mri.mat -applyxfm
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
