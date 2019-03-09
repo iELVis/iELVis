@@ -55,7 +55,7 @@ cp $2 $elecReconPath/postimpRaw.nii.gz
 echo 'Registering ' $2 ' to brainmask.nii.gz with a rigid (6 degrees of freedom) transformation that maximizes mutual information between the volumes. This takes awhile....'
 flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/brainmask.nii.gz -omat $elecReconPath/ct2bmask.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -searchrx -180 180 -searchry -180 180 -searchrz -180 180
 # Redo CT to MR coregistration but initialize it with affine transformation from the CT to brain registration
-flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/bmask2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -init ct2bmask.mat
+flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/bmask2t1.mat -interp trilinear -cost mutualinfo -dof 6 -searchcost mutualinfo -init $elecReconPath/ct2bmask.mat
 # Make directory store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 
