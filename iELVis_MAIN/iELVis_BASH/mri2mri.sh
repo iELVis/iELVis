@@ -2,13 +2,13 @@
 
 # mri2mri.sh
 # 
-#The second argument is the nii.gz file of the CT scan that you need to create with something like Matlab or FSL's mri_convert function.
+#The second argument is the nii.gz file of the postimplant MRI scan that you need to create with something like Matlab or FSL's mri_convert function.
 #This script uses FSL's flirt command to rigidly (i.e., 6 degrees of freedom mapping) transform the CT scan so that it lines up with the preimplant MRI by maximizing the mutual information between the volumes.
 #Images of the two volumes overlayed are automatically generated so that you can inspect the quality of the coregistration. 
 #In the process the elec_recon subfolder in the patient's FreeSurfer folder is created along with the following files:
 #    T1.nii.gz: The full head MRI
 #    brainmask.nii.gz: The skull stripped MRI
-#    ctINt1.nii.gz: The post-implant CT coregistered to the pre-implant MRI
+#    postInPre.nii.gz: The post-implant CT coregistered to the pre-implant MRI
 #
 # Created by David Groppe on 2/11/15.
 # Questions? Email: david.m.groppe@gmail.com
