@@ -1,5 +1,5 @@
-function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
-% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
+function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
+% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
 % This function plots electrodes. It should only be called by plotPialSurf.m
 %
 % Inputs:
@@ -18,6 +18,7 @@ function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecC
 % Copy original value of elecColors to be able to tell if colored
 % electrodes were desired even if no electrodes get shown
 elecColorsOrig=elecColors;
+elecColorsEdgeOrig=elecColorsEdge;
 elecCmapName=[];
 
 % Get electrode coordinates
@@ -63,13 +64,16 @@ else
         % specified at a subset of electrodes
         n_col=size(elecColors,2);
         tempElecColors=zeros(max(showElecIds),n_col);
+		tempElecColorsEdge=zeros(max(showElecIds),3);
         for a=1:length(elecNames),
             temp_id=findStrInCell(elecNames{a},showElecNames);
             if ~isempty(temp_id),
                 tempElecColors(showElecIds(temp_id),:)=elecColors(a,:);
+				tempElecColorsEdge(showElecIds(temp_id),:)=elecColorsEdge(a,:);
             end
         end
         elecColors=tempElecColors;
+		elecColorsEdge=tempElecColorsEdge;
     end
 end
 
@@ -117,11 +121,15 @@ for j = 1:nShowElec,
         sph_colors(sph_ct,:)=showElecColors(j,:);
     else
         h_elec{j}=plot3(showElecCoords(j,1),showElecCoords(j,2),showElecCoords(j,3),'o','Color',showElecColors(j,:),'MarkerFaceColor', showElecColors(j,:),'MarkerSize',elecSize);
-        if universalYes(edgeBlack),
-            set(h_elec{j},'MarkerEdgeColor','k');
-        else
-            set(h_elec{j},'MarkerEdgeColor',showElecColors(j,:));
-        end
+		if ~isempty(elecColorsEdge), % this input was checked in plotPialSurf
+			set(h_elec{j},'MarkerEdgeColor',elecColorsEdge(j,:));
+		else
+			if universalYes(edgeBlack),
+				set(h_elec{j},'MarkerEdgeColor','k');
+			else
+				set(h_elec{j},'MarkerEdgeColor',showElecColors(j,:));
+			end
+		end
         if showLabels,
             add_name(showElecCoords(j,:),showElecNames{j},showElecNames,elecSize,showElecColors(j,:))
         end

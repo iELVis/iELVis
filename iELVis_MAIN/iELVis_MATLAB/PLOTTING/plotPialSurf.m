@@ -37,6 +37,10 @@
 %                           a matrix or vector you must use elecNames arg
 %                           (see below). {default: all electrodes filled
 %                           with black}.
+%     elecColorsEdge       -2D matrix of colors to draw the border of electrodes
+%                           (rows=electrodes, columns=RGB values). When
+%                           elecColorsEdge is specified, elecColors must also be
+%                           specified and must be numeric. {default: not used}
 %     edgeBlack            -If 'y', electrodes will all have a black
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
@@ -365,6 +369,7 @@ if ~isfield(cfg, 'snap2surf'),      snap2surf = 0;         else  snap2surf = cfg
 if ~isfield(cfg, 'surfType'),       surfType = 'pial';     else  surfType = cfg.surfType;     end
 if ~isfield(cfg, 'elecCoord'),      elecCoord= 'LEPTO';      else  elecCoord = cfg.elecCoord;       end
 if ~isfield(cfg, 'elecColors'),     elecColors= [];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge= [];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'), elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'elecCbar'),       elecCbar=[];          else elecCbar=cfg.elecCbar; end
 if ~isfield(cfg, 'elecUnits'),      elecUnits=[];            else elecUnits=cfg.elecUnits; end
@@ -428,6 +433,50 @@ try
             end
         end
     end
+	
+	% If matrix of elecColorsEdge specified make sure an equal number of elecNames
+	% specified
+	if ~isempty(elecColorsEdge) && isnumeric(elecColorsEdge),
+	    nElecColorsEdge=size(elecColorsEdge,1);
+        if nElecColorsEdge~=length(elecNames),
+            if ~(length(elecNames)==1 && isequal(size(nElecColorsEdge),[1 3]))
+                % Above condition catches odd corner case of single
+                % electrode with an RGB value
+                error('# of elecColorsEdge elements, %d, needs to equal # of elecNames, %d.',nElecColorsEdge,length(elecNames));
+            end
+        end
+		
+		% check that elecColorsEdge is an N-by-3 matrix
+		if size(elecColorsEdge,2)~=3,
+		    error('elecColorsEdge must be a %d by 3 matrix.',length(elecNames));
+		end
+		
+		% check that elecColorsEdge has the same number of elements as elecColors
+		if ~isempty(elecColors) && isnumeric(elecColors),
+			if isvector(elecColors),
+				nElecColors=length(elecColors);
+			else
+				nElecColors=size(elecColors,1);
+			end
+			if nElecColors~=nElecColorsEdge
+				error('# of elecColorsEdge elements, %d, needs to equal # of elecColors, %d.',nElecColorsEdge,nElecColors);
+			end
+		
+		% check that elecColors has been specified as a numeric input
+		else
+			error('When specifying elecColorsEdge, elecColors must be specified as a numeric input.');
+		end
+		
+		% warn that edgeBlack will be ignored
+		if universalYes(edgeBlack),
+			warning('If both elecColorsEdge and edgeBlack are requested, edgeBlack will be ignored.');
+		end
+		
+		% warn that elecColorsEdge will be ignored when plotting electrodes as spheres
+		if strcmpi(elecShape,'sphere'),
+		    warning('When plotting electrodes as spheres, elecColorsEdge will be ignored.');
+		end
+	end
     
     % Call *omni subfunctions if requested
     if strcmpi(brainView,'omni')
@@ -763,7 +812,7 @@ try
         h_elec=[];
     else
         [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
-            surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
+            surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale, ...
             elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
             elecCbar,bidsDir,bidsSes);
         plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
@@ -882,6 +931,7 @@ if ~isfield(cfg, 'elecCoord'),      elecCoord=[];      else  elecCoord = cfg.ele
 if ~isfield(cfg, 'elecNames'),      elecNames=[];      else  elecNames = cfg.elecNames;       end
 if ~isfield(cfg, 'elecSize'),       elecSize=8;          else  elecSize = cfg.elecSize;      end
 if ~isfield(cfg, 'elecColors'),     elecColors=[];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge=[];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'),   elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'olayColorScale'),   olayColorScale='absmax';   else olayColorScale=cfg.olayColorScale; end
 if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits; end
@@ -942,6 +992,7 @@ end
 elecCoordByHem=cell(1,2);
 elecNamesByHem=cell(1,2);
 elecColorsByHem=cell(1,2);
+elecColorsEdgeByHem=cell(1,2);
 elecCoverage=zeros(1,2);
 if ~strcmpi(elecCoord,'n'),
     if ~isempty(elecNames) && ischar(elecCoord),
@@ -992,6 +1043,9 @@ if ~strcmpi(elecCoord,'n'),
                 elecColorsByHem{hem_loop}=elecColors;
             else
                 elecColorsByHem{hem_loop}=elecColors(ids,:);
+                if ~isempty(elecColorsEdge)
+                    elecColorsEdgeByHem{hem_loop}=elecColorsEdge(ids,:);
+                end
             end
         end
     else
@@ -1156,6 +1210,7 @@ for h=1:2,
             sub_cfg.elecCoord=elecCoordByHem{temp_hem_id};
             sub_cfg.elecNames=elecNamesByHem{temp_hem_id};
             sub_cfg.elecColors=elecColorsByHem{temp_hem_id};
+            sub_cfg.elecColorsEdge=elecColorsEdgeByHem{temp_hem_id};
             if ~isfield(sub_cfg,'elecSize')
                 sub_cfg.elecSize=6;
             end
