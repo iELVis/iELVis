@@ -64,16 +64,22 @@ else
         % specified at a subset of electrodes
         n_col=size(elecColors,2);
         tempElecColors=zeros(max(showElecIds),n_col);
-		tempElecColorsEdge=zeros(max(showElecIds),3);
+        if ~isempty(elecColorsEdge),
+            tempElecColorsEdge=zeros(max(showElecIds),3);
+        end
         for a=1:length(elecNames),
             temp_id=findStrInCell(elecNames{a},showElecNames);
             if ~isempty(temp_id),
                 tempElecColors(showElecIds(temp_id),:)=elecColors(a,:);
-				tempElecColorsEdge(showElecIds(temp_id),:)=elecColorsEdge(a,:);
+                if ~isempty(elecColorsEdge),
+                    tempElecColorsEdge(showElecIds(temp_id),:)=elecColorsEdge(a,:);
+                end
             end
         end
         elecColors=tempElecColors;
-		elecColorsEdge=tempElecColorsEdge;
+        if ~isempty(elecColorsEdge),
+            elecColorsEdge=tempElecColorsEdge;
+        end
     end
 end
 
