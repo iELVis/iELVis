@@ -54,6 +54,10 @@ cp $fsDir/mri/orig.mgz $newFolder/mri/.
 cp $fsDir/mri/transforms/talairach.xfm $newFolder/mri/transforms/.
 cp $fsDir/mri/orig/001.mgz $newFolder/mri/orig/.
 
+# Copy build stamp
+mkdir $newFolder/scripts
+cp $fsDir/scripts/build-stamp.txt $newFolder/scripts/.
+
 # Copy label stuff
 mkdir $newFolder/label
 cp $fsDir/label/*.aparc.a2009s.annot $newFolder/label/.
