@@ -52,7 +52,7 @@ cp $fsDir/mri/brainmask.mgz $newFolder/mri/.
 cp $fsDir/mri/aparc+aseg.mgz $newFolder/mri/.
 cp $fsDir/mri/orig.mgz $newFolder/mri/.
 cp $fsDir/mri/transforms/talairach.xfm $newFolder/mri/transforms/.
-cp $fsDir/mri/001.mgz $newFolder/mri/orig/.
+cp $fsDir/mri/orig/001.mgz $newFolder/mri/orig/.
 
 # Copy label stuff
 mkdir $newFolder/label
