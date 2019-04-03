@@ -23,12 +23,12 @@ hemi = 'lh'
 
 # Pysurfer/Freesurfer parameters
 subject_id='sub-'+sub
-subjects_dir=os.path.join(elecInfoPath,'derivatives','iELVis')
+subjects_dir=os.path.join(BidsIeegRootDir,'derivatives','iELVis')
 surf = 'pial'
 
 
 # Import electrode info
-inFname=os.path.join(elecInfoPath,subject_id,'ieeg',subject_id+'_ses-01_space-pial_electrodes.tsv')
+inFname=os.path.join(BidsIeegRootDir,subject_id,'ieeg',subject_id+'_ses-01_space-pial_electrodes.tsv')
 xyzDf=pd.read_csv(inFname,sep='\t')
 nElec=xyzDf.shape[0]
 xyz=np.zeros((nElec,3))
