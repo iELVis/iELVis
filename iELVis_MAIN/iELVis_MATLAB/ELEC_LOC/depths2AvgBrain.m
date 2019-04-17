@@ -1,14 +1,34 @@
-function [avgCoords, elecNames, isLeft]=depths2AvgBrain(subj)
-%function [avgCoords, elecNames, isLeft]=depths2AvgBrain(subj)
+function [avgCoords, elecNames, isLeft]=depths2AvgBrain(subj,varargin)
+%function [avgCoords, elecNames, isLeft]=depths2AvgBrain(subj,varargin)
 %
 % This function takes RAS CT coordinates of depth electrodes (i.e.,
-% the depth electrode coordinates in the postimplant CT or MRI) and maps it 
+% the depth electrode coordinates in the postimplant CT or MRI) and maps it
 % to the corresponding location in MNI305 space using an affine
 % transformation. These coordinates can then be used to visualize electrode
 % locations on the FreeSurfer average brain.
 %
 % Inputs:
 %   subj = FreeSurfer subject name
+%
+% Optional Inputs: passed as fields in a configuration structure
+%   elecCoord = N-by-3 numeric array with RAS electrode coordinates.
+%               {default: not used; the function looks into the subject's
+%               Freesurfer folder for electrode coordinate file instead}
+%   elecNames = cell array of strings with electrode names, corresponding
+%               to the rows of elecCoord. This argument is required
+%               if elecCoord is used. {default: not used; the function
+%               looks into the subject's Freesurfer folder for electrode
+%               name file instead}
+%   isLeft    = N-dimensional binary vector where N is the # of electrodes.
+%               0 indicates that an electrode is on/in the right hemisphere.
+%               1 indicates a left hemisphere location. This argument is
+%               required if elecCoord is used. Otherwise this information
+%               is read from the participant's electrodeNames file.
+%   isSubdural= N-dimensional binary vector where N is the # of electrodes.
+%               0 indicates that an electrode is a depth electrode. 1
+%               indicates a subdural electrode. This argument is required
+%               if elecCoord is used. Otherwise this information is read
+%               from the participant's electrodeNames file.
 %
 % Outputs:
 %   avgCoords = Electrode coordinates in MNI305 space that can be visualized
@@ -27,6 +47,21 @@ function [avgCoords, elecNames, isLeft]=depths2AvgBrain(subj)
 % 2015-2016
 %
 
+% manage optional input arguments
+switch nargin
+    case 1
+        cfg=[];
+    case 2
+        cfg=varargin{1};
+    otherwise
+        error('depths2AvgBrain can either accept 1 or 2 inputs.');
+end
+% parse input parameters in cfg structure and set defaults
+if  ~isfield(cfg,'elecCoord'),      elecCoord = []; else    elecCoord = cfg.elecCoord;      end
+if  ~isfield(cfg,'elecNames'),      elecNames = []; else    elecNames = cfg.elecNames;      end
+if  ~isfield(cfg,'isLeft'),        isLeft = [];   else    isLeft = cfg.isLeft;      end
+if  ~isfield(cfg,'isSubdural'),     isSubdural = [];   else    isSubdural = cfg.isSubdural;      end
+
 %% FreeSurfer Subject Directory
 fsDir=getFsurfSubDir();
 subDir=fullfile(fsDir,subj);
@@ -40,7 +75,7 @@ end
 mgzFname=fullfile(subDir,'mri','orig.mgz');
 checkFile(mgzFname);
 MRIhdr=MRIread(mgzFname,true);
-Norig=MRIhdr.vox2ras; 
+Norig=MRIhdr.vox2ras;
 Torig=MRIhdr.tkrvox2ras;
 
 
@@ -49,42 +84,47 @@ TalTransform=freesurfer_read_talxfm(fullfile(subDir,'mri','transforms','talairac
 
 
 %% Import Electrode Coordinates in Patient Space and Electrode Names
-ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.POSTIMPLANT']);
-if ~exist(ptntCoordFile,'file')
-    % try original filename convention
-    ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.CT']);
+if isempty(elecCoord) % default behavior: no elecCoord were provided as input
+    ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.POSTIMPLANT']);
     if ~exist(ptntCoordFile,'file')
-        ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.POSTIMPLANT']);
-        error('The following file is missing: %s\n',ptntCoordFile);
+        % try original filename convention
+        ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.CT']);
+        if ~exist(ptntCoordFile,'file')
+            ptntCoordFile=fullfile(subDir,'elec_recon',[subj '.POSTIMPLANT']);
+            error('The following file is missing: %s\n',ptntCoordFile);
+        end
     end
-end
-tempCsv=csv2Cell(ptntCoordFile,' ',2);
-nElec=size(tempCsv,1);
-ptntCoords=zeros(nElec,3);
-for a=1:nElec,
-   for b=1:3,
-    ptntCoords(a,b)=str2double(tempCsv{a,b});
-   end
+    tempCsv=csv2Cell(ptntCoordFile,' ',2);
+    nElec=size(tempCsv,1);
+    elecCoord=zeros(nElec,3);
+    for a=1:nElec,
+        for b=1:3,
+            elecCoord(a,b)=str2double(tempCsv{a,b});
+        end
+    end
+    
+    elecNamesFile=fullfile(subDir,'elec_recon',[subj '.electrodeNames']);
+    tempCsv=csv2Cell(elecNamesFile,' ',2);
+    elecNames=tempCsv(:,1);
+    isLeft=zeros(nElec,1);
+    isDepth=zeros(nElec,1);
+    for a=1:nElec,
+        if tempCsv{a,3}=='L'
+            isLeft(a)=1;
+        end
+        if tempCsv{a,2}=='D'
+            isDepth(a)=1;
+        end
+        %elecNames{a}=[subj '-' elecNames{a}];
+    end
+else % elecCoord (and elecNames and isLeft and isSubdural) were provided as input
+    isDepth=~isSubdural;
 end
 
-elecNamesFile=fullfile(subDir,'elec_recon',[subj '.electrodeNames']);
-tempCsv=csv2Cell(elecNamesFile,' ',2);
-elecNames=tempCsv(:,1);
-isLeft=zeros(nElec,1);
-isDepth=zeros(nElec,1);
-for a=1:nElec,
-    if tempCsv{a,3}=='L'
-        isLeft(a)=1;
-    end
-    if tempCsv{a,2}=='D'
-        isDepth(a)=1;
-    end
-    %elecNames{a}=[subj '-' elecNames{a}];
-end
 % Select only depths
 elecNames=elecNames(isDepth==1);
 isLeft=isLeft(isDepth==1);
-ptntCoords=ptntCoords(isDepth==1,:);
+elecCoord=elecCoord(isDepth==1,:);
 nElec=sum(isDepth);
 
 %%
@@ -92,5 +132,5 @@ nElec=sum(isDepth);
 % Section #2 of "Transforms within a subject's anatomical space"
 % "2. I have an RAS point on the surface (tkrR tkrA tkrS) ("Vertex RAS"
 % from tksurfer) and want to compute the MNI305 RAS that corresponds to this point:"
-avgCoords=(TalTransform*Norig*(Torig\[ptntCoords'; ones(1, nElec)]))';
+avgCoords=(TalTransform*Norig*(Torig\[elecCoord'; ones(1, nElec)]))';
 avgCoords=avgCoords(:,1:3);
