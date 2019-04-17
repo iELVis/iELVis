@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage='\nUSAGE:\n  mri2mriBbreg.sh freesurferSubjectName ctNiiFile\n\nEXAMPLE:\n mri2mriBbreg.sh TWH014 /Users/dgroppe/Desktop/TWH_14_DICOMS/ct.nii.gz\n'
+usage='\nUSAGE:\n  mri2mriBbreg.sh freesurferSubjectName postimplantMriNiiFile\n\nEXAMPLE:\n mri2mriBbreg.sh PT001 /Users/dgroppe/Desktop/PT001_DICOMS/post_mri.nii.gz\n'
 
 if [ "$#" = 0 ]; then
  echo -e $usage
@@ -8,16 +8,13 @@ if [ "$#" = 0 ]; then
 fi
 
 
-# mri2mri.sh
+# mri2mriBbreg.sh
 #
 # Registers an MRI to an MRI using bbregister
 #
 # Created by David Groppe on 2/11/15.
 # Questions? Email: david.m.groppe@gmail.com
 # Copyright 2015 __MyCompanyName__. All rights reserved.
-
-#echo 'Registering postopCT.nii.gz to T1.nii.gz'
-#echo Subject $1
 
 sub=$1
 fsDir=$SUBJECTS_DIR/$sub
@@ -50,8 +47,8 @@ mri_convert $mriPath/brainmask.mgz $elecReconPath/brainmask.nii.gz
 echo 'Copying CT nii.gz file to elec_recon folder.'
 cp $2 $elecReconPath/postimpRaw.nii.gz
 
-bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/mri2mri.dat --fslmat $elecReconPath/mri2mri.mat --init-fsl --t1
-flirt -in postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/mri2mri.mat -applyxfm
+bbregister --s $sub --mov $elecReconPath/postimpRaw.nii.gz --reg $elecReconPath/mri2mri.dat --fslmat $elecReconPath/mri2mri.mat --init-fsl --t1
+flirt -in $elecReconPath/postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/mri2mri.mat -applyxfm
 # Make directory to store coregistration images
 mkdir -p $elecReconPath/PICS/COREG/
 

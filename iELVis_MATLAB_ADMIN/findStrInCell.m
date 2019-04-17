@@ -9,7 +9,7 @@ function ids=findstrInCell(str,cell_o_strings,error_flag)
 %
 % Optional Input:
 %   error_flag - [1|0] If 1, an error is thrown when str is not found in
-%                cell_o_strings
+%                cell_o_strings. {default: 0}
 %
 % Output:
 %   ids - Indices of elements of cell_o_strings that match str.  ids is
@@ -20,7 +20,7 @@ function ids=findstrInCell(str,cell_o_strings,error_flag)
 % Author: David Groppe
 
 if nargin<3,
-   error_flag='n'; 
+   error_flag=0; 
 end
 
 ids=[];

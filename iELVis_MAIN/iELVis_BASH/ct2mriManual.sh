@@ -48,8 +48,8 @@ cp $2 $elecReconPath/postimpRaw.nii.gz
 echo 'Copying ct2mri.dat to ct2mriManual.dat.'
 cp $elecReconPath/ct2mri.dat $elecReconPath/ct2mriManual.dat
 
-bbregister --s $sub --mov postimpRaw.nii.gz --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-reg $elecReconPath/ct2mriManual.dat  --bold
-flirt -in postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
+bbregister --s $sub --mov $elecReconPath/postimpRaw.nii.gz --reg $elecReconPath/ct2mri.dat --fslmat $elecReconPath/ct2mri.mat --init-reg $elecReconPath/ct2mriManual.dat  --bold
+flirt -in $elecReconPath/postimpRaw.nii.gz -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -interp trilinear -init $elecReconPath/ct2mri.mat -applyxfm
 
 # Make images of CT/MRI coregistration
 slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz
