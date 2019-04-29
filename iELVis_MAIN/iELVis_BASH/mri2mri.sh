@@ -65,6 +65,7 @@ slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz
 slices $elecReconPath/postInPre.nii.gz $elecReconPath/T1.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_1.gif
 slices $elecReconPath/T1.nii.gz  $elecReconPath/postInPre.nii.gz -o $elecReconPath/PICS/COREG/postINpreT1_2.gif
 
+# Output the command run to the command line so user can see exactly what was run
 echo flirt -in $elecReconPath/postimpRaw.nii.gz  -ref $elecReconPath/T1.nii.gz -out $elecReconPath/postInPre.nii.gz -omat $elecReconPath/post2preT1.mat -interp trilinear -cost normcorr -dof 6 -searchcost normcorr -searchrx -180 180 -searchry -180 180 -searchrz -180 180
 echo 'Run the command below to interactively inspect the coregistration:'
 echo "fslview ${elecReconPath}/T1.nii.gz ${elecReconPath}/postInPre.nii.gz"

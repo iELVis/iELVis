@@ -10,7 +10,7 @@ function plotMgridOnPial(fsub,printEm)
 %            elec_recon folder
 %
 % Examples:
-% plotMgridOnPial('TWH10',0);
+% plotMgridOnPial('PT001',0);
 %
 %
 % Author:
@@ -34,8 +34,17 @@ end
 
 
 %% Get mgrid info
-%[~, elecLabels, elecRgb]=mgrid2matlab(fsub,hem);
-[~, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsub);
+fsDir=getFsurfSubDir();
+elecReconDir=fullfile(fsDir,fsub,'elec_recon');
+iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
+iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
+if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
+    % import from iLoc
+    [~, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(fsub);
+else
+    % import from mgrid
+    [~, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsub);
+end
 nElec=length(elecLabels);
 
 elecnames=cell(1,length(elecLabels));

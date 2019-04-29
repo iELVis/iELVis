@@ -21,7 +21,16 @@ elecReconPath=fullfile(subPath,'elec_recon');
 postimpLocFname=fullfile(elecReconPath,[fsSub 'PostimpLoc.txt']);
 
 %% space delimited from mgrid
-[eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsSub,0);
+elecReconDir=fullfile(fsDir,fsSub,'elec_recon');
+iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
+iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
+if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
+    % import from iLoc
+    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(fsSub);
+else
+    % import from mgrid
+    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsSub,0);
+end
 eCoords=eCoords-1; % Make coordinates same as in mgrid file (thus first slice has a coordinate of 0, last has a coordinate of 255)
 fprintf('Creating file: %s\n',postimpLocFname);
 fid=fopen(postimpLocFname,'w');

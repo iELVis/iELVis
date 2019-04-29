@@ -86,7 +86,17 @@ fsDir=getFsurfSubDir();
 brainShiftMethod=['dykstra-' iELVis_getGitInfo];
 
 %%
-[elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
+elecReconDir=fullfile(fsDir,sub,'elec_recon');
+iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
+iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
+if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
+    % import from iLoc
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub);
+else
+    % import from mgrid
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
+end
+% [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
 
 % Remove electrodes that were disabled in bioimagesuite
 presentIds=find(elecPresent);
