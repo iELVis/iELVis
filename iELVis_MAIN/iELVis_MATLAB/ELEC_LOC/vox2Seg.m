@@ -15,7 +15,7 @@ function anatLabel=vox2Seg(coordILA,fsSub)
 %
 %  Example:
 %  >>coordILA=[147 144 115];
-%  >>anatLabel=vox2Seg(coordILA,'NiAs')
+%  >>anatLabel=vox2Seg(coordILA,'PT001')
 %
 % Author: David M. Groppe
 % Feb. 2015

@@ -1,8 +1,18 @@
-function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub)
-%function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub)
+function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub,elecHem)
+%function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub,elecHem)
 %
-% Input:
-%  sug - Freesurfer name of the subject.
+% Required Input:
+%  sub - Freesurfer name of the subject.
+%
+% Optional Inputs:
+%  elecHem - 'L', 'R', or 'FirstChar': If 'L' all electrodes are assumed to lie on
+%        the left hemisphere. If 'R' all electrodes are assumed to lie
+%        onthe right hemisphere. 'FirstChar' means that each electrode's
+%        name begins with 'L' or 'R', which specifies the hemisphere. If
+%        empty, the electrode's hemisphere assignment is automatically
+%        deteremined using its anatomical location. Automatic assignment
+%        may fail for medial electrodes and can be corrected by manually
+%        editing the patient's *.electrodeNames file. Default: elecHem=[]
 %
 % Output:
 %  elecMatrix  - 3D matrix of electrode coordinates. Column 1 is R->L (i.e.,
@@ -20,7 +30,7 @@ function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(s
 %                pairs that are neighbors. Last column indicates the color
 %                (rgb) of the pair. For use with plotElecPial.m.
 %  elecPresent - Binary vector of length(elecMatrix). If elecPresent(x)==0
-%                then the xth electrode is disabled (i.e., cut off and not 
+%                then the xth electrode is disabled (i.e., cut off and not
 %                implanted).
 %
 %  Example:
@@ -38,6 +48,17 @@ function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(s
 fsDir=getFsurfSubDir();
 elecReconDir=fullfile(fsDir,sub,'elec_recon');
 
+if nargin<2,
+    elecHem=[];
+end
+
+if ~isempty(elecHem),
+    ids=findStrInCell(elecHem,{'L','R','FirstChar'},0);
+    if isempty(ids),
+        error('Illegal value of elecHem.');
+    end
+end
+
 defaultElecType='D';
 
 % TODO need to copy iLoc*.tsv files to elec_recon folder is sh script
@@ -45,7 +66,7 @@ defaultElecType='D';
 % Load iLoc electrode information
 iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
 if ~exist(iLocInfoFname,'file')
-   error('iLoc file %s not found.',iLocInfoFname); 
+    error('iLoc file %s not found.',iLocInfoFname);
 end
 infoCsv=csv2Cell(iLocInfoFname,9,1);
 nElec=size(infoCsv,1);
@@ -68,22 +89,21 @@ for a=1:nElec,
     % Simple labels
     simpleLabels{a}=[infoCsv{a,1} infoCsv{a,2}];
     
-    % Elec Type
-    if strcmpi(infoCsv{a,11},'Depth'),
-        elecType='D';
-    elseif strcmpi(infoCsv{a,10},'TRUE')
-        elecType='G';
-    elseif strcmpi(infoCsv{a,11},'Subdural')
-        elecType='S';
-    else % might be Unspecified
-        fprintf('Electrode type for %s is %s. Setting it to %s by default.', ...
-            elecType,infoCsv{a,1},infoCsv{a,11},defaultElecType);
-    end
-    
-    % Elec Name
-    hem=infoCsv{a,1}(1); % TODO in need to make this a separate column in iLocInfo or generate it automatically
-    elecLabels{a}=sprintf('%c%c_%s_%s',hem,elecType,infoCsv{a,1}, ...
-        infoCsv{a,2}); % eleLabels are formatted like this LS_LO_5
+    %     % Elec Type
+    %     if strcmpi(infoCsv{a,11},'Depth'),
+    %         elecType='D';
+    %     elseif strcmpi(infoCsv{a,10},'TRUE')
+    %         elecType='G';
+    %     elseif strcmpi(infoCsv{a,11},'Subdural')
+    %         elecType='S';
+    %     else % might be Unspecified
+    %         fprintf('Electrode type for %s is %s. Setting it to %s by default.', ...
+    %             elecType,infoCsv{a,1},infoCsv{a,11},defaultElecType);
+    %     end
+    %     % Elec Name
+    %     hem=infoCsv{a,1}(1); % TODO in need to make this a separate column in iLocInfo or generate it automatically
+    %     elecLabels{a}=sprintf('%c%c_%s_%s',hem,elecType,infoCsv{a,1}, ...
+    %         infoCsv{a,2}); % elecLabels are formatted like this LS_LO_5
     % Elec RGB
     for b=1:3,
         elecRgb(a,b)=str2double(infoCsv{a,b+6})/255;
@@ -107,15 +127,67 @@ elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
 elecMatrix(:,2)=256-fsurfRas(3,:); % convert S to I
 elecMatrix(:,3)=256-fsurfRas(2,:); % convert A to P
 
+%% Get elec labels
+elecCoordILA=zeros(nElec,3);
+elecCoordILA(:,1)=elecMatrix(:,2);
+elecCoordILA(:,2)=elecMatrix(:,1);
+elecCoordILA(:,3)=fsurfRas(2,:);
+for a=1:nElec,
+    fprintf('Identifying hemisphere corresponding to electrode %d/%d\n',a,nElec);
+    hem=[];
+    if strcmpi(elecHem,'L'),
+        hem='L';
+    elseif strcmpi(elecHem,'R'),
+        hem='R';
+    elseif strcmpi(elecHem,'FirstChar'),
+        hem=infoCsv{a,1}(1);
+    else
+        anatLabel=vox2Seg(round(elecCoordILA(a,:)),'PT001');
+        seg=strsplit(anatLabel,'-');
+        
+        if length(seg)>1,
+            if strcmpi(seg(2),'lh'),
+                hem='L';
+            elseif strcmpi(seg(2),'rh'),
+                hem='R';
+            end
+        end
+        if isempty(hem),
+            % anatomical location unknown, guess left hemisphere if coordinate
+            % is on left side of volume (volume dimensions are 256^3)
+            if  elecCoordILA(a,2)<=128,
+                hem='R';
+            else
+                hem='L';
+            end
+        end
+    end
+    
+    % Elec Type
+    if strcmpi(infoCsv{a,11},'Depth'),
+        elecType='D';
+    elseif strcmpi(infoCsv{a,10},'TRUE')
+        elecType='G';
+    elseif strcmpi(infoCsv{a,11},'Subdural')
+        elecType='S';
+    else % might be Unspecified
+        fprintf('Electrode type for %s is %s. Setting it to %s by default.', ...
+            elecType,infoCsv{a,1},infoCsv{a,11},defaultElecType);
+    end
+    % Elec Name
+    elecLabels{a}=sprintf('%c%c_%s_%s',hem,elecType,infoCsv{a,1}, ...
+        infoCsv{a,2}); % elecLabels are formatted like this LS_LO_5
+end
+
 %%
 % Load iLoc electrode pair information
 iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
 if ~exist(iLocPairsFname,'file')
-   error('iLoc file %s not found.',iLocPairsFname); 
+    error('iLoc file %s not found.',iLocPairsFname);
 end
 pairsCsv=csv2Cell(iLocPairsFname,9,1);
 nPairs=size(pairsCsv,1);
-elecPairs=cell(nPairs,3); 
+elecPairs=cell(nPairs,3);
 for a=1:nPairs,
     % Find the index and iELVis name of the first electrode
     tempLabel=[pairsCsv{a,1} pairsCsv{a,5}];
@@ -129,7 +201,7 @@ for a=1:nPairs,
     
     tempRgb=zeros(1,3);
     for b=1:3,
-       tempRgb(b)=str2double(pairsCsv{a,b+1})/255;
+        tempRgb(b)=str2double(pairsCsv{a,b+1})/255;
     end
     elecPairs{a,3}=tempRgb;
 end
