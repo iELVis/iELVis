@@ -26,7 +26,7 @@ function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(
 %  elecPairs   - n x 3 cell array. First two columns indicate electrode
 %                pairs that are neighbors. Last column indicates the color
 %                (rgb) of the pair. For use with plotElecPial.m.
-%  elecPresent - Binary vector of length(elecMatrix). If elecPresent(x)==o
+%  elecPresent - Binary vector of length(elecMatrix). If elecPresent(x)==0
 %                then the xth electrode is disabled (i.e., cut off and not 
 %                implanted).
 %
@@ -35,7 +35,7 @@ function [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(
 %   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab();
 %
 %   Load using iELVis storage conventions:
-%   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab('TWH11');
+%   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab('PT001');
 %
 %   Load using an full mgrid filename:
 %   >>[elecMatrix, elecLabels, elecRgb]=mgrid2matlab('/Applications/freesurfer/subjects/TWH11/elec_recon/TWH11.mgrid');

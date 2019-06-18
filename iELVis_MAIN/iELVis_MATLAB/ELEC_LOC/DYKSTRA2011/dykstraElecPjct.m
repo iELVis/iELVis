@@ -1,5 +1,5 @@
-function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId)
-%function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId)
+dicmfunction dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
+%function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
 %
 % Corrects intracranial electrode locations for brain shift using the
 % following method:
@@ -27,6 +27,15 @@ function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId)
 %                possible that data may be recorded in multiple sessions and
 %                the electrodes recorded from may differ across sessions.
 %                {default: 1}
+%  elecHem - 'L', 'R', or 'FirstChar': If 'L' all electrodes are assumed to lie on
+%        the left hemisphere. If 'R' all electrodes are assumed to lie
+%        onthe right hemisphere. 'FirstChar' means that each electrode's
+%        name begins with 'L' or 'R', which specifies the hemisphere. If
+%        empty, the electrode's hemisphere assignment is automatically
+%        deteremined using its anatomical location. Automatic assignment
+%        may fail for medial electrodes and can be corrected by manually
+%        editing the patient's *.electrodeNames file. This ONLY HAS AN EFFECT
+%        if importing electrode locations from iLoc. Default: elecHem=[]
 %
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
@@ -79,6 +88,15 @@ end
 if nargin<4,
     sessionId=1;
 end
+if nargin<5,
+    elecHem=[];
+end
+if ~isempty(elecHem),
+    ids=findStrInCell(elecHem,{'L','R','FirstChar'},0);
+    if isempty(ids),
+        error('Illegal value of elecHem.');
+    end
+end
 
 fsDir=getFsurfSubDir();
 
@@ -86,7 +104,17 @@ fsDir=getFsurfSubDir();
 brainShiftMethod=['dykstra-' iELVis_getGitInfo];
 
 %%
-[elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
+elecReconDir=fullfile(fsDir,sub,'elec_recon');
+iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
+iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
+if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
+    % import from iLoc
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub,elecHem);
+else
+    % import from mgrid
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
+end
+% [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
 
 % Remove electrodes that were disabled in bioimagesuite
 presentIds=find(elecPresent);

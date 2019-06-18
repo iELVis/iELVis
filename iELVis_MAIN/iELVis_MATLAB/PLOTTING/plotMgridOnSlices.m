@@ -95,11 +95,17 @@ mx=max(max(max(mri.vol)))*cntrst;
 mn=min(min(min(mri.vol)));
 sVol=size(mri.vol);
 
-
 % Get mgrid info
 if isempty(mgridFname)
     if isempty(bidsDir)
-        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+        elecReconDir=fullfile(fsdir,fsSub,'elec_recon');
+        iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
+        iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
+        if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
+            [elecMatrix, elecLabels, elecRgb]=iLoc2Matlab(fsSub);
+        else
+            [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+        end
         % elecMatrix coords are LIP
         % elecLabels is a cell array of things like LD_LDAm_10
         % elecRgb is nElec x 3 matrix of 0-1 RGB values
