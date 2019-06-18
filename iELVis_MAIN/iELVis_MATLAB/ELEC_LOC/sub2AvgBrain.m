@@ -164,7 +164,6 @@ end
 avgCoords=zeros(nElec,3);
 avgVids=zeros(nElec,1);
 subVids=zeros(nElec,1);
-plotCtOffset=0; % counts the # of electrodes that have been displayed
 for hemLoop=1:2,
     if hemLoop==1
         % Do left hemisphere elecs
@@ -244,8 +243,8 @@ for hemLoop=1:2,
                 view(270,0);
             end
             for a=1:nHemElec,
-                h=plot3(avgCoords(a+plotCtOffset,1),avgCoords(a+plotCtOffset,2),avgCoords(a+plotCtOffset,3),'r.');
-                clickText(h,elecNames{a+plotCtOffset});
+                h=plot3(avgCoords(hemElecIds(a),1),avgCoords(hemElecIds(a),2),avgCoords(hemElecIds(a),3),'r.');
+                clickText(h,elecNames{hemElecIds(a)});
                 set(h,'markersize',20,'color',elecColors(a,:));
             end
             if universalNo(rmDepths)
@@ -265,9 +264,8 @@ for hemLoop=1:2,
                 view(270,0);
             end
             for a=1:nHemElec
-                h=plot3(elecCoord(hemElecIds(a),1),elecCoord(hemElecIds(a),2), ...
-                    elecCoord(hemElecIds(a),3),'r.');
-                clickText(h,elecNames{a+plotCtOffset});
+                h=plot3(elecCoord(hemElecIds(a),1),elecCoord(hemElecIds(a),2),elecCoord(hemElecIds(a),3),'r.');
+                clickText(h,elecNames{hemElecIds(a)});
                 set(h,'markersize',20,'color',elecColors(a,:));
             end
             if universalNo(rmDepths)
@@ -293,9 +291,8 @@ for hemLoop=1:2,
                 view(90,0);
             end
             for a=1:nHemElec
-                h=plot3(avgCoords(a+plotCtOffset,1),avgCoords(a+plotCtOffset,2), ...
-                    avgCoords(a+plotCtOffset,3),'r.');
-                clickText(h,elecNames{a+plotCtOffset});
+                h=plot3(avgCoords(hemElecIds(a),1),avgCoords(hemElecIds(a),2),avgCoords(hemElecIds(a),3),'r.');
+                clickText(h,elecNames{hemElecIds(a)});
                 set(h,'markersize',20,'color',elecColors(a,:));
             end
             if universalNo(rmDepths)
@@ -315,9 +312,8 @@ for hemLoop=1:2,
                 view(90,0);
             end
             for a=1:nHemElec
-                h=plot3(elecCoord(hemElecIds(a),1),elecCoord(hemElecIds(a),2), ...
-                    elecCoord(hemElecIds(a),3),'r.');
-                clickText(h,elecNames{a+plotCtOffset});
+                h=plot3(elecCoord(hemElecIds(a),1),elecCoord(hemElecIds(a),2),elecCoord(hemElecIds(a),3),'r.');
+                clickText(h,elecNames{hemElecIds(a)});
                 set(h,'markersize',20,'color',elecColors(a,:));
             end
             if universalNo(rmDepths)
@@ -327,7 +323,6 @@ for hemLoop=1:2,
             set(gcf,'name',subj);
             
             drawnow;
-            plotCtOffset=nHemElec+plotCtOffset;
         end
     end
 end

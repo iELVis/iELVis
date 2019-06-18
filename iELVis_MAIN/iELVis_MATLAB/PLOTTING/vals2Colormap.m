@@ -33,7 +33,7 @@ function [map, limits, cmap]=vals2Colormap(vals,type,cmap,minmax)
 
 % History:
 % 2015-4: Made compatible with Matlab 2014's parula cmap: DG
-% 2015-4: Can handle saturated colormaps: Kathrin Müsch
+% 2015-4: Can handle saturated colormaps: Kathrin M?sch
 
 if nargin<3,
     if verLessThan('matlab','8.0.1')
