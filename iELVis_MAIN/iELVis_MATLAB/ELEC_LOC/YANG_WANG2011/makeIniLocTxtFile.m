@@ -13,7 +13,7 @@ function makeIniLocTxtFile(fsSub, elecHem)
 %        deteremined using its anatomical location. Automatic assignment
 %        may fail for medial electrodes and can be corrected by manually
 %        editing the patient's *.electrodeNames file. This ONLY HAS AN EFFECT
-%        if importing electrode locations from iLoc. Default: elecHem=[]
+%        if importing electrode locations from persyst. Default: elecHem=[]
 %
 % Create a text file of elec coordinates (in voxel space) readable by Wang, Yang or Dykstra
 % brain shift correctioncode. The file is called *PostimpLoc.txt and is the
@@ -43,11 +43,11 @@ postimpLocFname=fullfile(elecReconPath,[fsSub 'PostimpLoc.txt']);
 
 %% space delimited from mgrid
 elecReconDir=fullfile(fsDir,fsSub,'elec_recon');
-iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
-iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
-if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
-    % import from iLoc
-    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(fsSub,elecHem);
+persystInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
+persystPairsFname=fullfile(elecReconDir,'persystElecPairs.tsv');
+if exist(persystInfoFname,'file') && exist(persystPairsFname,'file')
+    % import from persyst
+    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=persyst2Matlab(fsSub,elecHem);
 else
     % import from mgrid
     [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsSub,0);

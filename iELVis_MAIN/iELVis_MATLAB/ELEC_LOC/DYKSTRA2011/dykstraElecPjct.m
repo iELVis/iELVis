@@ -1,4 +1,4 @@
-dicmfunction dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
+function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
 %function dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
 %
 % Corrects intracranial electrode locations for brain shift using the
@@ -35,7 +35,7 @@ dicmfunction dykstraElecPjct(sub,minimizeChange,bidsRootDir,sessionId,elecHem)
 %        deteremined using its anatomical location. Automatic assignment
 %        may fail for medial electrodes and can be corrected by manually
 %        editing the patient's *.electrodeNames file. This ONLY HAS AN EFFECT
-%        if importing electrode locations from iLoc. Default: elecHem=[]
+%        if NOT importing electrode locations from an mgrid file. Default: elecHem=[]
 %
 % Outputs:
 %  The following files are created in the elec_recon subfolder of the
@@ -105,11 +105,11 @@ brainShiftMethod=['dykstra-' iELVis_getGitInfo];
 
 %%
 elecReconDir=fullfile(fsDir,sub,'elec_recon');
-iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
-iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
-if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
-    % import from iLoc
-    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(sub,elecHem);
+persystInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
+persystPairsFname=fullfile(elecReconDir,'persystElecPairs.tsv');
+if exist(persystInfoFname,'file') && exist(persystPairsFname,'file')
+    % import from persyst
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=persyst2Matlab(sub,elecHem);
 else
     % import from mgrid
     [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
