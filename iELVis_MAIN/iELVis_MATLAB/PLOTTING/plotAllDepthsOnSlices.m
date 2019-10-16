@@ -1,12 +1,12 @@
 function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
-% function plotAllDepthsOnSlices(fsSub,cfg)??
+% function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %
 % Creates a figure illustrating the location of each depth electrode contact 
 % in a sagittal, coronal, and axial slice and indicates which part of
 % the brain it is in. You need to first need to record electrode
 % coordinates in iELVis conventions (e.g., using yangWangElecPjct.m or
-% dykstraElecPjct.m) or have an mgrid file of electrode information from
-% BioImageSuite.
+% dykstraElecPjct.m), have an mgrid file of electrode information from
+% BioImageSuite, or have analogous info in MNI space.
 %
 % Required Inputs:
 %  fsSub - Patient's freesurfer directory name
@@ -14,7 +14,10 @@ function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %                 format electrode information is stored in. 
 %
 % Optional cfg parameters:
-%  mgridFname - mgrid filename and path. If empty, ??
+%  mgridFname - mgrid filename and path. If empty, and
+%               elecInfoType=='mgrid', we assume the mgrid file is in the
+%               subject's elec_recon subfolder and named *.mgrid, where *
+%               is the subject's FreeSurfer ID.
 %  fullTitle  - If 1, the mgrid and mri voxel coordinates are displayed in
 %               the figure title along with the electrode name and anatomical
 %               location. {default: 0}
@@ -48,16 +51,16 @@ function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %              bidsDir not specified {default: 1}
 %
 %
-% Examples: ??
+% Examples:
 %  %Specify mgrid file and do NOT print
 %  cfg=[];
-%  cfg.mgridFname='/Applications/freesurfer/subjects/TWH001/elec_recon/TWH001.mgrid';
-%  plotAllDepthsOnSlices('PT001',cfg);
+%  cfg.mgridFname='/Applications/freesurfer/subjects/PT001/elec_recon/PT001.mgrid';
+%  plotAllDepthsOnSlices('PT001','mgrid',cfg);
 %
 %  %Use FreeSurfer file structure and print
 %  cfg=[];
 %  cfg.printFigs=1;
-%  plotAllDepthsOnSlices('PT001',cfg);
+%  plotAllDepthsOnSlices('PT001','mgrid',cfg);
 %
 %
 % Author: David M. Groppe
@@ -65,7 +68,7 @@ function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 % Feinstein Institute for Medical Research/Univ. of Toronto
 
 
-if ~isfield(cfg,'mgridFname'),    mgridFname=[];    else mgridFname=cfg.mgridFname; end % ??
+if ~isfield(cfg,'mgridFname'),    mgridFname=[];    else mgridFname=cfg.mgridFname; end
 if ~isfield(cfg,'fullTitle'),     fullTitle=0;      else fullTitle=cfg.fullTitle; end
 if ~isfield(cfg,'markerSize'),    markerSize=30;    else markerSize=cfg.markerSize; end
 if ~isfield(cfg,'cntrst'),    cntrst=.5;          else cntrst=cfg.cntrst; end
@@ -180,7 +183,11 @@ elseif strcmpi(elecInfoType,'MNI'),
     % elecRgb is nElec x 3 matrix of 0-1 RGB values
 else
     % mgrid format
-     [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+    if isempty(mgridFname)
+        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+    else
+        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub,mgridFname);
+    end
 end
             
 nElec=length(elecLabels);

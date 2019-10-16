@@ -64,7 +64,7 @@ plotMgridOnPial('PT001',1);
 
 %% Test Plot: Mgrid on Slices
 cfg=[]; cfg.printFigs=1;
-plotMgridOnSlices('PT001',cfg);
+plotAllDepthsOnSlices('PT001','mgrid',cfg);
 
 
 %%
