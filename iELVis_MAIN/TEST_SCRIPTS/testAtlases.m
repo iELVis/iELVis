@@ -60,10 +60,12 @@ parc_col(id,:)=col.table(id,1:3);
 cfg=[];
 cfg.view='l';
 cfg.overlayParcellation='Y17';
-cfg.title=col.struct_names{id}; 
+cfg.title=sprintf('Y17 Atlas: Network %d',id); 
 cfg.parcellationColors = parc_col;
 cfgOut=plotPialSurf('PT001',cfg);
-
+if printEm
+   print(gcf,'-djpeg','Yeo17_NW16'); 
+end
 
 %%
 disp('Script testAtlases.m completed successfully.')
