@@ -105,11 +105,11 @@ brainShiftMethod=['dykstra-' iELVis_getGitInfo];
 
 %%
 elecReconDir=fullfile(fsDir,sub,'elec_recon');
-persystInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
-persystPairsFname=fullfile(elecReconDir,'persystElecPairs.tsv');
-if exist(persystInfoFname,'file') && exist(persystPairsFname,'file')
-    % import from persyst
-    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=persyst2Matlab(sub,elecHem);
+mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+if exist(mniInfoFname,'file') && exist(mniPairsFname,'file')
+    % import from mni
+    [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mni2Matlab(sub,elecHem);
 else
     % import from mgrid
     [elecMatrix, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(sub);
