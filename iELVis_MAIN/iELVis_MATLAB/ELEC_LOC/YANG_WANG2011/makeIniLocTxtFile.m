@@ -5,6 +5,8 @@ function makeIniLocTxtFile(fsSub, elecInfoType, elecHem)
 %  fsSub - Name of patient's FreeSurfer folder (e.g., fsSub)
 %
 % Optional Input:
+%  elecInfoType - 'mgrid' or 'mni'; The text file format electrode
+%        coordinates are stored in. {Default: 'mgrid'}
 %  elecHem - 'L', 'R', or 'FirstChar': If 'L' all electrodes are assumed to lie on
 %        the left hemisphere. If 'R' all electrodes are assumed to lie
 %        onthe right hemisphere. 'FirstChar' means that each electrode's
@@ -13,7 +15,7 @@ function makeIniLocTxtFile(fsSub, elecInfoType, elecHem)
 %        deteremined using its anatomical location. Automatic assignment
 %        may fail for medial electrodes and can be corrected by manually
 %        editing the patient's *.electrodeNames file. This ONLY HAS AN EFFECT
-%        if importing electrode locations from mni. Default: elecHem=[]
+%        if importing electrode locations from mni. {Default: elecHem=[]}
 %
 % Create a text file of elec coordinates (in voxel space) readable by Wang, Yang or Dykstra
 % brain shift correctioncode. The file is called *PostimpLoc.txt and is the
@@ -26,6 +28,9 @@ function makeIniLocTxtFile(fsSub, elecInfoType, elecHem)
 fsDir=getFsurfSubDir();
 
 if nargin<2,
+    elecInfoType='mgrid';
+end
+if nargin<3,
     elecHem=[];
 end
 if ~isempty(elecHem),
