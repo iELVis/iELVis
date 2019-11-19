@@ -39,7 +39,7 @@ function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %              when this function is called. Each time a new electrode
 %              needs to be visualized the figure is cleared. This is useful
 %              when lots of depths have been used and you're printing the
-%              figures.
+%              figures. {default: 1}
 %  printFigs - 1 or directory. If 1, each figure is output to a jpg file in the patient's
 %              elec_recon/PICS folder and the figure is closed after the
 %              jpg is created. This is particularly useful for implants with
