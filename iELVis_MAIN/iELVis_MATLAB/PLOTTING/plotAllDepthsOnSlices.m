@@ -33,8 +33,13 @@ function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %  colorLUT    - fullpath to color lookup table if you would like to use
 %                non default colors for your parcellation overlay.
 %                {default: FreeSurferColorLUTnoFormat.txt}
-%  pauseOn   - If 1, Matlab pa'uses after each figure is made and waits for
+%  pauseOn   - If 1, Matlab pauses after each figure is made and waits for
 %              a keypress. {default: 0}
+%  figOverwrite - If non-zero, only one new Matlab figure will be produced 
+%              when this function is called. Each time a new electrode
+%              needs to be visualized the figure is cleared. This is useful
+%              when lots of depths have been used and you're printing the
+%              figures.
 %  printFigs - 1 or directory. If 1, each figure is output to a jpg file in the patient's
 %              elec_recon/PICS folder and the figure is closed after the
 %              jpg is created. This is particularly useful for implants with
@@ -78,6 +83,7 @@ if ~isfield(cfg,'pauseOn'),    pauseOn=0;          else pauseOn=cfg.pauseOn; end
 if ~isfield(cfg,'printFigs'),    printFigs=0;          else printFigs=cfg.printFigs; end
 if ~isfield(cfg, 'bidsDir'),      bidsDir=[];         else bidsDir=cfg.bidsDir; end
 if ~isfield(cfg, 'bidsSes'),      bidsSes=1;         else bidsSes=cfg.bidsSes; end
+if ~isfield(cfg, 'figOverwrite'),  figOverwrite=1;  else figOverwrite=cfg.figOverwrite; end
 checkCfg(cfg,'plotAllDepthsOnSlices.m');
 
 % Check for valid arguments
@@ -234,10 +240,19 @@ if universalYes(anatOverlay)
     fclose(fid);
 end
 
-
+figId=0;
 for elecId=1:nElec,
     if depthElecs(elecId)
-        figId=figure();
+        if figId<1,
+            figId=figure();
+        else
+            if universalYes(figOverwrite),
+                 figure(figId);
+            else
+                figId=figure();
+            end
+        end
+        clf();
         set(figId,'position',[78 551 960 346],'paperpositionmode','auto');
         
         hm=zeros(1,3);
@@ -403,10 +418,9 @@ for elecId=1:nElec,
             drawnow;
             figFname=fullfile(outPath,sprintf('%s_%sSlices',fsSub,elecLabels{elecId}));
             fprintf('Exporting figure to %s\n',figFname);
-            %print(figId,figFname,'-depsc');
             print(figId,figFname,'-djpeg');
             pause(1);
-            close(figId);
+            %close(figId);
         end
         
         if universalYes(pauseOn)
