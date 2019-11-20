@@ -102,7 +102,7 @@ end
 
 
 %% Define/Create BIDS directories
-if ~isfolder(bidsRootDir); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsRootDir); end
+if ~exist(bidsRootDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsRootDir); end
 
 if ~isempty(sessionId)
     bidsSubDir=fullfile(bidsRootDir,sprintf('sub-%s%sses-%s',subj, filesep, sessionId));
@@ -110,17 +110,17 @@ else
     bidsSubDir=fullfile(bidsRootDir,sprintf('sub-%s',subj));
 end
 
-if ~isfolder(bidsSubDir); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir); end
+if ~exist(bidsSubDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir); end
 ieegDir=fullfile(bidsSubDir,'ieeg');
-if ~isfolder(ieegDir); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir); end
+if ~exist(ieegDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir); end
 derivDir=fullfile(bidsRootDir,'derivatives','iELVis');
-if ~isfolder(derivDir) && istrue(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir); end
+if ~exist(derivDir,'dir') && universalYes(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir); end
 derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
-if ~isfolder(derivSubDir) && istrue(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir); end
+if ~exist(derivSubDir,'dir') && universalYes(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir); end
 
 
 %% Export neuroimaging to anat folder
-if istrue(exportAnat)
+if universalYes(exportAnat)
     anatDir=fullfile(bidsSubDir,'anat');
     [SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
     copyfile(fullfile(fsSubDir,'mri','orig','001.mgz'),fullfile(anatDir,'preimpRaw.mgz'));
@@ -154,7 +154,7 @@ end
 
 %% Export neuroimaging to derivatives folder
 % copy FreeSurfer version to derivatives folder
-if istrue(exportDeriv)
+if universalYes(exportDeriv)
     copyfile(fsurfVersionFname,fullfile(derivSubDir,'freesurferVersion.txt'));
 
     % Copy FreeSurfer pre-processed preimplant scan
@@ -163,7 +163,7 @@ if istrue(exportDeriv)
 
     % Copy postimplant scan aligned to preimplant scan
     postimpAlignedFname='postInPre.nii.gz';
-    if ~exist(postimpAlignedFname,'file')
+    if ~exist(fullfile(elecReconDir,postimpAlignedFname),'file')
         postimpAlignedFname='ctINt1.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
     end
     copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postInPre.nii.gz'));
@@ -200,7 +200,7 @@ if istrue(exportDeriv)
 
 end
 %% Export FreeSurfer avg brain and associate info to derivates
-if istrue(exportDeriv)
+if universalYes(exportDeriv)
     
     derivFsavgDir=fullfile(derivDir,'sub-fsaverage');
     [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
