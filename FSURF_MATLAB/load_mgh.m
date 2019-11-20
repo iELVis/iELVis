@@ -101,7 +101,7 @@ if(frames(1) <= 0) frames = 0; end
 
 if(exist('headeronly')~=1) headeronly = 0; end
 
-if strncmp(computer,'PCWIN',5) % PM edited 20160322
+if strncmp(computer,'PCWIN',5) & gzipped ~= -1 % PM edited 20160322 %June edited 20191120
     fid=fopen(fullfile(foldername,new_fname),'rb','b');
 else
     fid    = fopen(fname, 'rb', 'b') ;
