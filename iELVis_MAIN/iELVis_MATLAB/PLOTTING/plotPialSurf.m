@@ -90,6 +90,9 @@
 %     elecCbar             -'y' or 'n': Plot colorbar next to brain. {default:
 %                           'y' if funcfname elecColors argument specified,
 %                           'n' otherwise}
+%     elecCmapName         -Name of a function that outputs a N-by-3 colormap
+%                           {default: []; MATLAB's default colormap is used
+%                           in that case}
 %     elecColorScale       -'absmax','minmax', 'justpos', 'justneg',
 %                           or numeric vector [minval maxval].  The limits
 %                           that define the electrode data color scale.
