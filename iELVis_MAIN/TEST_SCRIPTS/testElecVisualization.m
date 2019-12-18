@@ -78,5 +78,28 @@ if printEm,
     print(gcf,'-djpeg','pt001bipolar');
 end 
  
+%% Plotting both hemispheres on the same axis
+figure(1); clf;
+% Plot left hem
+cfg=[];
+cfg.view='l';
+cfg.figId=1;
+cfg.clearFig=0;
+cfg.axis=gca(); % axis handle (in this case the current axis)
+cfg.showLabels='n';
+cfg.elecCoord='n';
+cfg.title=[];
+cfgOut=plotPialSurf('PT001',cfg);
+
+% Plot right hem
+cfg.view='r';
+cfgOutL=plotPialSurf('PT001',cfg);
+
+% Set view
+view(156,-5.6000);
+if printEm,
+    print(gcf,'-djpeg','bothHemExample');
+end 
+
 %%
 disp('Script testElecVisualization.m completed successfully.')

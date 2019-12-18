@@ -1,5 +1,5 @@
-function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
-% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
+function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir, exportAnat, exportDeriv)
+% function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir, exportAnat, exportDeriv)
 % 
 % Takes iELVis electrode location and neuroimaging information and copies
 % it into a new directory according to BIDS-iEEG conventions.
@@ -10,16 +10,20 @@ function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
 %
 % Required Inputs:
 %  subj - [string] Patient FreeSurfer ID
+%
 %  bidsRootDir - [string] The root BIDS directory into which all data from a study
 %                will be stored
 %
 % Optional Inputs:
-%  sessionId - [integer] A number indicating the "session" in which the
-%              corresponding iEEG data have been recorded. This will be
-%              used to create filenames of electrode locations as it is
+%  sessionId - [integer or string] A string or number indicating the "session" 
+%              in which the corresponding iEEG data have been recorded. This 
+%              will be used to create filenames of electrode locations as it is
 %              possible that data may be recorded in multiple sessions and
-%              the electrodes recorded from may differ across sessions.
-%              {default: 1}
+%              the electrodes recorded from may differ across
+%              sessions. If left as empty (i.e. [] ) then no session folder
+%              will be created and no session name will be added to
+%              electrode file names
+%              {default: []}
 %
 %  atlas - Anatomical atlas to use for identifying the anatomical region
 %          nearest each electrode. Options:
@@ -27,17 +31,35 @@ function iELVisFsurf2BIDS(subj,bidsRootDir,sessionId, atlas, elecReconDir)
 %             'D' =Destrieux
 %             'Y7'=Yeo 7-network resting state fMRI atlas
 %             'Y17'=Yeo 17-network resting state fMRI atlas
-%          Default: not used
+%           Left empty (i.e. [] ) will use default 'DK' atlas
+%
 %  elecReconDir - [string] The directory from which iELVis information
 %                (e.g., electrode names and coordinates) will be taken 
-%                from. {default: the "elec_recon" subfolder of the
-%                patient's FreeSurfer subject dir}
+%                from. Leaving empty (i.e. [] ) will use default 
+%                {default: the "elec_recon" subfolder of the patient's
+%                FreeSurfer subject dir}
+%               
+%  exportAnat - [boolean] Whether a sub/anat directory is created and
+%               populated with pre and post implant MRI scans
+%               {default: 1}
 %
-% Example:
-%  iELVisFsurf2BIDS('PT001','~/Desktop/HandMotor',1);
+%  exportDeriv - [boolean] Whether a derivatives/sub subdirectory is
+%               created and populated with freesurfer-derived files that
+%               contributed to reconstruction
+%               {default: 1}
 %
-
+% Examples:
+%  iELVisFsurf2BIDS('PT001','~/Desktop/HandMotor');
+%       - Electrode file names will be 'sub-PT001_space-....'
+%
+%  iELVisFsurf2BIDS('PT001','~/Desktop/HandMotor', 'implant', 'D', [], 0, 0);
+%       - Electrode file names will be 'sub-PT001_ses-implant_space-...'
+%       - Anatomic locations are based on Destrieux atlas
+%       - Uses default elec_recon directory
+%       - Does not create 'derivatives/iElVis/sub-PT001' or
+%           'sub-PT001/ses-implant/anat' directories
 % 
+
 %extraElecInfoFname=[]; % TODO make this an argument to the function
 
 fprintf('Exporting data from %s into iEEG-BIDS format.\n',subj);
@@ -47,20 +69,27 @@ fprintf('iEEG-BIDS root directory is %s\n',bidsRootDir);
 fsDir=getFsurfSubDir();
 fsSubDir=fullfile(fsDir,subj);
 
-if nargin<3,
-    sessionId=1;
+if nargin<3 || isempty(sessionId),
+    sessionId=[];
+    filesBaseName = sprintf('sub-%s', subj);
 else
-   if ~isnumeric(sessionId)
-      error('sessionId needs to be an integer.'); 
+   if isnumeric(sessionId)
+      sessionId = sprintf('%02d', sessionId); 
    end
+   filesBaseName = sprintf('sub-%s_ses-%s', subj,sessionId);
 end
 if nargin<4,
     atlas=[];
 end
-if nargin<5,
+if nargin<5 || isempty(elecReconDir),
     elecReconDir=fullfile(fsSubDir,'elec_recon');
 end
-
+if nargin < 6,
+    exportAnat = 1;
+end
+if nargin < 7,
+    exportDeriv = 1;
+end
 %% Get Freesurfer Version
 fsurfVersionFname=fullfile(fsSubDir,'scripts','build-stamp.txt');
 if exist(fsurfVersionFname,'file')
@@ -73,39 +102,46 @@ end
 
 
 %% Define/Create BIDS directories
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsRootDir);
-bidsSubDir=fullfile(bidsRootDir,sprintf('sub-%s',subj));
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir);
+if ~exist(bidsRootDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsRootDir); end
+
+if ~isempty(sessionId)
+    bidsSubDir=fullfile(bidsRootDir,sprintf('sub-%s%sses-%s',subj, filesep, sessionId));
+else
+    bidsSubDir=fullfile(bidsRootDir,sprintf('sub-%s',subj));
+end
+
+if ~exist(bidsSubDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(bidsSubDir); end
 ieegDir=fullfile(bidsSubDir,'ieeg');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir);
+if ~exist(ieegDir,'dir'); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(ieegDir); end
 derivDir=fullfile(bidsRootDir,'derivatives','iELVis');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir);
+if ~exist(derivDir,'dir') && universalYes(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivDir); end
 derivSubDir=fullfile(derivDir,sprintf('sub-%s',subj));
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir);
+if ~exist(derivSubDir,'dir') && universalYes(exportDeriv); [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivSubDir); end
 
 
 %% Export neuroimaging to anat folder
-anatDir=fullfile(bidsSubDir,'anat');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
-copyfile(fullfile(fsSubDir,'mri','orig','001.mgz'),fullfile(anatDir,'preimpRaw.mgz'));
-postimpRawFname='postimpRaw.nii.gz';
-if ~exist(fullfile(elecReconDir,postimpRawFname),'file')
-    % Data must have been processed with original version of iELVis that
-    % did not standardize the raw postimplant nii filename.
-    % Ask user to select the postimplant nii file
-    homeDir=pwd;
-    cd(elecReconDir);
-    disp('Select postimplant raw nii file');
-    [postimpRawFname, tempPathName] = uigetfile('*.nii.gz;*.nii', 'Select postimplant raw nii file');
-    if postimpRawFname==0
-       error('You need to select a file that contains the raw postimplant volume.'); 
+if universalYes(exportAnat)
+    anatDir=fullfile(bidsSubDir,'anat');
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(anatDir);
+    copyfile(fullfile(fsSubDir,'mri','orig','001.mgz'),fullfile(anatDir,'preimpRaw.mgz'));
+    postimpRawFname='postimpRaw.nii.gz';
+    if ~exist(fullfile(elecReconDir,postimpRawFname),'file')
+        % Data must have been processed with original version of iELVis that
+        % did not standardize the raw postimplant nii filename.
+        % Ask user to select the postimplant nii file
+        homeDir=pwd;
+        cd(elecReconDir);
+        disp('Select postimplant raw nii file');
+        [postimpRawFname, tempPathName] = uigetfile('*.nii.gz;*.nii', 'Select postimplant raw nii file');
+        if postimpRawFname==0
+           error('You need to select a file that contains the raw postimplant volume.'); 
+        end
+        cd(homeDir);
+        copyfile(fullfile(tempPathName,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
+    else
+        copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
     end
-    cd(homeDir);
-    copyfile(fullfile(tempPathName,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
-else
-    copyfile(fullfile(elecReconDir,postimpRawFname),fullfile(anatDir,'postimpRaw.nii.gz'));
 end
-
 
 %% Import information about electrode size and manufacturer TODO make this work once iEEG-BIDS format is set
 % if ~isempty(extraElecInfoFname)
@@ -118,87 +154,90 @@ end
 
 %% Export neuroimaging to derivatives folder
 % copy FreeSurfer version to derivatives folder
-copyfile(fsurfVersionFname,fullfile(derivSubDir,'freesurferVersion.txt'));
+if universalYes(exportDeriv)
+    copyfile(fsurfVersionFname,fullfile(derivSubDir,'freesurferVersion.txt'));
 
-% Copy FreeSurfer pre-processed preimplant scan
-preimpPreprocFname='T1.nii.gz';
-copyfile(fullfile(elecReconDir,preimpPreprocFname),fullfile(derivSubDir,'preimplantFsurf.nii.gz'));
+    % Copy FreeSurfer pre-processed preimplant scan
+    preimpPreprocFname='T1.nii.gz';
+    copyfile(fullfile(elecReconDir,preimpPreprocFname),fullfile(derivSubDir,'preimplantFsurf.nii.gz'));
 
-% Copy postimplant scan aligned to preimplant scan
-postimpAlignedFname='postInPre.nii.gz';
-if ~exist(postimpAlignedFname,'file')
-    postimpAlignedFname='ctINt1.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
+    % Copy postimplant scan aligned to preimplant scan
+    postimpAlignedFname='postInPre.nii.gz';
+    if ~exist(fullfile(elecReconDir,postimpAlignedFname),'file')
+        postimpAlignedFname='ctINt1.nii.gz'; % This was the original filename for the postimplant scan (CT or MRI)
+    end
+    copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postInPre.nii.gz'));
+
+    % Copy anatomical labels
+    labelFiles={'aparc.a2009s.annot','aparc.annot'};
+    tempSubDir='label';
+    fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+
+    % Copy Yeo anatomical labels if they exist
+    labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
+    tempSubDir='label';
+    fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
+
+    % Copy surface files to BIDS derivatives dir
+    % DG: I don't know if all of these files are necessary
+    surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
+    tempSubDir='surf';
+    fsurf2BIDS(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
+
+    % Copy mri volumes to BIDS derivatives dir
+    mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
+    tempSubDir='mri';
+    derivMriDir=fullfile(derivSubDir,tempSubDir);
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivMriDir);
+    for a=1:length(mriFiles),
+        copyfile(fullfile(fsSubDir,tempSubDir,mriFiles{a}),fullfile(derivMriDir,mriFiles{a}));
+    end
+    tempSubDir='transforms';
+    derivTransDir=fullfile(derivMriDir,tempSubDir);
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivTransDir);
+    fname='talairach.xfm';
+    copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname));
+
 end
-copyfile(fullfile(elecReconDir,postimpAlignedFname),fullfile(derivSubDir,'postInPre.nii.gz'));
-
-% Copy anatomical labels
-labelFiles={'aparc.a2009s.annot','aparc.annot'};
-tempSubDir='label';
-fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
-
-% Copy Yeo anatomical labels if they exist
-labelFiles={'Yeo2011_17Networks_N1000.mat','Yeo2011_7Networks_N1000.mat'};
-tempSubDir='label';
-fsurf2BIDS(labelFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir),1);
-
-% Copy surface files to BIDS derivatives dir
-% DG: I don't know if all of these files are necessary
-surfFiles={'area.pial','curv','curv.pial','inflated','pial','pial-outer-smoothed','sphere','sphere.reg','white'};
-tempSubDir='surf';
-fsurf2BIDS(surfFiles,fullfile(fsSubDir,tempSubDir),fullfile(derivSubDir,tempSubDir));
-
-% Copy mri volumes to BIDS derivatives dir
-mriFiles={'aparc+aseg.mgz','brainmask.mgz','orig.mgz'};
-tempSubDir='mri';
-derivMriDir=fullfile(derivSubDir,tempSubDir);
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivMriDir);
-for a=1:length(mriFiles),
-    copyfile(fullfile(fsSubDir,tempSubDir,mriFiles{a}),fullfile(derivMriDir,mriFiles{a}));
-end
-tempSubDir='transforms';
-derivTransDir=fullfile(derivMriDir,tempSubDir);
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivTransDir);
-fname='talairach.xfm';
-copyfile(fullfile(fsSubDir,'mri',tempSubDir,fname),fullfile(derivTransDir,fname));
-
-
 %% Export FreeSurfer avg brain and associate info to derivates
-derivFsavgDir=fullfile(derivDir,'sub-fsaverage');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
-derivFsavgSurfDir=fullfile(derivFsavgDir,'surf');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgSurfDir);
+if universalYes(exportDeriv)
+    
+    derivFsavgDir=fullfile(derivDir,'sub-fsaverage');
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgDir);
+    derivFsavgSurfDir=fullfile(derivFsavgDir,'surf');
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgSurfDir);
 
-fsurfAvgSurfDir=fullfile(fsDir,'fsaverage','surf');
-fnameStems={'inflated','pial'};
-for a=1:2,
-    if a==1
-        hem='lh';
-    else
-        hem='rh';
+    fsurfAvgSurfDir=fullfile(fsDir,'fsaverage','surf');
+    fnameStems={'inflated','pial'};
+    for a=1:2,
+        if a==1
+            hem='lh';
+        else
+            hem='rh';
+        end
+        for b=1:length(fnameStems),
+            copyfile(fullfile(fsurfAvgSurfDir,[hem '.' fnameStems{b}]), ...
+                fullfile(derivFsavgSurfDir,[hem '.' fnameStems{b}]));
+        end
     end
-    for b=1:length(fnameStems),
-        copyfile(fullfile(fsurfAvgSurfDir,[hem '.' fnameStems{b}]), ...
-            fullfile(derivFsavgSurfDir,[hem '.' fnameStems{b}]));
-    end
-end
 
-derivFsavgLabelDir=fullfile(derivFsavgDir,'label');
-[SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgLabelDir);
-fsurfAvgLabelDir=fullfile(fsDir,'fsaverage','label');
-fnameStems={'aparc.annot','aparc.a2009s.annot','Yeo2011_17Networks_N1000.annot', ...
-    'Yeo2011_7Networks_N1000.annot'};
-for a=1:2,
-    if a==1
-        hem='lh';
-    else
-        hem='rh';
+    derivFsavgLabelDir=fullfile(derivFsavgDir,'label');
+    [SUCCESS,MESSAGE,MESSAGEID] = mkdir(derivFsavgLabelDir);
+    fsurfAvgLabelDir=fullfile(fsDir,'fsaverage','label');
+    fnameStems={'aparc.annot','aparc.a2009s.annot','Yeo2011_17Networks_N1000.annot', ...
+        'Yeo2011_7Networks_N1000.annot'};
+    for a=1:2,
+        if a==1
+            hem='lh';
+        else
+            hem='rh';
+        end
+        for b=1:length(fnameStems),
+            copyfile(fullfile(fsurfAvgLabelDir,[hem '.' fnameStems{b}]), ...
+                fullfile(derivFsavgLabelDir,[hem '.' fnameStems{b}]));
+        end
     end
-    for b=1:length(fnameStems),
-        copyfile(fullfile(fsurfAvgLabelDir,[hem '.' fnameStems{b}]), ...
-            fullfile(derivFsavgLabelDir,[hem '.' fnameStems{b}]));
-    end
-end
-  
+end  
 
 %% Import electrode names, type, and hemisphere
 % Electrode names
@@ -311,8 +350,8 @@ for sLoop=1:nCoordSpaces,
     elecSpace=coordTypes{sLoop};
     % outFname=fullfile(ieegDir,sprintf('sub-%.2d_task-%s_run-%.2_channels.tsv', ...
     %     subId,task,runId));
-    elecTsvFname=fullfile(ieegDir,sprintf('sub-%s_ses-%.2d_space-%s_electrodes.tsv', ...
-        subj,sessionId,elecSpace));
+    elecTsvFname=fullfile(ieegDir,sprintf('%s_space-%s_electrodes.tsv', ...
+        filesBaseName,elecSpace));
     fid=fopen(elecTsvFname,'w');
     % Header
     fprintf(fid,'name\tx\ty\tz\themisphere\tsize\ttype\tmanufacturer\tanatomicalLocation\n');
@@ -339,8 +378,8 @@ for sLoop=1:nCoordSpaces,
     
     
     %% Create coordsystem.json file
-    coordJsonFname=fullfile(ieegDir,sprintf('sub-%s_ses-%.2d_space-%s_coordsystem.json', ...
-        subj,sessionId,elecSpace));
+    coordJsonFname=fullfile(ieegDir,sprintf('%s_space-%s_coordsystem.json', ...
+        filesBaseName,elecSpace));
     switch ielvisPostfix
         case 'FSAVERAGE'
             anatFile=sprintf('/derivatives/iELVis/fsaverage/surf/*.pial');

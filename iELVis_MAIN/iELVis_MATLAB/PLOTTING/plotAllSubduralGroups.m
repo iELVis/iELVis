@@ -1,16 +1,18 @@
-function plotMgridOnPial(fsub,printEm)
-%function plotMgridOnPial(fsub,printEm)
+function plotAllSubduralGroups(fsub,elecInfoType,printEm,elecHem)
+%function plotAllSubduralGroups(fsub,elecInfoType,printEm,elecHem)
 %
 % Makes romni or lomni plots on a gray pial and DK atlas pial of a
 % patient's brain with electrodes colored according to mgrid file colors.
 %
 % Inputs:
 %  fsub  - FreeSurfer subject directory
+%  elecInfoType - {'mgrid' or 'MNI'} a string indicating the
+%                 format electrode information is stored in. 
 %  printEm - If nonzero jpgs of the figures will be made in the subject's
 %            elec_recon folder
 %
 % Examples:
-% plotMgridOnPial('PT001',0);
+% plotAllSubduralGroups('PT001','mgrid',0);
 %
 %
 % Author:
@@ -28,19 +30,21 @@ function plotMgridOnPial(fsub,printEm)
 % FreeSurfer Subject Directory
 fsDir=getFsurfSubDir();
 
-if nargin<2,
+if nargin<3,
     printEm=0;
 end
+if nargin<4,
+    elecHem='FirstChar'; % ??
+end
 
-
-%% Get mgrid info
-fsDir=getFsurfSubDir();
-elecReconDir=fullfile(fsDir,fsub,'elec_recon');
-iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
-iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
-if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
-    % import from iLoc
-    [~, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(fsub);
+%% Get electrode info
+%elecReconDir=fullfile(fsDir,fsub,'elec_recon');
+% mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+% mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+%if exist(mniInfoFname,'file') && exist(mniPairsFname,'file')
+if strcmpi(elecInfoType,'mni')
+    % import from MNI conventions
+    [~, elecLabels, elecRgb, elecPairs, elecPresent]=mni2Matlab(fsub,elecHem);
 else
     % import from mgrid
     [~, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsub);

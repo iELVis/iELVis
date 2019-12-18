@@ -1,3 +1,6 @@
+%%
+printEm=0;
+
 %% Test Wiki Example 1
 groupAvgCoords=[];
 groupLabels=[];
@@ -21,7 +24,9 @@ cfg.elecNames=groupLabels;
 cfg.showLabels='n';
 cfg.title='PT001-2 on Avg. Brain';
 cfgOut=plotPialSurf('fsaverage',cfg);
-
+if printEm,
+    print(gcf,'-djpeg','pt001-2onAvgBrain');
+end
 
 %% Same as above but on Inflated average brain
 cfg=[];
