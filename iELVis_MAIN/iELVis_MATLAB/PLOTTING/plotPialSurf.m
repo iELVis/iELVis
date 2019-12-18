@@ -942,6 +942,7 @@ if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits;
 if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
 if ~isfield(cfg, 'showLabels'),         showLabels='y';            else  showLabels=cfg.showLabels; end
 if ~isfield(cfg, 'elecCbar'),     elecCbar=[];   else elecCbar=cfg.elecCbar; end
+if ~isfield(cfg, 'elecCmapName'),       elecCmapName=[];          else elecCmapName=cfg.elecCmapName; end
 if ~isfield(cfg, 'olayCbar'),     olayCbar=[];   else elecCbar=cfg.olayCbar; end
 if ~isfield(cfg, 'verbLevel'),     verbLevel=0;        else  verbLevel = cfg.verbLevel;        end
 if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end
@@ -964,7 +965,7 @@ if isempty(elecCoord),
 end
 
 % Sort out electrode colors:
-elecCmapName=[];
+%elecCmapName=[];
 if isempty(elecColors)
     elecCbar='n';
 elseif isnumeric(elecColors)
@@ -974,7 +975,7 @@ elseif isnumeric(elecColors)
     if isvector(elecColors)
         % convert vector of electrode values to RGB
         %[map, limits, cmap]=vals2Colormap(vals,type,cmap,minmax);
-        [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,elecColorScale);
+        [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,elecColorScale,elecCmapName);
         %[showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
     else
         % matrix of rgb values
