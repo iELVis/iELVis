@@ -16,11 +16,11 @@ cfg.title='PT001: iEEG-BIDS';
 cfg.bidsDir='/Users/davidgroppe/GIT/iELVis/PRIVATE_FILES/HandMotor'; % Note this differs from path on wiki
 cfgOut=plotPialSurf('PT001',cfg);
 
-%% plotMgridOnSlices test
+%% plotAllDepthsOnSlices test
 cfg=[]; 
 cfg.printFigs='~/Desktop/SLICE_FIGS';
 cfg.bidsDir='/Users/davidgroppe/GIT/iELVis/PRIVATE_FILES/HandMotor'; % Note this differs from path on wiki
-plotMgridOnSlices('PT001',cfg);
+plotAllDepthsOnSlices('PT001','BIDS-iEEG',cfg);
 
 %%
 disp('Script testBids.m completed successfully.')

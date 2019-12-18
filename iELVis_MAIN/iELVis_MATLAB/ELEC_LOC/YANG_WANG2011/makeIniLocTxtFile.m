@@ -1,10 +1,12 @@
-function makeIniLocTxtFile(fsSub, elecHem)
-%function makeIniLocTxtFile(fsSub, elecHem)
+function makeIniLocTxtFile(fsSub, elecInfoType, elecHem)
+%function makeIniLocTxtFile(fsSub, elecInfoType, elecHem)
 %
 % Required Input:
 %  fsSub - Name of patient's FreeSurfer folder (e.g., fsSub)
 %
 % Optional Input:
+%  elecInfoType - 'mgrid' or 'mni'; The text file format electrode
+%        coordinates are stored in. {Default: 'mgrid'}
 %  elecHem - 'L', 'R', or 'FirstChar': If 'L' all electrodes are assumed to lie on
 %        the left hemisphere. If 'R' all electrodes are assumed to lie
 %        onthe right hemisphere. 'FirstChar' means that each electrode's
@@ -13,7 +15,7 @@ function makeIniLocTxtFile(fsSub, elecHem)
 %        deteremined using its anatomical location. Automatic assignment
 %        may fail for medial electrodes and can be corrected by manually
 %        editing the patient's *.electrodeNames file. This ONLY HAS AN EFFECT
-%        if importing electrode locations from iLoc. Default: elecHem=[]
+%        if importing electrode locations from mni. {Default: elecHem=[]}
 %
 % Create a text file of elec coordinates (in voxel space) readable by Wang, Yang or Dykstra
 % brain shift correctioncode. The file is called *PostimpLoc.txt and is the
@@ -26,6 +28,9 @@ function makeIniLocTxtFile(fsSub, elecHem)
 fsDir=getFsurfSubDir();
 
 if nargin<2,
+    elecInfoType='mgrid';
+end
+if nargin<3,
     elecHem=[];
 end
 if ~isempty(elecHem),
@@ -42,12 +47,13 @@ elecReconPath=fullfile(subPath,'elec_recon');
 postimpLocFname=fullfile(elecReconPath,[fsSub 'PostimpLoc.txt']);
 
 %% space delimited from mgrid
-elecReconDir=fullfile(fsDir,fsSub,'elec_recon');
-iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
-iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
-if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
-    % import from iLoc
-    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=iLoc2Matlab(fsSub,elecHem);
+% elecReconDir=fullfile(fsDir,fsSub,'elec_recon');
+% mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+% mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+%if exist(mniInfoFname,'file') && exist(mniPairsFname,'file')
+if strcmpi(elecInfoType,'mni')
+    % import from mni
+    [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=mni2Matlab(fsSub,elecHem);
 else
     % import from mgrid
     [eCoords, elecLabels, elecRgb, elecPairs, elecPresent]=mgrid2matlab(fsSub,0);

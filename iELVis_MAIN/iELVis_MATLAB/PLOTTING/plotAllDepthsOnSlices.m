@@ -1,15 +1,23 @@
-function plotMgridOnSlices(fsSub,cfg)
-% function plotMgridOnSlices(fsSub,cfg)
+function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
+% function plotAllDepthsOnSlices(fsSub,elecInfoType,cfg)
 %
-% Creates a figure illustrating the location of each electrode in an mgrid
-% file in a sagittal, coronal, and axial slice and indicates which part of
-% the brain it is in.
+% Creates a figure illustrating the location of each depth electrode contact 
+% in a sagittal, coronal, and axial slice and indicates which part of
+% the brain it is in. You need to first need to record electrode
+% coordinates in iELVis conventions (e.g., using yangWangElecPjct.m or
+% dykstraElecPjct.m), have an mgrid file of electrode information from
+% BioImageSuite, or have analogous info in MNI space.
 %
 % Required Inputs:
 %  fsSub - Patient's freesurfer directory name
+%  elecInfoType - {'mgrid', 'BIDS-iEEG', or 'MNI'} a string indicating the
+%                 format electrode information is stored in. 
 %
 % Optional cfg parameters:
-%  mgridFname - mgrid filename and path. If empty, name is assumed to be fsSub.mgrid.
+%  mgridFname - mgrid filename and path. If empty, and
+%               elecInfoType=='mgrid', we assume the mgrid file is in the
+%               subject's elec_recon subfolder and named *.mgrid, where *
+%               is the subject's FreeSurfer ID.
 %  fullTitle  - If 1, the mgrid and mri voxel coordinates are displayed in
 %               the figure title along with the electrode name and anatomical
 %               location. {default: 0}
@@ -25,8 +33,13 @@ function plotMgridOnSlices(fsSub,cfg)
 %  colorLUT    - fullpath to color lookup table if you would like to use
 %                non default colors for your parcellation overlay.
 %                {default: FreeSurferColorLUTnoFormat.txt}
-%  pauseOn   - If 1, Matlab pa'uses after each figure is made and waits for
+%  pauseOn   - If 1, Matlab pauses after each figure is made and waits for
 %              a keypress. {default: 0}
+%  figOverwrite - If non-zero, only one new Matlab figure will be produced 
+%              when this function is called. Each time a new electrode
+%              needs to be visualized the figure is cleared. This is useful
+%              when lots of depths have been used and you're printing the
+%              figures. {default: 1}
 %  printFigs - 1 or directory. If 1, each figure is output to a jpg file in the patient's
 %              elec_recon/PICS folder and the figure is closed after the
 %              jpg is created. This is particularly useful for implants with
@@ -46,13 +59,13 @@ function plotMgridOnSlices(fsSub,cfg)
 % Examples:
 %  %Specify mgrid file and do NOT print
 %  cfg=[];
-%  cfg.mgridFname='/Applications/freesurfer/subjects/TWH001/elec_recon/TWH001.mgrid';
-%  plotMgridOnSlices('PT001',cfg);
+%  cfg.mgridFname='/Applications/freesurfer/subjects/PT001/elec_recon/PT001.mgrid';
+%  plotAllDepthsOnSlices('PT001','mgrid',cfg);
 %
 %  %Use FreeSurfer file structure and print
 %  cfg=[];
 %  cfg.printFigs=1;
-%  plotMgridOnSlices('PT001',cfg);
+%  plotAllDepthsOnSlices('PT001','mgrid',cfg);
 %
 %
 % Author: David M. Groppe
@@ -70,12 +83,27 @@ if ~isfield(cfg,'pauseOn'),    pauseOn=0;          else pauseOn=cfg.pauseOn; end
 if ~isfield(cfg,'printFigs'),    printFigs=0;          else printFigs=cfg.printFigs; end
 if ~isfield(cfg, 'bidsDir'),      bidsDir=[];         else bidsDir=cfg.bidsDir; end
 if ~isfield(cfg, 'bidsSes'),      bidsSes=1;         else bidsSes=cfg.bidsSes; end
-checkCfg(cfg,'plotMgridOnSlices.m');
+if ~isfield(cfg, 'figOverwrite'),  figOverwrite=1;  else figOverwrite=cfg.figOverwrite; end
+checkCfg(cfg,'plotAllDepthsOnSlices.m');
 
+% Check for valid arguments
+if (nargin<3),
+   error('plotAllDepthsOnSlices requires 2 arguments'); 
+end
+validFormats={'mgrid', 'BIDS-iEEG', 'MNI'};
+if isempty(findStrInCell(elecInfoType,validFormats))
+    error('%s is not a valid value for elecInfoType parameter',elecInfoType);
+end
+if strcmpi(elecInfoType,'BIDS-iEEG'),
+   if isempty(bidsDir),
+      error('You need to specifiy cfg.bidsDir when reading electrode information in BIDS-iEEG format.'); 
+   end
+end
 
 % FreeSurfer Subject Directory
 fsdir=getFsurfSubDir();
 
+% Define path to neuroimaging files
 if isempty(bidsDir)
     % Look in FreeSurfer directories
     mriDir=fullfile(fsdir,fsSub,'mri');
@@ -95,69 +123,79 @@ mx=max(max(max(mri.vol)))*cntrst;
 mn=min(min(min(mri.vol)));
 sVol=size(mri.vol);
 
-% Get mgrid info
-if isempty(mgridFname)
-    if isempty(bidsDir)
-        elecReconDir=fullfile(fsdir,fsSub,'elec_recon');
-        iLocInfoFname=fullfile(elecReconDir,'iLocElecInfo.tsv');
-        iLocPairsFname=fullfile(elecReconDir,'iLocElecPairs.tsv');
-        if exist(iLocInfoFname,'file') && exist(iLocPairsFname,'file')
-            [elecMatrix, elecLabels, elecRgb]=iLoc2Matlab(fsSub);
-        else
-            [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
-        end
-        % elecMatrix coords are LIP
-        % elecLabels is a cell array of things like LD_LDAm_10
-        % elecRgb is nElec x 3 matrix of 0-1 RGB values
-    else
-        % Get electrode information from iEEG-BIDs directory and transform
-        % coordinates to be compatible with those in mgrid files
-        %/Users/davidgroppe/Desktop/HandMotor/sub-PT001/ieeg/sub-PT001_ses-01_space-inf_electrodes.tsv
-        coordFname=fullfile(bidsDir,['sub-' fsSub],'ieeg',sprintf('sub-%s_ses-%.2d_space-postimplant_electrodes.tsv',fsSub,bidsSes));
-        fprintf('Taking electrode info from %s.\n',coordFname);
-        
-        %% Collect electrode coordinates
-        elecCoordCsv=csv2Cell(coordFname,9,0); %9=tab
-        nElecTotal=size(elecCoordCsv,1)-1;
-        RAS_coor=zeros(nElecTotal,3);
-        coordHdrs={'x','y','z'};
-        for csvLoopB=1:3,
-            colId=findStrInCell(coordHdrs{csvLoopB},elecCoordCsv(1,:),1);
-            for csvLoopA=1:nElecTotal,
-                RAS_coor(csvLoopA,csvLoopB)=str2double(elecCoordCsv{csvLoopA+1,colId});
-            end
-        end
-        % convert RAS coordinates to LIP
-        elecMatrix=zeros(nElecTotal,3);
-        elecMatrix(:,1)=-RAS_coor(:,1)+129;
-        elecMatrix(:,2)=-RAS_coor(:,3)+129;
-        elecMatrix(:,3)=-RAS_coor(:,2)+129;
-        
-        %% Collect electrode name, type, & hemisphere into elecLabels
-        % also define electrode colors (all red for the time being)
-        elecLabels=cell(nElecTotal,3); % a cell array of things like LD_LDAm10
-        nameId=findStrInCell('name',elecCoordCsv(1,:),1);
-        typeId=findStrInCell('type',elecCoordCsv(1,:),1);  % grid, depth, strip
-        hemId=findStrInCell('hemisphere',elecCoordCsv(1,:),1); % L,R
-        elecRgb=zeros(nElecTotal,3);
-        elecRgb(:,1)=1; % make all electrodes red
+% Get electrode info
+if strcmpi(elecInfoType,'BIDS-iEEG'),
+    % BIDS-iEEG format
+    % Get electrode information from iEEG-BIDs directory and transform
+    % coordinates to be compatible with those in mgrid files
+    %/Users/davidgroppe/Desktop/HandMotor/sub-PT001/ieeg/sub-PT001_ses-01_space-inf_electrodes.tsv
+    coordFname=fullfile(bidsDir,['sub-' fsSub],'ieeg',sprintf('sub-%s_ses-%.2d_space-postimplant_electrodes.tsv',fsSub,bidsSes));
+    fprintf('Taking electrode info from %s.\n',coordFname);
+    
+    %% Collect electrode coordinates
+    elecCoordCsv=csv2Cell(coordFname,9,0); %9=tab
+    nElecTotal=size(elecCoordCsv,1)-1;
+    RAS_coor=zeros(nElecTotal,3);
+    coordHdrs={'x','y','z'};
+    for csvLoopB=1:3,
+        colId=findStrInCell(coordHdrs{csvLoopB},elecCoordCsv(1,:),1);
         for csvLoopA=1:nElecTotal,
-            tempName=elecCoordCsv{csvLoopA+1,nameId}; % Name
-            switch elecCoordCsv{csvLoopA+1,typeId}
-                case 'grid'
-                    tempType='G';
-                case 'strip'
-                    tempType='S';
-                case 'depth'
-                    tempType='D';
-                otherwise
-                    error('Unrecognized value of electrode "type": %s',elecCoordCsv{csvLoopA+1,typeId});
-            end
-            tempHem=elecCoordCsv{csvLoopA+1,hemId}; % Hemisphere
-            elecLabels{csvLoopA}=sprintf('%s%s_%s',tempHem,tempType,tempName);
+            RAS_coor(csvLoopA,csvLoopB)=str2double(elecCoordCsv{csvLoopA+1,colId});
         end
     end
+    % convert RAS coordinates to LIP
+    elecMatrix=zeros(nElecTotal,3);
+    elecMatrix(:,1)=-RAS_coor(:,1)+129;
+    elecMatrix(:,2)=-RAS_coor(:,3)+129;
+    elecMatrix(:,3)=-RAS_coor(:,2)+129;
+    
+    %% Collect electrode name, type, & hemisphere into elecLabels
+    % also define electrode colors (all red for the time being)
+    elecLabels=cell(nElecTotal,3); % a cell array of things like LD_LDAm10
+    nameId=findStrInCell('name',elecCoordCsv(1,:),1);
+    typeId=findStrInCell('type',elecCoordCsv(1,:),1);  % grid, depth, strip
+    hemId=findStrInCell('hemisphere',elecCoordCsv(1,:),1); % L,R
+    elecRgb=zeros(nElecTotal,3);
+    elecRgb(:,1)=1; % make all electrodes red
+    for csvLoopA=1:nElecTotal,
+        tempName=elecCoordCsv{csvLoopA+1,nameId}; % Name
+        switch elecCoordCsv{csvLoopA+1,typeId}
+            case 'grid'
+                tempType='G';
+            case 'strip'
+                tempType='S';
+            case 'depth'
+                tempType='D';
+            otherwise
+                error('Unrecognized value of electrode "type": %s',elecCoordCsv{csvLoopA+1,typeId});
+        end
+        tempHem=elecCoordCsv{csvLoopA+1,hemId}; % Hemisphere
+        elecLabels{csvLoopA}=sprintf('%s%s_%s',tempHem,tempType,tempName);
+    end
+elseif strcmpi(elecInfoType,'MNI'),
+    % MNI format
+    elecReconDir=fullfile(fsdir,fsSub,'elec_recon');
+    mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+    mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+    if ~exist(mniInfoFname,'file')
+        error('Missing %s',mniInfoFname);
+    end
+    if ~exist(mniPairsFname,'file')
+       error('Missing %s', mniPairsFname);
+    end
+    [elecMatrix, elecLabels, elecRgb]=mni2Matlab(fsSub);
+    % elecMatrix coords are LIP
+    % elecLabels is a cell array of things like LD_LDAm_10
+    % elecRgb is nElec x 3 matrix of 0-1 RGB values
+else
+    % mgrid format
+    if isempty(mgridFname)
+        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub);
+    else
+        [elecMatrix, elecLabels, elecRgb]=mgrid2matlab(fsSub,mgridFname);
+    end
 end
+            
 nElec=length(elecLabels);
 elecMatrix=round(elecMatrix);
 xyz=zeros(size(elecMatrix));
@@ -171,7 +209,6 @@ for a=1:nElec,
         depthElecs(a)=1;
     end
 end
-
 
 if universalYes(anatOverlay)
     % Load segmentation
@@ -203,10 +240,19 @@ if universalYes(anatOverlay)
     fclose(fid);
 end
 
-
+figId=0;
 for elecId=1:nElec,
     if depthElecs(elecId)
-        figId=figure();
+        if figId<1,
+            figId=figure();
+        else
+            if universalYes(figOverwrite),
+                 figure(figId);
+            else
+                figId=figure();
+            end
+        end
+        clf();
         set(figId,'position',[78 551 960 346],'paperpositionmode','auto');
         
         hm=zeros(1,3);
@@ -372,10 +418,9 @@ for elecId=1:nElec,
             drawnow;
             figFname=fullfile(outPath,sprintf('%s_%sSlices',fsSub,elecLabels{elecId}));
             fprintf('Exporting figure to %s\n',figFname);
-            %print(figId,figFname,'-depsc');
             print(figId,figFname,'-djpeg');
             pause(1);
-            close(figId);
+            %close(figId);
         end
         
         if universalYes(pauseOn)

@@ -59,12 +59,12 @@ dykstraElecPjct('PT001');
 
 
 %% Test Plots: Mgrid on Pial Surf
-plotMgridOnPial('PT001',1);
+plotAllSubduralGroups('PT001','mgrid',1);
 
 
 %% Test Plot: Mgrid on Slices
 cfg=[]; cfg.printFigs=1;
-plotMgridOnSlices('PT001',cfg);
+plotAllDepthsOnSlices('PT001','mgrid',cfg);
 
 
 %%
