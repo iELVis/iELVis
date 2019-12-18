@@ -1,5 +1,5 @@
-function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
-% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,bidsDir,bidsSes)
+function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,elecCmapName,bidsDir,bidsSes)
+% function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord,surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale,elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames,elecCbar,elecCmapName,bidsDir,bidsSes)
 % This function plots electrodes. It should only be called by plotPialSurf.m
 %
 % Inputs:
@@ -19,7 +19,7 @@ function [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecC
 % electrodes were desired even if no electrodes get shown
 elecColorsOrig=elecColors;
 elecColorsEdgeOrig=elecColorsEdge;
-elecCmapName=[];
+%elecCmapName=[];
 
 % Get electrode coordinates
 if isnumeric(elecCoord)
@@ -99,7 +99,7 @@ end
 % Figure out electrode colors
 elecCbarMin=[];
 elecCbarMax=[];
-[showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
+[showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar,elecCmapName);
 if ~isempty(elecColorsOrig) && isempty(showElecColors),
    error('ERROR: You tried to plot colored electrodes, but none of them are visible.'); 
 end

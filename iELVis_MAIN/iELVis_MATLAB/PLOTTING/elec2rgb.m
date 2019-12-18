@@ -1,5 +1,5 @@
-function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
-%function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar)
+function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar,elecCmapName)
+%function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar,elecCmapName)
 %
 % This function derives the RGB color values of electrodes. It gets called
 % from plotElecs.m
@@ -24,7 +24,7 @@ function [showElecColors, elecCbarMin, elecCbarMax, elecCmapName]=elec2rgb(elecC
 nShowElec=length(showElecIds);
 elecCbarMin=[];
 elecCbarMax=[];
-elecCmapName=[];
+%elecCmapName=[];
 if isempty(elecColors)
     % No color/value info given, make electrodes black
     showElecColors = zeros(nShowElec,3);
@@ -44,10 +44,12 @@ elseif isvector(elecColors) && size(elecColors,2)~=3
     else
         type=elecColorScale;
     end
-    if verLessThan('matlab','8.0.1')
-        elecCmapName='jet';
-    else
-        elecCmapName='parula';
+    if isempty(elecCmapName)
+        if verLessThan('matlab','8.0.1')
+            elecCmapName='jet';
+        else
+            elecCmapName='parula';
+        end
     end
     if isempty(elecCbarMin),
         % make electrode colormap

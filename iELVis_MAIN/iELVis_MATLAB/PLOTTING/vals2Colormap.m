@@ -167,5 +167,9 @@ switch cmap
         rgb_vals=[linspace(0,1,32)' linspace(0,1,32)' ones(32,1); ...
             ones(32,1) linspace(1,0,32)' linspace(1,0,32)']; 
     otherwise
-        error('I do not recognize cmap of type: %s',cmap);
+        try
+            rgb_vals=eval(cmap);
+        catch
+            error('Something seems wrong with cmap: %s',cmap);
+        end
 end

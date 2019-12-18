@@ -319,7 +319,7 @@
 %
 %
 %  Authors:
-%   David M. Groppe, Stephan Bickel, Pierre Mégevand, Andrew Dykstra
+%   David M. Groppe, Stephan Bickel, Pierre Megevand, Andrew Dykstra
 %   Laboratory for Multimodal Human Brain Mapping
 %   Feinstein Institute for Medical Research
 %   Manhasset, New York
@@ -372,6 +372,7 @@ if ~isfield(cfg, 'elecColors'),     elecColors= [];        else  elecColors = cf
 if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge= [];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'), elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'elecCbar'),       elecCbar=[];          else elecCbar=cfg.elecCbar; end
+if ~isfield(cfg, 'elecCmapName'),       elecCmapName=[];          else elecCmapName=cfg.elecCmapName; end
 if ~isfield(cfg, 'elecUnits'),      elecUnits=[];            else elecUnits=cfg.elecUnits; end
 if ~isfield(cfg, 'pullOut'),        pullOut= 1;            else  pullOut = cfg.pullOut; end
 if ~isfield(cfg, 'view'),           brainView= 'l';       else  brainView = cfg.view; end
@@ -406,7 +407,7 @@ global overlayData elecCbarMin elecCbarMax olayCbarMin olayCbarMax; % Needed for
 
 try
     checkCfg(cfg,'plotPialSurf.m');
-    elecCmapName=[]; % needed for cfgOut
+    %elecCmapName=[]; % needed for cfgOut
     olayCmapName=[]; % needed for cfgOut
     
     % If matrix of elecCoord specified make sure an equal number of elecNames
@@ -814,7 +815,7 @@ try
         [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
             surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale, ...
             elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
-            elecCbar,bidsDir,bidsSes);
+            elecCbar,elecCmapName,bidsDir,bidsSes);
         plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
     end
     
