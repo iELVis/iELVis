@@ -41,7 +41,15 @@
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
 %                           electrodes are represented as spheres. {default:
-%                           'y'}
+%                           'y'}.
+%                          -Cell array of electrode names you want black 
+%                           edges drawn for (i.e. cfg.edgeBlack = {'LDa1' 'LDa3'};
+%     edgeColors           -nx2 cell array for electrode label - color 
+%                           combinations for the edges. Colors can be 'r', 
+%                           'g', 'y', 'b', 'k' i.e. {'LDa1' 'k'; 'LDa2' 'y'}.
+%                           Electrodes not mentioned will have a black edge, 
+%                           {default" 'n' which will just do what's defined 
+%                           in edgeBlack}.
 %     elecNames            -Cell array of the names of the electrodes to
 %                           show. If elecCoord is a matrix of coordinates,
 %                           the number of names needs to equal the number of
@@ -385,6 +393,7 @@ if ~isfield(cfg, 'pairs'), elecPairs=[];  else elecPairs=cfg.pairs; end
 if ~isfield(cfg, 'lineWidth'), lineWidth=[];  else lineWidth=cfg.lineWidth; end
 if ~isfield(cfg, 'ignoreDepthElec'), ignoreDepthElec='y'; else ignoreDepthElec=cfg.ignoreDepthElec; end
 if ~isfield(cfg, 'edgeBlack'),      edgeBlack='y';         else edgeBlack=cfg.edgeBlack; end
+if ~isfield(cfg, 'edgeColors'),     edgeColors=[];         else edgeColors=cfg.edgeColors; end
 if ~isfield(cfg, 'elecShape'), elecShape='marker';  else elecShape=cfg.elecShape; end
 if ~isfield(cfg, 'showLabels'), showLabels=0;  else showLabels=universalYes(cfg.showLabels); end
 if ~isfield(cfg, 'opaqueness'),      opaqueness=1;          else opaqueness=cfg.opaqueness; end
@@ -764,7 +773,7 @@ try
     else
         [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
             surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorScale, ...
-            elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
+            elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,edgeColors,elecNames, ...
             elecCbar,bidsDir,bidsSes);
         plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
     end
