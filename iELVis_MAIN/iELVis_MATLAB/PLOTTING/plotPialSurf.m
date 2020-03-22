@@ -41,7 +41,10 @@
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
 %                           electrodes are represented as spheres. {default:
-%                           'y'}
+%                           'y'}.
+%                          -Or you can name the labels of the electrodes
+%                          you want black edges drawn for (i.e. cfg.edgeBlack =
+%                          {'LDa1' 'LDa3'};
 %     elecNames            -Cell array of the names of the electrodes to
 %                           show. If elecCoord is a matrix of coordinates,
 %                           the number of names needs to equal the number of
