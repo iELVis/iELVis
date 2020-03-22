@@ -110,19 +110,21 @@ else
 end
 
 % Plot Electrodes
-for j = 1:nShowElec,
+for j = 1:nShowElec
     if elecSphere
         sph_ct=sph_ct+1;
         h_elec{sph_ct}=surf(sphX+showElecCoords(j,1),sphY+showElecCoords(j,2),sphZ+showElecCoords(j,3),zeros(Zdim));
         sph_colors(sph_ct,:)=showElecColors(j,:);
     else
         h_elec{j}=plot3(showElecCoords(j,1),showElecCoords(j,2),showElecCoords(j,3),'o','Color',showElecColors(j,:),'MarkerFaceColor', showElecColors(j,:),'MarkerSize',elecSize);
-        if universalYes(edgeBlack),
+        if universalYes(edgeBlack)
+            set(h_elec{j},'MarkerEdgeColor','k');
+        elseif any(strcmp(showElecNames{j},edgeBlack))
             set(h_elec{j},'MarkerEdgeColor','k');
         else
             set(h_elec{j},'MarkerEdgeColor',showElecColors(j,:));
         end
-        if showLabels,
+        if showLabels
             add_name(showElecCoords(j,:),showElecNames{j},showElecNames,elecSize,showElecColors(j,:))
         end
     end
