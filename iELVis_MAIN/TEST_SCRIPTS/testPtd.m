@@ -1,7 +1,7 @@
-% This script tests Manu's PTD index function using an SEEG patient
+% This script tests Manu's PTD index function
 
 %% Compute PTD index
-PTD_idx = getPtdIndex('TWH077');
+PTD_idx = getPtdIndex('PT001');
 
 %% Plot and output PTD index for each contact
 figure(1); clf;
