@@ -39,6 +39,7 @@ cp $fsDir/elec_recon/*.LEPTO* $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*.PIAL* $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*.INF* $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*.CT* $newFolder/elec_recon/.
+cp $fsDir/elec_recon/*.POSTIMPLANT* $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*PostimpLoc*.txt $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*.electrodeNames $newFolder/elec_recon/.
 cp $fsDir/elec_recon/*elec_recon.pdf $newFolder/elec_recon/.
