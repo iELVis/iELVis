@@ -95,13 +95,13 @@ elseif n>1
     label_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
 end
-fid=fopen(label_file);
-tmp=textscan(fid,'%s %s %s');
-fclose(fid);
-for i=3:length(tmp{1})
-    label{i-2,1}=strcat(tmp{1}{i},'_',tmp{2}{i},'_',tmp{3}{i});
-end
-clear tmp;
+elecInfo=csv2Cell(label_file,' ',2);
+nElec=size(elecInfo,1);
+label(1:nElec,1)={''};
+for i=1:nElec
+    label{i,1}=strcat(elecInfo{i,1},'_',elecInfo{i,2},'_',elecInfo{i,3});
+	end
+clear elecInfo
 
 % load electrodes coordinate
 files=dir(fullfile(recon_folder,'*.LEPTOVOX'));
@@ -119,15 +119,15 @@ elseif n>1
     elec_file=fullfile(elec_dir,temp_file);
     clear elec_dir temp_file files n
 end
-fid=fopen(elec_file);
-tmp=textscan(fid,'%s %s %s');
-fclose(fid);
-for i=3:length(tmp{1})
-    elec(i-2,1)=str2num(tmp{1}{i});
-    elec(i-2,2)=str2num(tmp{2}{i});
+coordCsv=csv2Cell(elec_file,' ',2);
+elec=zeros(nElec,3);
+for a=1:nElec
+    for b=1:3
+        elec(a,b)=str2double(coordCsv{a,b});
+    end
     elec(i-2,3)=str2num(tmp{3}{i});
 end
-clear tmp;
+clear coordCsv
 elec=elec+1; % Voxel indexing starts at 0 but MATLAB indexing starts with 1
 
 %% load look-up table for the FreeSurfer MRI atlases

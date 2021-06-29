@@ -120,7 +120,7 @@ else
 end
 
 % Plot Electrodes
-for j = 1:nShowElec,
+for j = 1:nShowElec
     if elecSphere
         sph_ct=sph_ct+1;
         h_elec{sph_ct}=surf(sphX+showElecCoords(j,1),sphY+showElecCoords(j,2),sphZ+showElecCoords(j,3),zeros(Zdim));

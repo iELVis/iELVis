@@ -45,7 +45,7 @@
 %                           border. Otherwise, border will be same color as
 %                           marker. This argument has no effect if
 %                           electrodes are represented as spheres. {default:
-%                           'y'}
+%                           'y'}.
 %     elecNames            -Cell array of the names of the electrodes to
 %                           show. If elecCoord is a matrix of coordinates,
 %                           the number of names needs to equal the number of
