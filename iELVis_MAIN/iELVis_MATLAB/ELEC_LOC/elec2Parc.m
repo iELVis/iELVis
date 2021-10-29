@@ -14,6 +14,7 @@
 %           'D' =Destrieux
 %           'Y7'=Yeo 7-network resting state fMRI atlas
 %           'Y17'=Yeo 17-network resting state fMRI atlas
+%           'HCP'=Human Connectome Project Multi-Modal Parcellation Atlas
 %           'fullpath2parcfile'=Some annotation file defined by you.
 %  out2text - [1 or 0] If non-zero, a tab delimited text file called *_@_AtlasLabels.tsv
 %            is created in the patient's elec_recon folder (where * is the
@@ -136,19 +137,38 @@ for hemLoop=1:2,
                     parcFname=fullfile(labelFolder,[lower(hem) 'h.aparc.a2009s.annot']);
                     [~, label, colortable]=read_annotation(parcFname);
                 case 'Y7'
-                    parcFname=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_7Networks_N1000.mat']);
-                    if ~exist(parcFname,'file')
-                        % Try original naming convention
-                        parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_7Networks_N1000.mat']);
+                    parcFname_mat=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_7Networks_N1000.mat']);
+                    parcFname_orig=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_7Networks_N1000.mat']);
+                    parcFname_annot=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_7Networks_N1000.annot']);
+                    if exist(parcFname_mat, 'file')
+                        load(parcFname_mat);
+                    elseif exist(parcFname_orig,'file')
+                        load(parcFname_orig);
+                    elseif exist(parcFname_annot,'file')
+                        [~, label, colortable]=read_annotation(parcFname_annot);
+                    else
+                        error('Can not find Y7 parcellation. Run createIndivYeoMapping')
                     end
-                    load(parcFname);
                 case 'Y17'
-                    parcFname=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_17Networks_N1000.mat']);
-                    if ~exist(parcFname,'file')
-                        % Try original naming convention
-                        parcFname=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_17Networks_N1000.mat']);
+                    parcFname_mat=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_17Networks_N1000.mat']);
+                    parcFname_orig=fullfile(labelFolder,[lower(hem) 'h_Yeo2011_17Networks_N1000.mat']);
+                    parcFname_annot=fullfile(labelFolder,[lower(hem) 'h.Yeo2011_17Networks_N1000.annot']);
+                    if exist(parcFname_mat, 'file')
+                        load(parcFname_mat);
+                    elseif exist(parcFname_orig,'file')
+                        load(parcFname_orig);
+                    elseif exist(parcFname_annot,'file')
+                        [~, label, colortable]=read_annotation(parcFname_annot);
+                    else
+                        error('Can not find Y17 parcellation. Run createIndivYeoMapping')
                     end
-                    load(parcFname);
+                case 'HCP'
+                    parcFname=fullfile(labelFolder,[lower(hem) 'h.HCP-MMP1.annot']);
+                    if exist(parcFname,'file')
+                        [~, label, colortable]=read_annotation(parcFname);
+                    else
+                        error('Can not find HCP parcellation. Run createIndivHCPMapping')
+                    end
                 otherwise
                     error('Unrecognized value of atlas argument.')
             end
