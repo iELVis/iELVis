@@ -100,7 +100,7 @@ nElec=size(elecInfo,1);
 label(1:nElec,1)={''};
 for i=1:nElec
     label{i,1}=strcat(elecInfo{i,1},'_',elecInfo{i,2},'_',elecInfo{i,3});
-	end
+end
 clear elecInfo
 
 % load electrodes coordinate
@@ -125,7 +125,6 @@ for a=1:nElec
     for b=1:3
         elec(a,b)=str2double(coordCsv{a,b});
     end
-    elec(i-2,3)=str2num(tmp{3}{i});
 end
 clear coordCsv
 elec=elec+1; % Voxel indexing starts at 0 but MATLAB indexing starts with 1
