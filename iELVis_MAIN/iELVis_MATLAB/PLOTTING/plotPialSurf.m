@@ -143,6 +143,7 @@
 %                             funcfname needs to be a cell array of two
 %                             filenames. The first specifies the left hem
 %                             values and the second the right.
+%                             'miniomni' - 2 views of each hemisphere
 %                             'lomni' - 6 views of left hemisphere
 %                             'l' - Left hem lateral
 %                             'lm' - Left hem medial
@@ -485,6 +486,9 @@ try
     % Call *omni subfunctions if requested
     if strcmpi(brainView,'omni')
         cfgOut=plotPialOmni(fsSub,cfg);
+        return;
+    elseif strcmpi(brainView,'miniomni')
+        cfgOut=plotPialMiniOmni(fsSub,cfg);
         return;
     elseif strcmpi(brainView,'lomni') || strcmpi(brainView,'romni')
         cfgOut=plotPialHemi(fsSub,cfg);
@@ -1285,6 +1289,357 @@ elseif universalYes(elecCbar),
 elseif universalYes(olayCbar)
     % Colorbar for pial surface overlay (e.g., neuroimaging)
     pos=[.4 .06 .2 .03];
+    cbarDGplus(pos,olayUsedLimits,olayCmapName,5,olayUnits);
+end
+
+% Title
+if isfield(cfg,'title')
+    if ~isempty(cfg.title)
+        % Overall Fig Title
+        ht=textsc2014(cfg.title,'title');
+        set(ht,'fontweight','bold','fontsize',20,'position',[0.5 0.975]);
+    end
+end
+drawnow;
+
+
+%% subfunction plotPialMiniOmni
+function sub_cfg_out=plotPialMiniOmni(fsSub,cfg)
+
+if ~isfield(cfg, 'figId'),         hFig=[];            else  hFig=cfg.figId; end
+if ~isfield(cfg, 'olayThresh'),       olayThresh=[];          else  olayThresh = cfg.olayThresh; end
+if ~isfield(cfg, 'figId'),         hFig=[];              else  hFig=cfg.figId; end
+if ~isfield(cfg, 'fsurfSubDir'),   fsDir=[];             else fsDir=cfg.fsurfSubDir; end
+if ~isfield(cfg, 'elecCoord'),      elecCoord=[];      else  elecCoord = cfg.elecCoord;       end
+if ~isfield(cfg, 'elecNames'),      elecNames=[];      else  elecNames = cfg.elecNames;       end
+if ~isfield(cfg, 'elecSize'),       elecSize=8;          else  elecSize = cfg.elecSize;      end
+if ~isfield(cfg, 'elecColors'),     elecColors=[];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge=[];        else  elecColorsEdge = cfg.elecColorsEdge;        end
+if ~isfield(cfg, 'elecColorScale'),   elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
+if ~isfield(cfg, 'olayColorScale'),   olayColorScale='absmax';   else olayColorScale=cfg.olayColorScale; end
+if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits; end
+if ~isfield(cfg, 'olayUnits'),      olayUnits=[];         else olayUnits=cfg.olayUnits; end
+if ~isfield(cfg, 'showLabels'),         showLabels='y';            else  showLabels=cfg.showLabels; end
+if ~isfield(cfg, 'elecCbar'),     elecCbar=[];   else elecCbar=cfg.elecCbar; end
+if ~isfield(cfg, 'elecCmapName'),       elecCmapName=[];          else elecCmapName=cfg.elecCmapName; end
+if ~isfield(cfg, 'olayCbar'),     olayCbar=[];   else elecCbar=cfg.olayCbar; end
+if ~isfield(cfg, 'verbLevel'),     verbLevel=0;        else  verbLevel = cfg.verbLevel;        end
+if ~isfield(cfg, 'pialOverlay'),    pialOverlay=[];        else pialOverlay=cfg.pialOverlay; end
+if ~isfield(cfg, 'ignoreDepthElec'), ignoreDepthElec='y'; else ignoreDepthElec=cfg.ignoreDepthElec; end
+if ~isfield(cfg, 'surfType'),       surfType = 'pial';     else  surfType = cfg.surfType;     end
+
+if isempty(fsDir)
+    fsDir=getFsurfSubDir();
+end
+
+clear global elecCbarMin elecCbarMax olayCbarMin olayCbarMax cort;
+
+%% Figure out electrode information
+if isempty(elecCoord),
+    if strcmpi(surfType,'inflated'),
+        elecCoord='INF';
+    else
+        elecCoord='LEPTO';
+    end
+end
+
+% Sort out electrode colors:
+%elecCmapName=[];
+if isempty(elecColors)
+    elecCbar='n';
+elseif isnumeric(elecColors)
+    if isempty(elecCbar)
+        elecCbar='y';
+    end
+    if isvector(elecColors)
+        % convert vector of electrode values to RGB
+        %[map, limits, cmap]=vals2Colormap(vals,type,cmap,minmax);
+        [elecColors, elecLimits, elecCmapName]=vals2Colormap(elecColors,elecColorScale,elecCmapName);
+        %[showElecColors, elecCbarMin, elecCbarMax]=elec2rgb(elecColors,showElecIds,elecColorScale,elecCbar);
+    else
+        % matrix of rgb values
+        if universalYes(elecCbar) && ~isnumeric(elecColorScale)
+            error('If cfg.elecColors is a matrix of RGB values, you need to specify numeric elecColorScale limits.');
+        end
+        elecLimits=elecColorScale;
+    end
+elseif ischar(elecColors)
+    % All electrodes will be black or red
+    if isempty(elecCbar)
+        elecCbar='n';
+    end
+else
+    error('Invalid value for cfg.elecColors.');
+end
+
+% Get coordinates & figure out which hemisphere has electrodes
+elecCoordByHem=cell(1,2);
+elecNamesByHem=cell(1,2);
+elecColorsByHem=cell(1,2);
+elecColorsEdgeByHem=cell(1,2);
+elecCoverage=zeros(1,2);
+if ~strcmpi(elecCoord,'n'),
+    if ~isempty(elecNames) && ischar(elecCoord),
+        % Electrode names have been specified but coordinates need to be loaded
+        % from disk
+        
+        % Grab electrode names and hemisphere from subject dir
+        elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
+        elecInfo=csv2Cell(elecInfoFname,' ',2);
+        % Load electrode coordinates
+        elecCoordFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.' elecCoord]);
+        elecCoordCsv=csv2Cell(elecCoordFname,' ',2);
+        fullElecCoord=zeros(size(elecCoordCsv));
+        % Convert coordinates from string to #
+        for a=1:size(elecCoordCsv,1),
+            for b=1:3,
+                fullElecCoord(a,b)=str2double(elecCoordCsv{a,b});
+            end
+        end
+        
+        % Loop over desired elecNames and save coordinates
+        nDesiredElec=length(elecNames);
+        elecCoord=zeros(nDesiredElec,4);
+        for a=1:nDesiredElec,
+            elecId=findStrInCell(elecNames{a},elecInfo(:,1));
+            if isempty(elecId),
+                error('Could not find coordinates for electrode %s\n',elecNames{a});
+            end
+            elecCoord(a,1:3)=fullElecCoord(elecId,:);
+            if strcmpi(elecInfo(elecId,3),'L'),
+                elecCoord(a,4)=1;
+            end
+        end
+    end
+    
+    if isnumeric(elecCoord),
+        % electrode coordinates passed as argument
+        for hem_loop=1:2, %(Left hem first)
+            if hem_loop==1,
+                ids=find(elecCoord(:,4));
+            else
+                ids=find(elecCoord(:,4)==0);
+            end
+            elecCoordByHem{hem_loop}=elecCoord(ids,:);
+            elecCoverage(hem_loop)=length(ids);
+            elecNamesByHem{hem_loop}=elecNames(ids);
+            if isempty(elecColors) || ischar(elecColors)
+                elecColorsByHem{hem_loop}=elecColors;
+            else
+                elecColorsByHem{hem_loop}=elecColors(ids,:);
+                if ~isempty(elecColorsEdge)
+                    elecColorsEdgeByHem{hem_loop}=elecColorsEdge(ids,:);
+                end
+            end
+        end
+    else
+        % Grab electrode names and hemisphere from subject dir
+        elecInfoFname=fullfile(fsDir,fsSub,'elec_recon',[fsSub '.electrodeNames']);
+        elecInfo=csv2Cell(elecInfoFname,' ',2);
+        
+        % Grab electrode coordinates from subject dir
+        if isempty(elecNames),
+            % Read elec coordinates from subject's elec_recon subfolder
+            for hem_loop=1:2,
+                if hem_loop==1,
+                    side='l';
+                    use_ids=findStrInCell('L',elecInfo(:,3));
+                else
+                    side='r';
+                    use_ids=findStrInCell('R',elecInfo(:,3));
+                end
+                elecNames=elecInfo(use_ids,1);
+                [showElecCoords, showElecNames, showElecIds]=getElecPlottingInfo(surfType, ...
+                    elecCoord,fsDir,fsSub,side,ignoreDepthElec,elecNames);
+                if hem_loop==1,
+                    showElecCoords(:,4)=1;
+                else
+                    showElecCoords(:,4)=0;
+                end
+                elecCoordByHem{hem_loop}=showElecCoords;
+                elecNamesByHem{hem_loop}=showElecNames;
+                elecCoverage(hem_loop)=length(showElecIds);
+                if ischar(elecColors),
+                    elecColorsByHem{hem_loop}=elecColors;
+                else
+                    % If you read electrode coordinates from elec_recon and don't specify elecNames, all
+                    % electrodes must be the same color
+                    elecColorsByHem{hem_loop}=[]; % electrodes will be default color (black)
+                end
+            end
+        end
+    end
+end
+
+% Optional pial overlay color bar variables
+olayCmapName=[];
+olayUsedLimits=[];
+if ~isempty(pialOverlay),
+    if isempty(olayCbar)
+        olayCbar='y';
+    end
+    if length(pialOverlay)~=2
+        error('When you use the "miniomni" view option and "pialOverlay," pialOverlay needs two filenanes (cfg.pialOverlay{1}=left hem, cfg.pialOverlay{2}=right hem).');
+    end
+    % Load surf files to get color scale limits
+    for a=1:2,
+        if ~exist(pialOverlay{a},'file')
+            error('File not found: %s',pialOverlay{a});
+        end
+        dot_id=find(pialOverlay{a}=='.');
+        extnsn=pialOverlay{a}(dot_id+1:end);
+        if strcmpi(extnsn,'mat')
+            load(pialOverlay{a});
+        else
+            mgh = MRIread(pialOverlay{a});
+        end
+        switch lower(olayColorScale)
+            case 'absmax'
+                abs_mx(a)=max(abs(mgh.vol));
+            case 'justpos'
+                func_mx(a)=max(mgh.vol);
+                olayCmapName='autumn';
+            case 'justneg'
+                func_mn(a)=min(mgh.vol);
+                olayCmapName='winter';
+            case 'minmax'
+                func_mn(a)=min(mgh.vol);
+                func_mx(a)=max(mgh.vol);
+            otherwise
+                %'nominal',
+                error('Invalid value of cfg.olayColorScale');
+        end
+    end
+    
+    switch lower(olayColorScale)
+        case 'absmax'
+            olayUsedLimits=[-1 1]*max(abs_mx);
+        case 'justpos'
+            olayUsedLimits=[olayThresh max(func_mx)];
+        case 'justneg'
+            olayUsedLimits=[min(func_mn) olayThresh];
+        case 'minmax'
+            olayUsedLimits=[min(func_mn) max(func_mx)];
+    end
+end
+
+% Create figure
+if isempty(hFig),
+    hFig=figure; clf;
+else
+    figure(hFig); clf;
+end
+set(hFig,'MenuBar','none','position',[100 190 1000 400],'paperpositionmode','auto');
+
+% Loop over hemispheres (Left hem first)
+for h=1:2,
+    for v=1:2,
+        ax_loc=[0 0 0 0];
+        if h==1,
+            bview='l';
+        else
+            bview='r';
+        end
+        if v==2,
+            bview=[bview 'sv'];
+        end
+        switch (h-1)*2+v,
+            case 1 %LH lateral
+                ax_loc=[0.005 .2 .33 .6];
+            case 2 %LH inferior
+                ax_loc=[.3475 0.09 .16 0.82];
+                
+            case 3 %RH lateral
+                ax_loc=[.665 .2 .33 .6];
+            case 4 %RH inferior
+                ax_loc=[.4925 0.09 .16 0.82];
+        end
+        hAx=axes('position',ax_loc);
+        sub_cfg=cfg;
+        sub_cfg.view=bview;
+        
+        sub_cfg.title=[];
+        if bview(1)=='l'
+            temp_hem_id=1; %left hem
+        else
+            temp_hem_id=2; %right hem
+        end
+        if ~elecCoverage(temp_hem_id)
+            sub_cfg.elecCoord='n';
+        else
+            sub_cfg.elecCoord=elecCoordByHem{temp_hem_id};
+            sub_cfg.elecNames=elecNamesByHem{temp_hem_id};
+            sub_cfg.elecColors=elecColorsByHem{temp_hem_id};
+            sub_cfg.elecColorsEdge=elecColorsEdgeByHem{temp_hem_id};
+            if ~isfield(sub_cfg,'elecSize')
+                sub_cfg.elecSize=6;
+            end
+            sub_cfg.showLabels=showLabels;
+        end
+        
+        % If plotting annotations from files input by user, choose hemisphere
+        if isfield(sub_cfg,'overlayParcellation')
+            if iscell(sub_cfg.overlayParcellation) && length(sub_cfg.overlayParcellation)==2
+                
+                if ~isempty(strfind(sub_cfg.overlayParcellation{1},'lh_'))  && ~isempty(strfind(sub_cfg.overlayParcellation{2},'rh_'))
+                    lh_annot = sub_cfg.overlayParcellation{1};
+                    rh_annot = sub_cfg.overlayParcellation{2};
+                elseif ~isempty(strfind(sub_cfg.overlayParcellation{1},'rh_'))  && ~isempty(strfind(sub_cfg.overlayParcellation{2},'lh_'))
+                    lh_annot = sub_cfg.overlayParcellation{2};
+                    rh_annot = sub_cfg.overlayParcellation{1};
+                else
+                    error(['If you define parcellation files to overlay with omni view,'...
+                        'cfg.overlayParcellation has to be a cell array with the left and '...
+                        'right hemisphere annotation file. The file names (with fullpath) have to include either ''lh_'' or ''rh_''']);
+                end
+                
+                if h==1
+                    sub_cfg.overlayParcellation =  lh_annot;
+                elseif h==2
+                    sub_cfg.overlayParcellation =  rh_annot;
+                end
+            end
+        end
+        
+        sub_cfg.figId=hFig;
+        sub_cfg.axis=hAx;
+        sub_cfg.verbLevel=verbLevel;
+        if ~isempty(pialOverlay),
+            sub_cfg.pialOverlay=pialOverlay{h};
+        end
+        sub_cfg.clearFig='n';
+        sub_cfg.elecCbar='n';
+        sub_cfg.olayCbar='n';
+        sub_cfg.olayColorScale=olayUsedLimits;
+        if v==2
+            sub_cfg.clearGlobal=1; %last view for this hem, clear overlay data from global memory
+        else
+            sub_cfg.clearGlobal=0;
+        end
+        sub_cfg_out=plotPialSurf(fsSub,sub_cfg); % PLOT BRAIN!!!!
+        
+        if isempty(elecCmapName) && isfield(sub_cfg_out,'elecCmapName')
+            elecCmapName=sub_cfg_out.elecCmapName;
+        end
+    end
+end
+
+%% DRAW COLORBAR(S)
+if universalYes(elecCbar) && universalYes(olayCbar),
+    % Colorbar for electrodes
+    pos=[.88 .1 .01 .8];
+    cbarDGplus(pos,elecLimits,elecCmapName,5,elecUnits,'right');
+    
+    % Colorbar for pial surface overlay (e.g., neuroimaging)
+    pos=[.94 .1 .01 .8];
+    cbarDGplus(pos,olayUsedLimits,olayCmapName,5,olayUnits,'right');
+elseif universalYes(elecCbar),
+    % Colorbar for electrodes
+    pos=[.90 .1 .03 .8];
+    cbarDGplus(pos,elecLimits,elecCmapName,5,elecUnits);
+elseif universalYes(olayCbar)
+    % Colorbar for pial surface overlay (e.g., neuroimaging)
+    pos=[.90 .1 .03 .8];
     cbarDGplus(pos,olayUsedLimits,olayCmapName,5,olayUnits);
 end
 
