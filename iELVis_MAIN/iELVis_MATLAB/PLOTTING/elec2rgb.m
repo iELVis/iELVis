@@ -63,15 +63,15 @@ elseif isvector(elecColors) && size(elecColors,2)~=3
     end
 else
     showElecColors=elecColors(showElecIds,:);
-    if ~universalNo(elecCbar),
+%     if ~universalNo(elecCbar),
         if isnumeric(elecColorScale) && isvector(elecColorScale) && length(elecColorScale)==2
             elecCbarMin=min(elecColorScale);
             elecCbarMax=max(elecColorScale);
         else
             error('When cfg.elecColors is a matrix of RGB values, elecColorScale needs to specify the min and max of the colorscale.');
         end
-    else
-       elecCbarMin=[];
-       elecCbarMax=[];
-    end
+%     else
+%        elecCbarMin=[];
+%        elecCbarMax=[];
+%     end
 end

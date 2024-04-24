@@ -37,6 +37,11 @@
 %                           a matrix or vector you must use elecNames arg
 %                           (see below). {default: all electrodes filled
 %                           with black}.
+%     elecAlpha            -1D vector of transparency values for electrode
+%                           markers, or a single number to be applied to 
+%                           all electrodes. 1 is fully opaque, 0 is fully
+%                           transparent. {default: 1, meaning all electrodes
+%                           are fully opaque}.
 %     elecColorsEdge       -2D matrix of colors to draw the border of electrodes
 %                           (rows=electrodes, columns=RGB values). When
 %                           elecColorsEdge is specified, elecColors must also be
@@ -373,6 +378,7 @@ if ~isfield(cfg, 'snap2surf'),      snap2surf = 0;         else  snap2surf = cfg
 if ~isfield(cfg, 'surfType'),       surfType = 'pial';     else  surfType = cfg.surfType;     end
 if ~isfield(cfg, 'elecCoord'),      elecCoord= 'LEPTO';      else  elecCoord = cfg.elecCoord;       end
 if ~isfield(cfg, 'elecColors'),     elecColors= [];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecAlpha'),      elecAlpha=1;          else  elecAlpha=cfg.elecAlpha;           end
 if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge= [];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'), elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'elecCbar'),       elecCbar=[];          else elecCbar=cfg.elecCbar; end
@@ -436,6 +442,19 @@ try
                 % electrode with an RGB value
                 error('# of elecColors elements, %d, needs to equal # of elecNames, %d.',nElecColors,length(elecNames));
             end
+        end
+    end
+    
+    % If vector of elecAlpha specified make sure an equal number of
+    % elecNames specified
+    if ~isscalar(elecAlpha)
+        if isvector(elecAlpha)
+            nElecAlpha=length(elecAlpha);
+            if nElecAlpha~=length(elecNames)
+                error('# of elecAlpha elements, %d, needs to equal # of elecNames, %d.',nElecAlpha,length(elecNames));
+            end
+        else
+            error('elecAlpha must be either a scalar or a vector.');
         end
     end
 	
@@ -820,7 +839,7 @@ try
         h_elec=[];
     else
         [showElecCoords, showElecNames, h_elec, elecCbarMin, elecCbarMax, elecCmapName]=plotElecs(elecCoord, ...
-            surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecColorsEdge,elecColorScale, ...
+            surfType,fsDir,fsSub,side,ignoreDepthElec,pullOut,elecColors,elecAlpha,elecColorsEdge,elecColorScale, ...
             elecShape,elecSize,showLabels,clickElec,elecAssign,edgeBlack,elecNames, ...
             elecCbar,elecCmapName,bidsDir,bidsSes);
         plotElecPairs(elecPairs,lineWidth,side,showElecNames,showElecCoords,elecSize);
