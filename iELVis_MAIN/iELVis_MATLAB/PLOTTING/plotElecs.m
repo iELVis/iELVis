@@ -135,7 +135,7 @@ for j = 1:nShowElec
         sph_colors(sph_ct,:)=showElecColors(j,:);
     else
 %         h_elec{j}=plot3(showElecCoords(j,1),showElecCoords(j,2),showElecCoords(j,3),'o','Color',showElecColors(j,:),'MarkerFaceColor', showElecColors(j,:),'MarkerSize',elecSize);
-        h_elec{j}=scatter3(showElecCoords(j,1),showElecCoords(j,2),showElecCoords(j,3),'o','MarkerEdgeColor',showElecColors(j,:),'MarkerFaceColor',showElecColors(j,:),'MarkerFaceAlpha',showElecAlpha(j,:),'SizeData',elecSize.^2);
+        h_elec{j}=scatter3(showElecCoords(j,1),showElecCoords(j,2),showElecCoords(j,3),'o','MarkerEdgeColor',showElecColors(j,:),'MarkerEdgeAlpha',showElecAlpha(j),'MarkerFaceColor',showElecColors(j,:),'MarkerFaceAlpha',showElecAlpha(j),'SizeData',elecSize.^2);
 		if ~isempty(elecColorsEdge), % this input was checked in plotPialSurf
 			set(h_elec{j},'MarkerEdgeColor',elecColorsEdge(j,:));
 		else
