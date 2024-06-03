@@ -958,6 +958,7 @@ if ~isfield(cfg, 'elecCoord'),      elecCoord=[];      else  elecCoord = cfg.ele
 if ~isfield(cfg, 'elecNames'),      elecNames=[];      else  elecNames = cfg.elecNames;       end
 if ~isfield(cfg, 'elecSize'),       elecSize=8;          else  elecSize = cfg.elecSize;      end
 if ~isfield(cfg, 'elecColors'),     elecColors=[];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecAlpha'),     elecAlpha=[];        else  elecAlpha = cfg.elecAlpha;        end
 if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge=[];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'),   elecColorScale='absmax';   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'olayColorScale'),   olayColorScale='absmax';   else olayColorScale=cfg.olayColorScale; end
@@ -1073,6 +1074,9 @@ if ~strcmpi(elecCoord,'n'),
                 elecColorsByHem{hem_loop}=elecColors(ids,:);
                 if ~isempty(elecColorsEdge)
                     elecColorsEdgeByHem{hem_loop}=elecColorsEdge(ids,:);
+                end
+                if ~isempty(elecAlpha)
+                    elecAlphaByHem{hem_loop}=elecAlpha(ids);
                 end
             end
         end
@@ -1238,6 +1242,7 @@ for h=1:2,
             sub_cfg.elecCoord=elecCoordByHem{temp_hem_id};
             sub_cfg.elecNames=elecNamesByHem{temp_hem_id};
             sub_cfg.elecColors=elecColorsByHem{temp_hem_id};
+            sub_cfg.elecAlpha=elecAlphaByHem{temp_hem_id};
             sub_cfg.elecColorsEdge=elecColorsEdgeByHem{temp_hem_id};
             if ~isfield(sub_cfg,'elecSize')
                 sub_cfg.elecSize=6;
