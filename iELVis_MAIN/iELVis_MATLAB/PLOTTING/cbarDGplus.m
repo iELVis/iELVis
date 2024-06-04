@@ -46,7 +46,11 @@ hCbar=axes('position',pos);
 if isempty(cmapName)
     colormap('parula');
 else
-    colormap(cmapName);
+    try
+        colormap(cmapName);
+    catch
+        colormap(eval(cmapName));
+    end
 end
 map=colormap;
 n_colors=size(map,1);

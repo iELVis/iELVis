@@ -129,7 +129,11 @@ if nargin<5 || isempty(cmapName),
         map = colormap('parula');
     end
 else
-   map=colormap(cmapName); 
+    try
+        map=colormap(cmapName); 
+    catch
+        map=colormap(eval(cmapName));
+    end
 end
 
 %obj = findobj('tag','cbar','parent',gcf);
