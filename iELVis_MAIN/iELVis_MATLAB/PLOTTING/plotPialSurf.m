@@ -1598,8 +1598,8 @@ for h=1:2,
             sub_cfg.elecCoord=elecCoordByHem{temp_hem_id};
             sub_cfg.elecNames=elecNamesByHem{temp_hem_id};
             sub_cfg.elecColors=elecColorsByHem{temp_hem_id};
-            sub_cfg.elecColorsEdge=elecColorsEdgeByHem{temp_hem_id};
             sub_cfg.elecAlpha=elecAlphaByHem{temp_hem_id};
+            sub_cfg.elecColorsEdge=elecColorsEdgeByHem{temp_hem_id};
             if ~isfield(sub_cfg,'elecSize')
                 sub_cfg.elecSize=6;
             end
@@ -1692,6 +1692,8 @@ if ~isfield(cfg, 'fsurfSubDir'),   fsDir=[];             else fsDir=cfg.fsurfSub
 if ~isfield(cfg, 'elecCoord'),      elecCoord= 'LEPTO';      else  elecCoord = cfg.elecCoord;       end
 if ~isfield(cfg, 'elecSize'),       elecSize = 8;          else  elecSize = cfg.elecSize;      end
 if ~isfield(cfg, 'elecColors'),     elecColors= [];        else  elecColors = cfg.elecColors;        end
+if ~isfield(cfg, 'elecAlpha'),      elecAlpha=[];         else  elecAlpha = cfg.elecAlpha;          end
+if ~isfield(cfg, 'elecColorsEdge'),     elecColorsEdge=[];        else  elecColorsEdge = cfg.elecColorsEdge;        end
 if ~isfield(cfg, 'elecColorScale'),   elecColorScale=[];   else elecColorScale=cfg.elecColorScale; end
 if ~isfield(cfg, 'olayColorScale'),   olayColorScale=[];   else olayColorScale=cfg.olayColorScale; end
 if ~isfield(cfg, 'elecUnits'),     elecUnits=[];   else elecUnits=cfg.elecUnits; end
