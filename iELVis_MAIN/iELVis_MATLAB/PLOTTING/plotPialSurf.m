@@ -1021,6 +1021,7 @@ end
 elecCoordByHem=cell(1,2);
 elecNamesByHem=cell(1,2);
 elecColorsByHem=cell(1,2);
+elecAlphaByHem=cell(1,2);
 elecColorsEdgeByHem=cell(1,2);
 elecCoverage=zeros(1,2);
 if ~strcmpi(elecCoord,'n'),
@@ -1109,10 +1110,12 @@ if ~strcmpi(elecCoord,'n'),
                 elecCoverage(hem_loop)=length(showElecIds);
                 if ischar(elecColors),
                     elecColorsByHem{hem_loop}=elecColors;
+                    elecAlphaByHem{hem_loop}=1; % make all electrodes opaque
                 else
                     % If you read electrode coordinates from elec_recon and don't specify elecNames, all
                     % electrodes must be the same color
                     elecColorsByHem{hem_loop}=[]; % electrodes will be default color (black)
+                    elecAlphaByHem{hem_loop}=1; % make all electrodes opaque
                 end
             end
         end
