@@ -97,7 +97,7 @@ fclose(fid);
 
 function [pre, post]=parse_by_char(str,delimiter)
 
-char_ids=find(str==delimiter);
+if isspace(delimiter), char_ids=find(isstrprop(str,'wspace')); else, char_ids=find(str==delimiter); end % edited by Pierre Mégevand 2024/07/16 to deal with tabs as separators
 if isempty(char_ids),
     pre=str;
     post=[];
