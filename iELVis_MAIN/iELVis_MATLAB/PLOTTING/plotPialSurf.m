@@ -1077,7 +1077,11 @@ if ~strcmpi(elecCoord,'n'),
                     elecColorsEdgeByHem{hem_loop}=elecColorsEdge(ids,:);
                 end
                 if ~isempty(elecAlpha)
-                    elecAlphaByHem{hem_loop}=elecAlpha(ids);
+                    if numel(elecAlpha)==1
+                        elecAlphaByHem{hem_loop}=elecAlpha;
+                    else
+                        elecAlphaByHem{hem_loop}=elecAlpha(ids);
+                    end
                 end
             end
         end
