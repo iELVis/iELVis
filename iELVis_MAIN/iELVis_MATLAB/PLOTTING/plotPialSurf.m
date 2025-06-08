@@ -632,42 +632,61 @@ try
             [averts,albl,actbl]=read_annotation(annotFname);
             actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
         elseif strcmpi(overlayParcellation,'Y7')
-            if strcmpi(fsSub,'fsaverage')
-                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
-                [averts,albl,actbl]=read_annotation(annotFname);
-            else
-                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
-                if ~exist(annotFname,'file')
-                    % try original naming convention
-                    annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
-                end
-                load(annotFname);
+            annotFname_annot=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
+            annotFname_mat=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+            if exist(annotFname_annot,'file')
+                [averts,albl,actbl]=read_annotation(annotFname_annot);
+            elseif exist(annotFname_mat,'file')
+                load(annotFname_mat);
                 albl=label;
                 actbl=colortable;
                 clear colortable label vertices
-                actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+            else
+                error('Can not find Y7 parcellation. Run createIndivHCPMapping')
             end
+            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+            
+%             annotFname=fullfile(labelFolder,[side 'h.Yeo2011_7Networks_N1000.annot']); % Yeo et al. 2011
+%             if ~exist(annotFname,'file')
+%                 annotFname=fullfile(labelFolder,[side 'h_Yeo2011_7Networks_N1000.mat']); % Yeo et al. 2011
+%                 load(annotFname);
+%                 albl=label;
+%                 actbl=colortable;
+%                 clear colortable label vertices
+%             else
+%                 [averts,albl,actbl]=read_annotation(annotFname);
+%             end
+%             actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+%         
+        
         elseif strcmpi(overlayParcellation,'Y17')
-            if strcmpi(fsSub,'fsaverage')
-                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.annot']); % Yeo et al. 2011
-                [averts,albl,actbl]=read_annotation(annotFname);
-            else
-                annotFname=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
-                if ~exist(annotFname,'file')
-                    % try original naming convention
-                    annotFname=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
-                end
-                load(annotFname);
+            
+            annotFname_annot=fullfile(labelFolder,[side 'h.Yeo2011_17Networks_N1000.annot']); % Yeo et al. 2011
+            annotFname_mat=fullfile(labelFolder,[side 'h_Yeo2011_17Networks_N1000.mat']); % Yeo et al. 2011
+            if exist(annotFname_annot,'file')
+                [averts,albl,actbl]=read_annotation(annotFname_annot);
+            elseif exist(annotFname_mat,'file')
+                load(annotFname_mat);
                 albl=label;
                 actbl=colortable;
                 clear colortable label vertices
-                actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+            else
+                error('Can not find Y17 parcellation. Run createIndivHCPMapping')
             end
+            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
+        
+        elseif strcmpi(overlayParcellation,'HCP')
+            annotFname=fullfile(labelFolder,[side 'h.HCP-MMP1.annot']); %HCP 180 atlas
+            if ~exist(annotFname,'file')
+                error('Can not find HCP parcellation. Run createIndivHCPMapping')
+            end
+            [averts,albl,actbl]=read_annotation(annotFname);
+            actbl.table(1,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
         elseif exist(overlayParcellation,'file')
             [averts,albl,actbl]=read_annotation(overlayParcellation);
             %  actbl.table(43,1:3)=255*[1 1 1]*.7; %make medial wall the same shade of grey as functional plots
         else
-            error('overlayParcellation argument needs to take a value of ''D'',''DK'',''Y7'', ''Y17'', or fullpath to annotation file.');
+            error('overlayParcellation argument needs to take a value of ''D'',''DK'',''Y7'', ''Y17'', "HCP" or fullpath to annotation file.');
         end
         if ~isempty(parcellationColors)
             if size(parcellationColors,1)~=size(actbl.table,1)

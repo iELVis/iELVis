@@ -57,18 +57,18 @@ for hemLoop=1:2,
     
     
     %% Read Sub Pial Surf
-    fname=[sub_dir '/surf/' hem '.pial'];
+    fname=[sub_dir filesep 'surf' filesep hem '.pial'];
     pial=read_surf_helper(fname);
     
     
     %% Read Sub Spherical Surf
-    fname=[sub_dir '/surf/' hem '.sphere.reg'];
+    fname=[sub_dir filesep 'surf' filesep hem '.sphere.reg'];
     sph=read_surf_helper(fname);
     n_sub_vert=size(sph.vert,1);
     
     
     %% Load Avg Spherical Surf
-    fname=[avg_dir '/surf/' hem '.sphere.reg'];
+    fname=[avg_dir filesep 'surf' filesep hem '.sphere.reg'];
     avg_sph=read_surf_helper(fname);
     n_avg_vert=length(avg_sph.vert);
     
@@ -103,16 +103,27 @@ for hemLoop=1:2,
     end
     
     %% Export individual annotation as a mat file
-    annotFname7=fullfile(labelFolder,[hem '.Yeo2011_7Networks_N1000.mat']);
-    fprintf('Saving Yeo7 %s\n',annotFname7);
-    label=indivBrainYeo7;
-    colortable=colortable7;
-    save(annotFname7,'label','colortable');
+    %annotFname7=fullfile(labelFolder,[hem '.Yeo2011_7Networks_N1000.mat']);
+    %fprintf('Saving Yeo7 %s\n',annotFname7);
+    %label=indivBrainYeo7;
+    %colortable=colortable7;
+    %save(annotFname7,'label','colortable');
     
-    annotFname17=fullfile(labelFolder,[hem '.Yeo2011_17Networks_N1000.mat']);
+    annotFname7=fullfile(labelFolder,[hem '.Yeo2011_7Networks_N1000.annot']);
+    fprintf('Saving Yeo7 %s\n',annotFname7);
+    write_annotation(annotFname7, [0:(n_sub_vert-1)] ,indivBrainYeo7, colortable7);
+    
+    
+    
+    
+%     annotFname17=fullfile(labelFolder,[hem '.Yeo2011_17Networks_N1000.mat']);
+%     fprintf('Saving Yeo17 %s\n',annotFname17);
+%     label=indivBrainYeo17;
+%     colortable=colortable17;
+%     save(annotFname17,'label','colortable');
+    
+    annotFname17=fullfile(labelFolder,[hem '.Yeo2011_17Networks_N1000.annot']);
     fprintf('Saving Yeo17 %s\n',annotFname17);
-    label=indivBrainYeo17;
-    colortable=colortable17;
-    save(annotFname17,'label','colortable');
+    write_annotation(annotFname17, [0:(n_sub_vert-1)] ,indivBrainYeo17, colortable17);
     
 end
