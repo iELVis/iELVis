@@ -64,10 +64,22 @@ end
 
 defaultElecType='D';
 
+% Load preimplant nii
+mriNiiFname=fullfile(elecReconDir,'T1.nii.gz');
+if ~exist(mriNiiFname,'file')
+    error('preimplant MRI, %s, not found', mriNiiFname);
+end
+hdr = load_nifti(mriNiiFname);
+mm2vox=inv(hdr.vox2ras);
+
 % Load mni electrode information
-mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+%mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
+%if ~exist(mniInfoFname,'file')
+%    error('mni file %s not found.',mniInfoFname);
+%end
+mniInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
 if ~exist(mniInfoFname,'file')
-    error('mni file %s not found.',mniInfoFname);
+    error('Persyst file %s not found.',mniInfoFname);
 end
 infoCsv=csv2Cell(mniInfoFname,9,1);
 nElec=size(infoCsv,1);
@@ -124,25 +136,29 @@ if 0,
     fclose(fid);
     
     % Convert mni coordinates to Mgrid-style coordinates
-    fsurfRas=affineTrans*[mniRas ones(nElec,1)]'; % convert coordinates from 3rd party app to FreeSurfer space
+    fsurfVox=affineTrans*[mniRas ones(nElec,1)]'; % convert coordinates from 3rd party app to FreeSurfer space
    
 else    
     % Import electrode locations derived from FLIRT's img2imgcoord
     temp=importdata(fullfile(elecReconDir,'fsurfXyz.txt'));
-    fsurfRas=temp.data'; % coordinates are Right+, Ant+, Sup+ 
+    fsurfMm=[temp.data ones(nElec,1)]'; % coordinates are Right+, Ant+, Sup+ 
+    fsurfVox=mm2vox*fsurfMm; % 4x4*4*nElec
 end
 elecMatrix=zeros(nElec,3); % LIP coordinates
 % Note, fsurfRas coordinates range from 0-255, so elecMatrix coordinates
 % will range from 1-256 which is exactly the range produced by
 % mgrid2matlab.m
-% For some reason this works for TWH cases
-elecMatrix(:,1)=-1+fsurfRas(1,:); % convert R to L %elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
-elecMatrix(:,2)=1+fsurfRas(2,:); % it's already I, but origin needs to be 1
-elecMatrix(:,3)=256-fsurfRas(3,:); % convert A to P
+% This works for TWH
+%elecMatrix(:,1)=-1+fsurfVox(1,:); % convert R to L %elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
+%elecMatrix(:,2)=1+fsurfVox(2,:); % it's already I, but origin needs to be 1
+%elecMatrix(:,3)=256-fsurfVox(3,:); % convert A to P
 % But this works for PT001 and makes more sense
 % elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
 % elecMatrix(:,2)=256-fsurfRas(3,:); % convert S to I
 % elecMatrix(:,3)=256-fsurfRas(2,:); % convert A to P
+elecMatrix(:,1)=256-fsurfVox(1,:); % convert R to L
+elecMatrix(:,2)=256-fsurfVox(3,:); % convert S to I
+elecMatrix(:,3)=256-fsurfVox(2,:); % convert A to P
 
 %% For debugging
 % figure(1); clf;
@@ -166,7 +182,7 @@ elecMatrix(:,3)=256-fsurfRas(3,:); % convert A to P
 elecCoordILA=zeros(nElec,3);
 elecCoordILA(:,1)=elecMatrix(:,2);
 elecCoordILA(:,2)=elecMatrix(:,1);
-elecCoordILA(:,3)=fsurfRas(2,:);
+elecCoordILA(:,3)=fsurfVox(2,:);
 for a=1:nElec,
     fprintf('Identifying hemisphere corresponding to electrode %d/%d\n',a,nElec);
     hem=[];
@@ -216,7 +232,7 @@ end
 
 %%
 % Load mni electrode pair information
-mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+mniPairsFname=fullfile(elecReconDir,'persystElecPairs.tsv');
 if ~exist(mniPairsFname,'file')
     error('mni file %s not found.',mniPairsFname);
 end
