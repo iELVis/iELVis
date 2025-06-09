@@ -16,7 +16,7 @@
 
 usage='\nUSAGE:\n  persyst2fsurf.sh FsurfId persystFolder\n\nEXAMPLE:\n persyst2fsurf.sh PT001 /Users/Penfield/Desktop/PT001_Minimal\n'
 
-echo "persyst2fsurf.sh Version 2025-06-08"
+echo "persyst2fsurf.sh Version 2025-06-09 using mm coordinates"
 echo " "
 
 if [ "$#" -ne 2 ]; then
@@ -97,4 +97,4 @@ echo "fsleyes ${elecReconPath}/T1.nii.gz ${elecReconPath}/persystInFsurfPre.nii.
 tail -n +2 $elecReconPath/persystElecInfo.tsv | cut -d'	' -f 3,4,5 > $elecReconPath/persystXyz.tsv
 
 # Convert Persyst electrode coordinates. Note, img2imgcoord is an FSL function
-img2imgcoord -src $elecReconPath/postimp_persyst.nii.gz -dest $elecReconPath/T1.nii.gz -xfm $elecReconPath/persyst2fsurf.mat $elecReconPath/persystXyz.tsv > $elecReconPath/fsurfXyz.txt
+img2imgcoord -src $elecReconPath/postimp_persyst.nii.gz -dest $elecReconPath/T1.nii.gz -xfm $elecReconPath/persyst2fsurf.mat $elecReconPath/persystXyz.tsv -mm > $elecReconPath/fsurfXyz.txt

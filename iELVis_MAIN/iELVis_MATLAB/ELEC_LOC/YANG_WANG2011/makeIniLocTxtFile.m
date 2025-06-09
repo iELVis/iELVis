@@ -40,8 +40,6 @@ if ~isempty(elecHem),
     end
 end
 
-% subPath = sprintf('%s/%s',fsDir,fsSub);
-% elecReconPath=[subPath '/elec_recon/'];
 subPath = fullfile(fsDir,fsSub);
 elecReconPath=fullfile(subPath,'elec_recon');
 postimpLocFname=fullfile(elecReconPath,[fsSub 'PostimpLoc.txt']);

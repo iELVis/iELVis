@@ -73,10 +73,6 @@ hdr = load_nifti(mriNiiFname);
 mm2vox=inv(hdr.vox2ras);
 
 % Load mni electrode information
-%mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
-%if ~exist(mniInfoFname,'file')
-%    error('mni file %s not found.',mniInfoFname);
-%end
 mniInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
 if ~exist(mniInfoFname,'file')
     error('Persyst file %s not found.',mniInfoFname);
@@ -137,14 +133,13 @@ if 0,
     
     % Convert mni coordinates to Mgrid-style coordinates
     fsurfVox=affineTrans*[mniRas ones(nElec,1)]'; % convert coordinates from 3rd party app to FreeSurfer space
-   
 else    
     % Import electrode locations derived from FLIRT's img2imgcoord
     temp=importdata(fullfile(elecReconDir,'fsurfXyz.txt'));
     fsurfMm=[temp.data ones(nElec,1)]'; % coordinates are Right+, Ant+, Sup+ 
-    fsurfVox=mm2vox*fsurfMm; % 4x4*4*nElec
+    fsurfVox=mm2vox*fsurfMm; % 4x4*4xnElec these voxel coordinates start at 0
 end
-elecMatrix=zeros(nElec,3); % LIP coordinates
+elecMatrix=zeros(nElec,3); % LIP coordinates starting at 1
 % Note, fsurfRas coordinates range from 0-255, so elecMatrix coordinates
 % will range from 1-256 which is exactly the range produced by
 % mgrid2matlab.m
