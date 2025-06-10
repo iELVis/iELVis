@@ -1,5 +1,5 @@
 function [vol, M, mr_parms, volsz] = load_mgh(fname,slices,frames,headeronly)
-% [vol, M, mr_parms, Mdc, volsz] = load_mgh(fname,<slices>,<frames>,<headeronly>)
+% [vol, M, mr_parms, volsz] = load_mgh(fname,<slices>,<frames>,<headeronly>)
 %
 % fname - path of the mgh file
 % 
@@ -28,22 +28,16 @@ function [vol, M, mr_parms, volsz] = load_mgh(fname,slices,frames,headeronly)
 % load_mgh.m
 %
 % Original Author: Bruce Fischl
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/12/10 15:51:49 $
-%    $Revision: 1.17 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 vol = [];
@@ -58,33 +52,28 @@ if(nargin < 1 | nargin > 4)
 end
 
 % unzip if it is compressed 
-if (strcmpi(fname((strlen(fname)-3):strlen(fname)), '.MGZ') | ...
+if (strcmpi(fname((strlen(fname)-3):strlen(fname)), '.MGZ') || ...
 		strcmpi(fname((strlen(fname)-3):strlen(fname)), '.GZ'))
   rand('state', sum(100*clock));
   gzipped =  round(rand(1)*10000000 + ...
 		   sum(int16(fname))) + round(cputime);
-  ind = findstr(fname, '.');
-  if strncmp(computer,'PCWIN',5)
-      % Windows machine
-      new_fname = sprintf('tmp%d.mgh', gzipped); % DG EDIT to make compatible with windows
-      %new_fname = sprintf('%s.load_mgh.%d.mgh', tempname,gzipped);  % line
-      %in newest version of FreeSurfer matlab code
+  %ind = findstr(fname, '.');
+  new_fname = sprintf('%s.load_mgh.m.mgh', tempname(fsgettmppath));
+  %if(exist('/scratch'))
+  %  new_fname = sprintf('%s.load_mgh.%d.mgh', tempname('/scratch/'),gzipped);
+  %else
+  %  new_fname = sprintf('/tmp/tmp.load_mgh.%d.mgh', gzipped);
+  %end
+  
+  % Using the 2nd sprintfs below allows for spaces in the file names
+  if(strcmp(computer,'MAC') || strcmp(computer,'MACI') || ismac)
+    %[status,msg] = unix(sprintf('gunzip -c %s > %s', fname, new_fname));
+    [status,msg] = unix(sprintf("gunzip -c '%s' > '%s'", fname, new_fname));
   else
-      new_fname = sprintf('/tmp/tmp%d.mgh', gzipped); % ORIGINAL LINE
+    %[status,msg] = unix(sprintf('zcat %s > %s', fname, new_fname)) ;
+    [status,msg] = unix(sprintf("zcat '%s' > '%s'", fname, new_fname)) ;
   end
-  if strncmp(computer,'PCWIN',5) % PM edited 20160322
-      if ~exist('C:\Program Files\7-Zip\7z.exe','file')
-          error('Win:no7zip','Could not find 7-Zip. Make sure that it is installed in\n''C:\\Program Files\\7-Zip\\'', or else edit this function\nto direct it to the correct location on your machine.');
-      end
-      % get folder and file name
-      foldername=fileparts(fname);
-      % execute 7-Zip command to extract and rename zipped file
-      eval(['dos ''"C:\Program Files\7-Zip\7z" x "' fname '" -so >"' fullfile(foldername,new_fname) '"''']);
-  elseif(strcmp(computer,'MAC') || strcmp(computer,'MACI') || strcmp(computer,'MACI64'))
-      unix(sprintf('gunzip -c %s > %s', fname, new_fname)) ;
-  else
-      unix(sprintf('zcat %s > %s', fname, new_fname)) ;
-  end
+  if status ~= 0, fprintf('%s\n',msg) ; end
   fname = new_fname ;
 else
   gzipped = -1 ;
@@ -101,11 +90,7 @@ if(frames(1) <= 0) frames = 0; end
 
 if(exist('headeronly')~=1) headeronly = 0; end
 
-if strncmp(computer,'PCWIN',5) && gzipped ~= -1 % PM edited 20160322 %June edited 20191120
-    fid=fopen(fullfile(foldername,new_fname),'rb','b');
-else
-    fid    = fopen(fname, 'rb', 'b') ;
-end
+fid    = fopen(fname, 'rb', 'b') ;
 if(fid == -1)
   fprintf('ERROR: could not open %s for reading\n',fname);
   return;
@@ -114,11 +99,8 @@ v       = fread(fid, 1, 'int') ;
 if(isempty(v))
   fprintf('ERROR: problem reading fname\n');
   if(gzipped >=0)
-      if strncmp(computer,'PCWIN',5) % PM edited 20160322
-          delete(fullfile(foldername,new_fname));
-      else
-          unix(sprintf('rm %s', fname));
-      end
+  [status,msg] = unix(sprintf('rm -f %s', fname));
+  if status ~= 0, fprintf('%s\n',msg) ; end
   end
 end
 ndim1   = fread(fid, 1, 'int') ; 
@@ -178,6 +160,7 @@ MRI_LONG =   2 ;
 MRI_FLOAT =  3 ;
 MRI_SHORT =  4 ;
 MRI_BITMAP = 5 ;
+MRI_USHRT = 10 ;
 
 % Determine number of bytes per voxel
 switch type
@@ -186,6 +169,8 @@ switch type
  case MRI_UCHAR,
   nbytespervox = 1;
  case MRI_SHORT,
+  nbytespervox = 2;
+ case MRI_USHRT,
   nbytespervox = 2;
  case MRI_INT,
   nbytespervox = 4;
@@ -201,28 +186,35 @@ if(headeronly)
   end
   fclose(fid);
   if(gzipped >=0)
-      if strncmp(computer,'PCWIN',5) % PM edited 20160322
-          delete(fullfile(foldername,new_fname));
-      else
-          unix(sprintf('rm %s', fname));
-      end
+  [status,msg] = unix(sprintf('rm -f %s', fname));
+  if status ~= 0, fprintf('%s\n',msg) ; end
   end
   return;
 end
 
+% set datatype to fread
+switch type
+ case MRI_FLOAT,
+  dtype = 'float32' ;
+ case MRI_UCHAR,
+  dtype = 'uchar' ;
+ case MRI_SHORT,
+  dtype = 'short' ;
+ case MRI_INT,
+  dtype = 'int' ;
+ case MRI_USHRT,
+  dtype = 'uint16' ;       
+end
+
+% preserve volume datatype if env var is set to 1
+if(getenv('FS_PRESERVE_MATLAB_VOLTYPE') == '1')
+  dtype = strcat('*', dtype) ;
+end 
 
 %------------------ Read in the entire volume ----------------%
 if(slices(1) <= 0 & frames(1) <= 0)
-  switch type
-   case MRI_FLOAT,
-    vol = fread(fid, nv, 'float32') ; 
-   case MRI_UCHAR,
-    vol = fread(fid, nv, 'uchar') ; 
-   case MRI_SHORT,
-    vol = fread(fid, nv, 'short') ; 
-   case MRI_INT,
-    vol = fread(fid, nv, 'int') ; 
-  end
+
+  vol = fread(fid, nv, dtype) ;
 
   if(~feof(fid))
     [mr_parms count] = fread(fid,4,'float32');
@@ -232,11 +224,8 @@ if(slices(1) <= 0 & frames(1) <= 0)
   end
   fclose(fid) ;
   if(gzipped >=0)
-      if strncmp(computer,'PCWIN',5) % PM edited 20160322
-          delete(fullfile(foldername,new_fname));
-      else
-        unix(sprintf('rm %s', fname));
-      end
+  [status,msg] = unix(sprintf('rm -f %s', fname));
+  if status ~= 0, fprintf('%s\n',msg) ; end
   end
   
   nread = prod(size(vol));
@@ -267,28 +256,16 @@ for frame = frames
   for slice = slices
     filepos = ((frame-1)*nvvol + (slice-1)*nvslice)*nbytespervox + filepos0;
     fseek(fid,filepos,'bof');
-    
-    switch type
-     case MRI_FLOAT,
-      [tmpslice nread]  = fread(fid, nvslice, 'float32') ; 
-     case MRI_UCHAR,
-      [tmpslice nread]  = fread(fid, nvslice, 'uchar') ; 
-     case MRI_SHORT,
-      [tmpslice nread]  = fread(fid, nvslice, 'short') ; 
-     case MRI_INT,
-      [tmpslice nread]  = fread(fid, nvslice, 'int') ; 
-    end
+
+    [tmpslice nread]  = fread(fid, nvslice, dtype) ; 
 
     if(nread ~= nvslice)
       fprintf('ERROR: load_mgh: reading slice %d, frame %d\n',slice,frame);
       fprintf('  tried to read %d, actually read %d\n',nvslice,nread);
       fclose(fid);
       if(gzipped >=0)
-          if strncmp(computer,'PCWIN',5) % PM edited 20160322
-              delete(fullfile(foldername,new_fname));
-          else
-            unix(sprintf('rm %s', fname));
-          end
+      [status,msg] = unix(sprintf('rm -f %s', fname));
+      if status ~= 0, fprintf('%s\n',msg) ; end
       end
       return;
     end
@@ -313,11 +290,8 @@ end
 
 fclose(fid) ;
 if(gzipped >=0)
-    if strncmp(computer,'PCWIN',5) % PM edited 20160322
-        delete(fullfile(foldername,new_fname));
-    else
-        unix(sprintf('rm %s', fname));
-    end
+[status,msg] = unix(sprintf('rm -f %s', fname));
+if status ~= 0, fprintf('%s\n',msg) ; end
 end
 
 return;

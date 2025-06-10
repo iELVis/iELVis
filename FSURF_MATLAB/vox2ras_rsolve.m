@@ -10,10 +10,6 @@ function [M_Ru1, M_Ru2, M_v1, M_v2] = vox2ras_rsolve(Vc_C, inPlaneRotation)
 %%
 %%	Rudolph Pienaar
 %%
-%% VERSION
-%%
-%% 	$Id: vox2ras_rsolve.m,v 1.5 2007/01/10 22:55:10 nicks Exp $
-%%
 %% SYNOPSIS
 %%
 %%     [M_Ru1 M_Ru2 M_v1 M_v2 ] = vox2ras_rsolve(Vc_C, inPlaneRotation)
@@ -112,22 +108,16 @@ v2	= zeros(3, 3);
 % vox2ras_rsolve.m
 %
 % Original Author: Rudolph Pienaar
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/01/10 22:55:10 $
-%    $Revision: 1.5 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 a	= ci^2 + ck^2;

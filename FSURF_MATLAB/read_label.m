@@ -1,10 +1,14 @@
-function [l] = read_label(sname, lname)
-% l = read_label(<sname>, lname)
+function [l, coords] = read_label(sname, lname)
+% [l, coords] = read_label(<sname>, lname)
 %
 % reads the label file 'lname' from the subject 'sname' 
 % in the subject's label directory into the vector l
 % l will be nvertices-by-5, where each column means:
 % (1) vertex number, (2-4) xyz at each vertex, (5) stat
+%
+% coords is an optional output argument that returns
+% the string at the end of vox2ras=%s on the
+% first line of the label (should be scanner, voxel, or tkreg)
 %
 % IMPORTANT: the vertex number is 0-based.
 % 
@@ -14,22 +18,16 @@ function [l] = read_label(sname, lname)
 % read_label.m
 %
 % Original Author: Bruce Fischl
-% CVS Revision Info:
-%    $Author: fischl $
-%    $Date: 2008/02/18 14:37:57 $
-%    $Revision: 1.6 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 
@@ -59,11 +57,10 @@ if(fid == -1)
   return;
 end
 
-fgets(fid) ;
-if(fid == -1)
-  fprintf('ERROR: could not open %s\n',fname);
-  return;
-end
+line = fgets(fid) ;
+ind = strfind(line, 'vox2ras=');
+coords = sscanf(line(ind:end), 'vox2ras=%s');
+
 
 line = fgets(fid) ;
 nv = sscanf(line, '%d') ;

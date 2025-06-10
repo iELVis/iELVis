@@ -1,45 +1,94 @@
-function [vertices, label, colortable] = Read_Brain_Annotation(filename)
-% [vertices, label, colortable] = Read_Brain_Annotation(annotfilename.annot)
+function [vertices, label, colortable] = read_annotation(filename, varargin)
 %
-% vertices expected to be simply from 0 to number of vertices - 1;
-% label is the vector of annotation
+% NAME
 %
-% colortable is empty struct if not embedded in .annot. Else, it will be
-% a struct.
-% colortable.numEntries = number of Entries
-% colortable.orig_tab = name of original colortable
-% colortable.struct_names = list of structure names (e.g. central sulcus and so on)
-% colortable.table = n x 5 matrix. 1st column is r, 2nd column is g, 3rd column
-% is b, 4th column is flag, 5th column is resultant integer values
-% calculated from r + g*2^8 + b*2^16 + flag*2^24. flag expected to be all 0.
-
+%       function [vertices, label, colortable] = ...
+%                                       read_annotation(filename [, verbosity])
+%
+% ARGUMENTS
+% INPUT
+%       filename        string          name of annotation file to read
+%
+% OPTIONAL
+%       verbosity       int             if true (>0), disp running output
+%                                       + if false (==0), be quiet and do not
+%                                       + display any running output
+%
+% OUTPUT
+%       vertices        vector          vector with values running from 0 to
+%                                       + size(vertices)-1
+%       label           vector          lookup of annotation values for 
+%                                       + corresponding vertex index.
+%       colortable      struct          structure of annotation data
+%                                       + see below
+%       
+% DESCRIPTION
+%
+%       This function essentially reads in a FreeSurfer annotation file
+%       <filename> and returns structures and vectors that together 
+%       assign each index in the surface vector to one of several 
+%       structure names.
+%       
+% COLORTABLE STRUCTURE
+% 
+%       Consists of the following fields:
+%       o numEntries:   number of entries
+%       o orig_tab:     filename of original colortable file
+%       o struct_names: cell array of structure names
+%       o table:        n x 5 matrix
+%                       Columns 1,2,3 are RGB values for struct color
+%                       Column 4 is the transparency value (i.e. 255 - alpha)
+%                       Column 5 is the structure ID, calculated from
+%                       R + G*2^8 + B*2^16
+%                       
+% LABEL VECTOR
+% 
+%       Each component of the <label> vector has a structureID value. To
+%       match the structureID value with a structure name, lookup the row
+%       index of the structureID in the 5th column of the colortable.table
+%       matrix. Use this index as an offset into the struct_names field
+%       to match the structureID with a string name.      
+%
+% PRECONDITIONS
+%
+%       o <filename> must be a valid FreeSurfer annotation file.
+%       
+% POSTCONDITIONS
+%
+%       o <colortable> will be an empty struct if not embedded in a
+%         FreeSurfer annotation file. 
+%       
+% EXAMPLE
+% [vertices label ctab] = read_annotation(fname);
+% stgctab = strmatch('superiortemporal',char(ctab.struct_names));
+% stgcode = ctab.table(stgctab,5);
+% indstg = find(label==stgcode);
+% nstg = length(indstg);
 
 %
 % read_annotation.m
-%
 % Original Author: Bruce Fischl
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/01/10 22:55:09 $
-%    $Revision: 1.4 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 fp = fopen(filename, 'r', 'b');
 
+verbosity = 0;
+if length(varargin)
+    verbosity       = varargin{1};  
+end;
+
 if(fp < 0)
-   disp('Annotation file cannot be opened');
+   if verbosity, disp('Annotation file cannot be opened'); end;
    return;
 end
 
@@ -51,7 +100,7 @@ label = tmp(2:2:end);
 
 bool = fread(fp, 1, 'int');
 if(isempty(bool)) %means no colortable
-   disp('No Colortable found.');
+   if verbosity, disp('No Colortable found.'); end;
    colortable = struct([]);
    fclose(fp);
    return; 
@@ -64,12 +113,11 @@ if(bool)
 
     if(numEntries > 0)
         
-        disp(['Reading from Original Version']);
+        if verbosity, disp(['Reading from Original Version']); end;
         colortable.numEntries = numEntries;
         len = fread(fp, 1, 'int');
         colortable.orig_tab = fread(fp, len, '*char')';
         colortable.orig_tab = colortable.orig_tab(1:end-1);
-
         colortable.struct_names = cell(numEntries,1);
         colortable.table = zeros(numEntries,5);
         for i = 1:numEntries
@@ -80,16 +128,19 @@ if(bool)
             colortable.table(i,2) = fread(fp, 1, 'int');
             colortable.table(i,3) = fread(fp, 1, 'int');
             colortable.table(i,4) = fread(fp, 1, 'int');
-            colortable.table(i,5) = colortable.table(i,1) + colortable.table(i,2)*2^8 + colortable.table(i,3)*2^16 + colortable.table(i,4)*2^24;
+            colortable.table(i,5) = colortable.table(i,1) + colortable.table(i,2)*2^8 + colortable.table(i,3)*2^16;
         end
-        disp(['colortable with ' num2str(colortable.numEntries) ' entries read (originally ' colortable.orig_tab ')']);
-
+        if verbosity
+            disp(['colortable with ' num2str(colortable.numEntries) ' entries read (originally ' colortable.orig_tab ')']);
+        end
     else
         version = -numEntries;
-        if(version~=2)    
+        if verbosity
+          if(version~=2)    
             disp(['Error! Does not handle version ' num2str(version)]);
-        else
+          else
             disp(['Reading from version ' num2str(version)]);
+          end
         end
         numEntries = fread(fp, 1, 'int');
         colortable.numEntries = numEntries;
@@ -99,15 +150,14 @@ if(bool)
         
         colortable.struct_names = cell(numEntries,1);
         colortable.table = zeros(numEntries,5);
-        
         numEntriesToRead = fread(fp, 1, 'int');
         for i = 1:numEntriesToRead
             structure = fread(fp, 1, 'int')+1;
             if (structure < 0)
-                disp(['Error! Read entry, index ' num2str(structure)]);
+              if verbosity, disp(['Error! Read entry, index ' num2str(structure)]); end;
             end
             if(~isempty(colortable.struct_names{structure}))
-                disp(['Error! Duplicate Structure ' num2str(structure)]);
+              if verbosity, disp(['Error! Duplicate Structure ' num2str(structure)]); end;
             end
             len = fread(fp, 1, 'int');
             colortable.struct_names{structure} = fread(fp, len, '*char')';
@@ -116,14 +166,27 @@ if(bool)
             colortable.table(structure,2) = fread(fp, 1, 'int');
             colortable.table(structure,3) = fread(fp, 1, 'int');
             colortable.table(structure,4) = fread(fp, 1, 'int');
-            colortable.table(structure,5) = colortable.table(structure,1) + colortable.table(structure,2)*2^8 + colortable.table(structure,3)*2^16 + colortable.table(structure,4)*2^24;       
+            colortable.table(structure,5) = colortable.table(structure,1) + colortable.table(structure,2)*2^8 + colortable.table(structure,3)*2^16;
+	end
+        if verbosity 
+          disp(['colortable with ' num2str(colortable.numEntries) ' entries read (originally ' colortable.orig_tab ')']);
         end
-        disp(['colortable with ' num2str(colortable.numEntries) ' entries read (originally ' colortable.orig_tab ')']);
     end    
 else
-    disp('Error! Should not be expecting bool = 0');    
+    if verbosity
+        disp('Error! Should not be expecting bool = 0');    
+    end;
 end
 
 fclose(fp);
 
+% This makes it so that each empty entry at least has a string, even
+% if it is an empty string. This can happen with average subjects.
+for i = 1:numEntries
+  if(isempty(colortable.struct_names{i}))
+    colortable.struct_names{i}='';
+  end
+end
+
+return;
 

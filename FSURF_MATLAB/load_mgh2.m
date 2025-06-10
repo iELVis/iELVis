@@ -19,22 +19,16 @@ return;
 % load_mgh2.m
 %
 % Original Author: Doug Greve
-% CVS Revision Info:
-%    $Author: greve $
-%    $Date: 2007/06/29 18:02:47 $
-%    $Revision: 1.4 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 
@@ -88,6 +82,7 @@ MRI_LONG =   2 ;
 MRI_FLOAT =  3 ;
 MRI_SHORT =  4 ;
 MRI_BITMAP = 5 ;
+MRI_USHRT = 10 ;
 
 fseek(fid, unused_space_size, 'cof') ;
 
@@ -101,7 +96,9 @@ switch type
   case MRI_SHORT,
     vol = fread(fid, nv, 'short') ; 
   case MRI_INT,
-    vol = fread(fid, nv, 'int') ; 
+    vol = fread(fid, nv, 'int') ;
+  case MRI_USHRT,
+    vol = fread(fid, nv, 'uint16') ;      
 end
 if(~feof(fid))
   [mr_parms count] = fread(fid,4,'float32');

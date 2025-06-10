@@ -1,12 +1,28 @@
-function [vertex_coords, faces] = read_surf(fname)
-
+function [vertex_coords, faces, magic] = read_surf(fname)
 %
 % [vertex_coords, faces] = read_surf(fname)
 % reads a the vertex coordinates and face lists from a surface file
 % note that reading the faces from a quad file can take a very long
 % time due to the goofy format that they are stored in. If the faces
-% output variable is not specified, they will not be read so it
+% output variable is not specified, they will not be read so it 
 % should execute pretty quickly.
+%
+
+
+%
+% read_surf.m
+%
+% Original Author: Bruce Fischl
+%
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
+%
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
+%
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 
@@ -23,36 +39,42 @@ function [vertex_coords, faces] = read_surf(fname)
 
 TRIANGLE_FILE_MAGIC_NUMBER =  16777214 ;
 QUAD_FILE_MAGIC_NUMBER =  16777215 ;
+NEW_QUAD_FILE_MAGIC_NUMBER =  16777213 ;
 
 fid = fopen(fname, 'rb', 'b') ;
 if (fid < 0)
-    str = sprintf('could not open curvature file %s.', fname) ;
-    error(str) ;
-   %oops(159) ;
+  str = sprintf('could not open surface file %s.', fname) ;
+  error(str) ;
 end
 magic = fread3(fid) ;
 
-if (magic == QUAD_FILE_MAGIC_NUMBER)
-    vnum = fread3(fid) ; %number of vertices
-    fnum = fread3(fid) ; %number of faces
-    vertex_coords = fread(fid, vnum*3, 'int16') ./ 100 ;
-    if (nargout > 1)
-         for i=1:fnum
-             for n=1:4
-                     faces(i,n) = fread3(fid) ;
-            end
-        end
+if((magic == QUAD_FILE_MAGIC_NUMBER) | (magic == NEW_QUAD_FILE_MAGIC_NUMBER))
+  vnum = fread3(fid) ;
+  fnum = fread3(fid) ;
+  vertex_coords = fread(fid, vnum*3, 'int16') ./ 100 ; 
+  if (nargout > 1)
+    for i=1:fnum
+      for n=1:4
+	faces(i,n) = fread3(fid) ;
+      end
     end
+  end
 elseif (magic == TRIANGLE_FILE_MAGIC_NUMBER)
   fgets(fid) ;
-    fgets(fid) ;
-    vnum = fread(fid, 1, 'int32') ; %number of vertices
-    fnum = fread(fid, 1, 'int32') ; %number of faces
-    vertex_coords = fread(fid, vnum*3, 'float32') + 1 ;
-    %The next line was added by Andrew Dykstra (HST-SHBT), Feb 12, 2009, in
-    %order to give 3D coordinates for the vertices
-    vertex_coords = reshape(vertex_coords, 3, vnum)';
-    faces = fread(fid, fnum*3, 'int32') + 1 ;
+  fscanf(fid,'\n');
+  vnum = fread(fid, 1, 'int32') ;
+  fnum = fread(fid, 1, 'int32') ;
+  vertex_coords = fread(fid, vnum*3, 'float32') ; 
+  if (nargout > 1)
+    faces = fread(fid, fnum*3, 'int32') ;
     faces = reshape(faces, 3, fnum)' ;
+  end
+else
+  fprintf('ERROR: magic number %d unknown\n',magic);
+  vertex_coords = [];
+  faces = [];
+  return;
 end
+
+vertex_coords = reshape(vertex_coords, 3, vnum)' ;
 fclose(fid) ;

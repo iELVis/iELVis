@@ -1,4 +1,4 @@
-function r = save_mgh(vol, fname, M, mr_parms);
+function r = save_mgh(vol, fname, M, mr_parms)
 %
 % save_mgh(vol,fname, M, <mr_parms>);
 %
@@ -17,27 +17,21 @@ function r = save_mgh(vol, fname, M, mr_parms);
 % save_mgh.m
 %
 % Original Author: Bruce Fischl
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/01/10 22:55:10 $
-%    $Revision: 1.7 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 r = 1;
 
-if(nargin < 2 | nargin > 4)
+if(nargin < 2 || nargin > 4)
   msg = 'USAGE: save_mgh2(vol,fname,M)';
   return;
 end
@@ -80,9 +74,14 @@ else
   fwrite(fid, MRI_FLOAT, 'int') ;  % type = MRI_FLOAT
 end
 
+fwrite(fid, 1, 'int') ; % dof (not used)
+
 %%?????????????%%%
-fwrite(fid, 1, 'int') ;          % dof (not used)
-dof = fread(fid, 1, 'int') ; 
+% This line was originally run. It does not appear to
+% do anything wrong in matlab, but it causes octave
+% to throw an error. Removing it does not appear to 
+% create a problem in either matlab or octave.
+% dof = fread(fid, 1, 'int') ;
 
 UNUSED_SPACE_SIZE= 256;
 USED_SPACE_SIZE = (3*4+4*3*4);  % space for ras transform
@@ -111,14 +110,12 @@ fclose(fid) ;
 
 r = 0;
 
-if (strcmpi(fname((length(fname)-3):length(fname)), '.MGZ') | ...
+if (strcmpi(fname((length(fname)-3):length(fname)), '.MGZ') || ...
 		strcmpi(fname((length(fname)-3):length(fname)), '.GZ'))
+  cmd = sprintf('gzip -f %s ; mv %s.gz %s', fname, fname, fname);
+  [status,msg] = unix(cmd);
+  if status ~= 0, fprintf('%s\n',msg) ; end
+end
 
-	gzipped =  round(rand(1)*10000000);
-	ind = findstr(fname, '.');
-	new_fname = sprintf('/tmp/tmp%d.mgh', gzipped);
-	unix(sprintf('mv %s %s ; gzip %s ; mv %s.gz %s', fname, new_fname, new_fname, new_fname, fname)) ;
-	fname = new_fname ;
-end	
 return;
 

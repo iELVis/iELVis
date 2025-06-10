@@ -2,7 +2,7 @@ function [y]=check_ROI(SubjectDir,th_pval)
 %
 %   For one subject: check if the size of 20 ROIs is within the normal range
 % The 20 following ROIs are checked: Left-Lateral-Ventricle Right-Lateral-Ventricle 
-%   Left-Hippocampus Right-Hippocampus Left-Thalamus-Proper Right-Thalamus-Proper 
+%   Left-Hippocampus Right-Hippocampus Left-Thalamus Right-Thalamus 
 %     Left-Caudate Right-Caudate Left-Putamen Right-Putamen Left-Pallidum 
 % Right-Pallidum Left-Amygdala Right-Amygdala Left-Accumbens-area Right-Accumbens-area 
 %      3rd-Ventricle 4th-Ventricle Left-Inf-Lat-Vent Right-Inf-Lat-Vent) 
@@ -16,22 +16,16 @@ function [y]=check_ROI(SubjectDir,th_pval)
 % subcortical_labeling_afd.m
 %
 % Original Author: Laurence Wastiaux
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/01/10 22:55:10 $
-%    $Revision: 1.2 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 
