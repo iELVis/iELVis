@@ -151,9 +151,13 @@ elecMatrix=zeros(nElec,3); % LIP coordinates starting at 1
 % elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
 % elecMatrix(:,2)=256-fsurfRas(3,:); % convert S to I
 % elecMatrix(:,3)=256-fsurfRas(2,:); % convert A to P
-elecMatrix(:,1)=256-fsurfVox(1,:); % convert R to L
-elecMatrix(:,2)=256-fsurfVox(3,:); % convert S to I
-elecMatrix(:,3)=256-fsurfVox(2,:); % convert A to P
+% elecMatrix(:,1)=256-fsurfVox(1,:); % convert R to L
+% elecMatrix(:,2)=256-fsurfVox(3,:); % convert S to I
+% elecMatrix(:,3)=256-fsurfVox(2,:); % convert A to P
+% This works for TWH
+elecMatrix(:,1)=-1+fsurfVox(1,:); % convert R to L %elecMatrix(:,1)=256-fsurfRas(1,:); % convert R to L
+elecMatrix(:,2)=1+fsurfVox(2,:); % it's already I, but origin needs to be 1
+elecMatrix(:,3)=256-fsurfVox(3,:); % convert A to P
 
 %% For debugging
 % figure(1); clf;
