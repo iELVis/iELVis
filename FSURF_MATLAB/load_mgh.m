@@ -2,7 +2,7 @@ function [vol, M, mr_parms, volsz] = load_mgh(fname,slices,frames,headeronly)
 % [vol, M, mr_parms, volsz] = load_mgh(fname,<slices>,<frames>,<headeronly>)
 %
 % fname - path of the mgh file
-% 
+%
 % slices - list of one-based slice numbers to load. All
 %   slices are loaded if slices is not specified, or
 %   if slices is empty, or if slices(1) <= 0.
@@ -46,37 +46,49 @@ mr_parms = [];
 volsz = [];
 
 if(nargin < 1 | nargin > 4)
-  msg = 'USAGE: [vol M] = load_mgh(fname,<slices>,<frames>,<headeronly>)';
-  fprintf('%s',msg);
-  return;
+    msg = 'USAGE: [vol M] = load_mgh(fname,<slices>,<frames>,<headeronly>)';
+    fprintf('%s',msg);
+    return;
 end
 
-% unzip if it is compressed 
+% unzip if it is compressed
 if (strcmpi(fname((strlen(fname)-3):strlen(fname)), '.MGZ') || ...
-		strcmpi(fname((strlen(fname)-3):strlen(fname)), '.GZ'))
-  rand('state', sum(100*clock));
-  gzipped =  round(rand(1)*10000000 + ...
-		   sum(int16(fname))) + round(cputime);
-  %ind = findstr(fname, '.');
-  new_fname = sprintf('%s.load_mgh.m.mgh', tempname(fsgettmppath));
-  %if(exist('/scratch'))
-  %  new_fname = sprintf('%s.load_mgh.%d.mgh', tempname('/scratch/'),gzipped);
-  %else
-  %  new_fname = sprintf('/tmp/tmp.load_mgh.%d.mgh', gzipped);
-  %end
-  
-  % Using the 2nd sprintfs below allows for spaces in the file names
-  if(strcmp(computer,'MAC') || strcmp(computer,'MACI') || ismac)
-    %[status,msg] = unix(sprintf('gunzip -c %s > %s', fname, new_fname));
-    [status,msg] = unix(sprintf("gunzip -c '%s' > '%s'", fname, new_fname));
-  else
-    %[status,msg] = unix(sprintf('zcat %s > %s', fname, new_fname)) ;
-    [status,msg] = unix(sprintf("zcat '%s' > '%s'", fname, new_fname)) ;
-  end
-  if status ~= 0, fprintf('%s\n',msg) ; end
-  fname = new_fname ;
+        strcmpi(fname((strlen(fname)-3):strlen(fname)), '.GZ'))
+    rand('state', sum(100*clock));
+    gzipped =  round(rand(1)*10000000 + ...
+        sum(int16(fname))) + round(cputime);
+    %ind = findstr(fname, '.');
+    if strncmp(computer,'PCWIN',5) % Windows machine
+        new_fname = sprintf('tmp%d.mgh', gzipped); % DG EDIT to make compatible with windows
+    else
+        new_fname = sprintf('%s.load_mgh.m.mgh', tempname(fsgettmppath));
+        %if(exist('/scratch'))
+        %  new_fname = sprintf('%s.load_mgh.%d.mgh', tempname('/scratch/'),gzipped);
+        %else
+        %  new_fname = sprintf('/tmp/tmp.load_mgh.%d.mgh', gzipped);
+        %end
+    end
+    
+    
+    % Using the 2nd sprintfs below allows for spaces in the file names
+    if strncmp(computer,'PCWIN',5) % PM edited 20160322
+        if ~exist('C:\Program Files\7-Zip\7z.exe','file')
+            error('Win:no7zip','Could not find 7-Zip. Make sure that it is installed in\n''C:\\Program Files\\7-Zip\\'', or else edit this function\nto direct it to the correct location on your machine.');
+        end
+        foldername=fileparts(fname); % get folder and file name
+        eval(['dos ''"C:\Program Files\7-Zip\7z" x "' fname '" -so >"' fullfile(foldername,new_fname) '"''']); % execute 7-Zip command to extract and rename zipped files
+        status=0; % dummy value, set to 0 to indicate successful unzip
+    elseif(strcmp(computer,'MAC') || strcmp(computer,'MACI') || ismac)
+        %[status,msg] = unix(sprintf('gunzip -c %s > %s', fname, new_fname));
+        [status,msg] = unix(sprintf("gunzip -c '%s' > '%s'", fname, new_fname));
+    else
+        %[status,msg] = unix(sprintf('zcat %s > %s', fname, new_fname)) ;
+        [status,msg] = unix(sprintf("zcat '%s' > '%s'", fname, new_fname)) ;
+    end
+    if status ~= 0, fprintf('%s\n',msg) ; end
+    fname = new_fname ;
 else
-  gzipped = -1 ;
+    gzipped = -1 ;
 end
 
 
@@ -90,68 +102,76 @@ if(frames(1) <= 0) frames = 0; end
 
 if(exist('headeronly')~=1) headeronly = 0; end
 
-fid    = fopen(fname, 'rb', 'b') ;
+if strncmp(computer,'PCWIN',5) && gzipped ~= -1 % PM edited 20160322 %June edited 20191120
+    fid=fopen(fullfile(foldername,new_fname),'rb','b');
+else
+    fid    = fopen(fname, 'rb', 'b') ;
+end
 if(fid == -1)
-  fprintf('ERROR: could not open %s for reading\n',fname);
-  return;
+    fprintf('ERROR: could not open %s for reading\n',fname);
+    return;
 end
-v       = fread(fid, 1, 'int') ; 
+v       = fread(fid, 1, 'int') ;
 if(isempty(v))
-  fprintf('ERROR: problem reading fname\n');
-  if(gzipped >=0)
-  [status,msg] = unix(sprintf('rm -f %s', fname));
-  if status ~= 0, fprintf('%s\n',msg) ; end
-  end
+    fprintf('ERROR: problem reading fname\n');
+    if(gzipped >=0)
+        if strncmp(computer,'PCWIN',5) % PM edited 20160322
+            delete(fullfile(foldername,new_fname));
+        else
+            [status,msg] = unix(sprintf('rm -f %s', fname));
+        end
+        if status ~= 0, fprintf('%s\n',msg) ; end
+    end
 end
-ndim1   = fread(fid, 1, 'int') ; 
-ndim2   = fread(fid, 1, 'int') ; 
-ndim3   = fread(fid, 1, 'int') ; 
+ndim1   = fread(fid, 1, 'int') ;
+ndim2   = fread(fid, 1, 'int') ;
+ndim3   = fread(fid, 1, 'int') ;
 nframes = fread(fid, 1, 'int') ;
-type    = fread(fid, 1, 'int') ; 
-dof     = fread(fid, 1, 'int') ; 
+type    = fread(fid, 1, 'int') ;
+dof     = fread(fid, 1, 'int') ;
 
 if(slices(1) > 0)
-  ind = find(slices > ndim3);
-  if(~isempty(ind))
-    fprintf('ERROR: load_mgh: some slices exceed nslices\n');
-    return;
-  end
+    ind = find(slices > ndim3);
+    if(~isempty(ind))
+        fprintf('ERROR: load_mgh: some slices exceed nslices\n');
+        return;
+    end
 end
 
 if(frames(1) > 0)
-  ind = find(frames > nframes);
-  if(~isempty(ind))
-    fprintf('ERROR: load_mgh: some frames exceed nframes\n');
-    return;
-  end
+    ind = find(frames > nframes);
+    if(~isempty(ind))
+        fprintf('ERROR: load_mgh: some frames exceed nframes\n');
+        return;
+    end
 end
 
 UNUSED_SPACE_SIZE= 256;
 USED_SPACE_SIZE = (3*4+4*3*4);  % space for ras transform
 
 unused_space_size = UNUSED_SPACE_SIZE-2 ;
-ras_good_flag = fread(fid, 1, 'short') ; 
+ras_good_flag = fread(fid, 1, 'short') ;
 if (ras_good_flag)
-  delta  = fread(fid, 3, 'float32') ; 
-  Mdc    = fread(fid, 9, 'float32') ; 
-  Mdc    = reshape(Mdc,[3 3]);
-  Pxyz_c = fread(fid, 3, 'float32') ; 
-
-  D = diag(delta);
-
-  Pcrs_c = [ndim1/2 ndim2/2 ndim3/2]'; % Should this be kept?
-
-  Pxyz_0 = Pxyz_c - Mdc*D*Pcrs_c;
-
-  M = [Mdc*D Pxyz_0;  ...
-	0 0 0 1];
-  ras_xform = [Mdc Pxyz_c; ...
-	0 0 0 1];
-  unused_space_size = unused_space_size - USED_SPACE_SIZE ;
+    delta  = fread(fid, 3, 'float32') ;
+    Mdc    = fread(fid, 9, 'float32') ;
+    Mdc    = reshape(Mdc,[3 3]);
+    Pxyz_c = fread(fid, 3, 'float32') ;
+    
+    D = diag(delta);
+    
+    Pcrs_c = [ndim1/2 ndim2/2 ndim3/2]'; % Should this be kept?
+    
+    Pxyz_0 = Pxyz_c - Mdc*D*Pcrs_c;
+    
+    M = [Mdc*D Pxyz_0;  ...
+        0 0 0 1];
+    ras_xform = [Mdc Pxyz_c; ...
+        0 0 0 1];
+    unused_space_size = unused_space_size - USED_SPACE_SIZE ;
 end
 
 fseek(fid, unused_space_size, 'cof') ;
-nv = ndim1 * ndim2 * ndim3 * nframes;  
+nv = ndim1 * ndim2 * ndim3 * nframes;
 volsz = [ndim1 ndim2 ndim3 nframes];
 
 MRI_UCHAR =  0 ;
@@ -164,79 +184,87 @@ MRI_USHRT = 10 ;
 
 % Determine number of bytes per voxel
 switch type
- case MRI_FLOAT,
-  nbytespervox = 4;
- case MRI_UCHAR,
-  nbytespervox = 1;
- case MRI_SHORT,
-  nbytespervox = 2;
- case MRI_USHRT,
-  nbytespervox = 2;
- case MRI_INT,
-  nbytespervox = 4;
+    case MRI_FLOAT,
+        nbytespervox = 4;
+    case MRI_UCHAR,
+        nbytespervox = 1;
+    case MRI_SHORT,
+        nbytespervox = 2;
+    case MRI_USHRT,
+        nbytespervox = 2;
+    case MRI_INT,
+        nbytespervox = 4;
 end
 
 if(headeronly)
-  fseek(fid,nv*nbytespervox,'cof');
-  if(~feof(fid))
-    [mr_parms count] = fread(fid,4,'float32');
-    if(count ~= 4) 
-      fprintf('WARNING: error reading MR params\n');
+    fseek(fid,nv*nbytespervox,'cof');
+    if(~feof(fid))
+        [mr_parms count] = fread(fid,4,'float32');
+        if(count ~= 4)
+            fprintf('WARNING: error reading MR params\n');
+        end
     end
-  end
-  fclose(fid);
-  if(gzipped >=0)
-  [status,msg] = unix(sprintf('rm -f %s', fname));
-  if status ~= 0, fprintf('%s\n',msg) ; end
-  end
-  return;
+    fclose(fid);
+    if(gzipped >=0)
+        if strncmp(computer,'PCWIN',5) % PM edited 20160322
+            delete(fullfile(foldername,new_fname));
+        else
+            [status,msg] = unix(sprintf('rm -f %s', fname));
+        end
+        if status ~= 0, fprintf('%s\n',msg) ; end
+    end
+    return;
 end
 
 % set datatype to fread
 switch type
- case MRI_FLOAT,
-  dtype = 'float32' ;
- case MRI_UCHAR,
-  dtype = 'uchar' ;
- case MRI_SHORT,
-  dtype = 'short' ;
- case MRI_INT,
-  dtype = 'int' ;
- case MRI_USHRT,
-  dtype = 'uint16' ;       
+    case MRI_FLOAT,
+        dtype = 'float32' ;
+    case MRI_UCHAR,
+        dtype = 'uchar' ;
+    case MRI_SHORT,
+        dtype = 'short' ;
+    case MRI_INT,
+        dtype = 'int' ;
+    case MRI_USHRT,
+        dtype = 'uint16' ;
 end
 
 % preserve volume datatype if env var is set to 1
 if(getenv('FS_PRESERVE_MATLAB_VOLTYPE') == '1')
-  dtype = strcat('*', dtype) ;
-end 
+    dtype = strcat('*', dtype) ;
+end
 
 %------------------ Read in the entire volume ----------------%
 if(slices(1) <= 0 & frames(1) <= 0)
-
-  vol = fread(fid, nv, dtype) ;
-
-  if(~feof(fid))
-    [mr_parms count] = fread(fid,4,'float32');
-    if(count ~= 4) 
-      fprintf('WARNING: error reading MR params\n');
+    
+    vol = fread(fid, nv, dtype) ;
+    
+    if(~feof(fid))
+        [mr_parms count] = fread(fid,4,'float32');
+        if(count ~= 4)
+            fprintf('WARNING: error reading MR params\n');
+        end
     end
-  end
-  fclose(fid) ;
-  if(gzipped >=0)
-  [status,msg] = unix(sprintf('rm -f %s', fname));
-  if status ~= 0, fprintf('%s\n',msg) ; end
-  end
-  
-  nread = prod(size(vol));
-  if(nread ~= nv)
-    fprintf('ERROR: tried to read %d, actually read %d\n',nv,nread);
-    vol = [];
+    fclose(fid) ;
+    if(gzipped >=0)
+        if strncmp(computer,'PCWIN',5) % PM edited 20160322
+            delete(fullfile(foldername,new_fname));
+        else
+            [status,msg] = unix(sprintf('rm -f %s', fname));
+        end
+        if status ~= 0, fprintf('%s\n',msg) ; end
+    end
+    
+    nread = prod(size(vol));
+    if(nread ~= nv)
+        fprintf('ERROR: tried to read %d, actually read %d\n',nv,nread);
+        vol = [];
+        return;
+    end
+    vol = reshape(vol,[ndim1 ndim2 ndim3 nframes]);
+    
     return;
-  end
-  vol = reshape(vol,[ndim1 ndim2 ndim3 nframes]);
-
-  return;
 end
 
 %----- only gets here if a subest of slices/frames are to be loaded ---------%
@@ -251,30 +279,34 @@ filepos0 = ftell(fid);
 vol = zeros(ndim1,ndim2,length(slices),length(frames));
 nthframe = 1;
 for frame = frames
-
-  nthslice = 1;
-  for slice = slices
-    filepos = ((frame-1)*nvvol + (slice-1)*nvslice)*nbytespervox + filepos0;
-    fseek(fid,filepos,'bof');
-
-    [tmpslice nread]  = fread(fid, nvslice, dtype) ; 
-
-    if(nread ~= nvslice)
-      fprintf('ERROR: load_mgh: reading slice %d, frame %d\n',slice,frame);
-      fprintf('  tried to read %d, actually read %d\n',nvslice,nread);
-      fclose(fid);
-      if(gzipped >=0)
-      [status,msg] = unix(sprintf('rm -f %s', fname));
-      if status ~= 0, fprintf('%s\n',msg) ; end
-      end
-      return;
+    
+    nthslice = 1;
+    for slice = slices
+        filepos = ((frame-1)*nvvol + (slice-1)*nvslice)*nbytespervox + filepos0;
+        fseek(fid,filepos,'bof');
+        
+        [tmpslice nread]  = fread(fid, nvslice, dtype) ;
+        
+        if(nread ~= nvslice)
+            fprintf('ERROR: load_mgh: reading slice %d, frame %d\n',slice,frame);
+            fprintf('  tried to read %d, actually read %d\n',nvslice,nread);
+            fclose(fid);
+            if(gzipped >=0)
+                if strncmp(computer,'PCWIN',5) % PM edited 20160322
+                    delete(fullfile(foldername,new_fname));
+                else
+                    [status,msg] = unix(sprintf('rm -f %s', fname));
+                end
+                if status ~= 0, fprintf('%s\n',msg) ; end
+            end
+            return;
+        end
+        
+        vol(:,:,nthslice,nthframe) = reshape(tmpslice,[ndim1 ndim2]);
+        nthslice = nthslice + 1;
     end
-
-    vol(:,:,nthslice,nthframe) = reshape(tmpslice,[ndim1 ndim2]);
-    nthslice = nthslice + 1;
-  end
-
-  nthframe = nthframe + 1;
+    
+    nthframe = nthframe + 1;
 end
 
 % seek to just beyond the last slice/frame %
@@ -282,16 +314,20 @@ filepos = (nframes*nvvol)*nbytespervox + filepos0;
 fseek(fid,filepos,'bof');
 
 if(~feof(fid))
-  [mr_parms count] = fread(fid,5,'float32');
-  if(count < 4) 
-    fprintf('WARNING: error reading MR params\n');
-  end
+    [mr_parms count] = fread(fid,5,'float32');
+    if(count < 4)
+        fprintf('WARNING: error reading MR params\n');
+    end
 end
 
 fclose(fid) ;
 if(gzipped >=0)
-[status,msg] = unix(sprintf('rm -f %s', fname));
-if status ~= 0, fprintf('%s\n',msg) ; end
+    if strncmp(computer,'PCWIN',5) % PM edited 20160322
+        delete(fullfile(foldername,new_fname));
+    else
+        [status,msg] = unix(sprintf('rm -f %s', fname));
+    end
+    if status ~= 0, fprintf('%s\n',msg) ; end
 end
 
 return;
