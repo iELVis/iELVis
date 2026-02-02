@@ -1,31 +1,25 @@
-function [code, name, rgbv] = read_fscolorlut(fname)
-% [code name rgb] = read_fscolorlut(fname)
+function [code, name, rgbv, tt] = read_fscolorlut(fname)
+% [code name rgb tt] = read_fscolorlut(fname)
 %
 % Reads a freesurfer color lookup table. By default
 % reads $FREESURFER_HOME/FreeSurferColorLUT.txt.
-%
+% tt is tissue type which might not be there for all ctabs
 
 
 %
 % read_fscolorlut.m
 %
 % Original Author: Doug Greve
-% CVS Revision Info:
-%    $Author: fischl $
-%    $Date: 2008/04/04 18:00:24 $
-%    $Revision: 1.3 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
+%
+% Reporting: freesurfer@nmr.mgh.harvard.edu
 %
 
 
@@ -42,6 +36,7 @@ if(fp == -1)
   return;
 end
 
+tt = [];
 name = '';
 nthitem = 1;
 while(1)
@@ -49,7 +44,8 @@ while(1)
   % scroll through any blank lines or comments %
   while(1)
     tline = fgetl(fp);
-    if(~isempty(tline) & tline(1) ~= '#') break; end
+    if(~isempty(tline) && tline(1) == -1) break; end
+    if(~isempty(deblank(tline)) & tline(1) ~= '#') break; end
   end
   if(tline(1) == -1) break; end
     
@@ -59,9 +55,11 @@ while(1)
   g = sscanf(tline,'%*d %*s %*d %d',1);
   b = sscanf(tline,'%*d %*s %*d %*d %d',1);
   v = sscanf(tline,'%*d %*s %*d %*d %*d %d',1);
+  t = sscanf(tline,'%*d %*s %*d %*d %*d %*d %d',1);
   code(nthitem,1) = c;
   name = strvcat(name,n');
   rgbv(nthitem,:) = [r g b v];
+  if(~isempty(t)) tt(nthitem,1) = t; end
 
   nthitem = nthitem + 1;
 end

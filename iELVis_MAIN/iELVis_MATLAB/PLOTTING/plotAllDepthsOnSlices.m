@@ -175,8 +175,8 @@ if strcmpi(elecInfoType,'BIDS-iEEG'),
 elseif strcmpi(elecInfoType,'MNI'),
     % MNI format
     elecReconDir=fullfile(fsdir,fsSub,'elec_recon');
-    mniInfoFname=fullfile(elecReconDir,'mniElecInfo.tsv');
-    mniPairsFname=fullfile(elecReconDir,'mniElecPairs.tsv');
+    mniInfoFname=fullfile(elecReconDir,'persystElecInfo.tsv');
+    mniPairsFname=fullfile(elecReconDir,'persystElecPairs.tsv');
     if ~exist(mniInfoFname,'file')
         error('Missing %s',mniInfoFname);
     end

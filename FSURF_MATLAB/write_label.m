@@ -1,37 +1,33 @@
-function ok = write_label(lindex, lxyz, lvals, labelfile, subjid)
-% ok = write_label(lindex, lxzy, lvals, labelfile, <subjid>)
+function ok = write_label(lindex, lxyz, lvals, labelfile, subjid,space)
+% ok = write_label(lindex, lxzy, lvals, labelfile, <subjid>,<space name>)
 
 
 %
 % write_label.m
 %
 % Original Author: Doug Greve
-% CVS Revision Info:
-%    $Author: nicks $
-%    $Date: 2007/01/10 22:55:10 $
-%    $Revision: 1.3 $
 %
-% Copyright (C) 2002-2007,
-% The General Hospital Corporation (Boston, MA). 
-% All rights reserved.
+% Copyright © 2021 The General Hospital Corporation (Boston, MA) "MGH"
 %
-% Distribution, usage and copying of this software is covered under the
-% terms found in the License Agreement file named 'COPYING' found in the
-% FreeSurfer source code root directory, and duplicated here:
-% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferOpenSourceLicense
+% Terms and conditions for use, reproduction, distribution and contribution
+% are found in the 'FreeSurfer Software License Agreement' contained
+% in the file 'LICENSE' found in the FreeSurfer distribution, and here:
 %
-% General inquiries: freesurfer@nmr.mgh.harvard.edu
-% Bug reports: analysis-bugs@nmr.mgh.harvard.edu
+% https://surfer.nmr.mgh.harvard.edu/fswiki/FreeSurferSoftwareLicense
 %
+% Reporting: freesurfer@nmr.mgh.harvard.edu
+%
+% where space name can be "voxel", "tkreg", "scanner"
 
 ok = 0;
 
-if(nargin ~= 4 & nargin ~= 5)
-  fprintf('ok = write_label(lindex, lxzy, lvals, labelfile, <subjid>)\n');
+if(nargin ~= 4 & nargin ~= 5 & nargin ~= 6)
+  fprintf('ok = write_label(lindex, lxzy, lvals, labelfile, <subjid> <space>)\n');
   return;
 end
 
-if(exist('subid') ~= 1) subjid = ''; end
+if(exist('subjid') ~= 1) subjid = 'matlab'; end
+if(exist('space') ~= 1) space = 'tkReg'; end
 
 if(isempty(lindex) & isempty(lxyz))
   fprintf('ERROR: both lindex and lxyz are empty.\n');
@@ -75,7 +71,7 @@ if(fid == -1)
   return;
 end
 
-fprintf(fid,'#!ascii label, from subject %s \n',subjid);
+fprintf(fid,'#!ascii label, from subject %s, vox2ras=%s \n',subjid,space);
 fprintf(fid,'%d\n',npoints);
 
 % Make sure they are npoints by 1 %

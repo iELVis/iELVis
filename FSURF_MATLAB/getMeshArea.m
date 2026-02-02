@@ -1,7 +1,9 @@
 function area = getMeshArea (mesh)
 
 area=0;
-for i=1:size(mesh.faces)
+disp("size(mesh.faces) is:");
+disp(size(mesh.faces));
+for i=1:length(mesh.faces) % was size
     p1=mesh.faces(i,1);
     p2=mesh.faces(i,2);
     p3=mesh.faces(i,3);

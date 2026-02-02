@@ -82,10 +82,8 @@ function varargout = read_meas_dat(filename, user_options)
 
 
 % jonathan polimeni <jonp@nmr.mgh.harvard.edu>, 10/04/2006
-% $Id: read_meas_dat.m,v 1.12 2008/07/16 06:45:24 jonnyreb Exp $
 %**************************************************************************%
 
-  VERSION = '$Revision: 1.12 $';
   if ( nargin == 0 ), help(mfilename); return; end;
 
 
